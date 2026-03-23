@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: 32334dd
-- Next step: Push the follow-up review-fix branch `codex/review-fixes-release`, open a PR, and unblock Pages deployment if repository settings allow it.
+- Last known good commit: 9340039
+- Next step: Monitor future Pages deploys for the GitHub Actions Node 20 deprecation warnings and update action versions once GitHub publishes Node 24-ready releases.
 
 ## Session log
 
@@ -42,7 +42,7 @@ Realign the starter repository into the confidence-curve app repository and impl
 **Open questions / risks:**
 
 - browser runtime performance still depends on Pyodide + SciPy startup cost, though local smoke tests passed
-- GitHub Pages deploys on `main` are still failing at `Configure Pages` because the Pages site has not been created for the repository
+- GitHub Pages now deploys successfully, but the current Pages actions still emit GitHub's Node 20 deprecation warnings
 
 **Objective:**
 
@@ -70,4 +70,4 @@ Land the merged review-follow-up fixes and continue the release checkpoint.
 
 **Open questions / risks:**
 
-- the remaining release blocker appears to be repository-level GitHub Pages enablement rather than application code
+- the app is deployed successfully on GitHub Pages, but the Pages workflow should be revisited before GitHub enforces Node 24-only JavaScript actions in June 2026
