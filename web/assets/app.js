@@ -99,6 +99,9 @@ function formatLikelihoodRatio(summary) {
   if (summary.likelihood_ratio_mle_to_null !== null) {
     return formatNumber(summary.likelihood_ratio_mle_to_null);
   }
+  if (summary.log_likelihood_ratio_mle_to_null === null) {
+    return "Overflow";
+  }
   const log10LikelihoodRatio = summary.log_likelihood_ratio_mle_to_null / Math.LN10;
   return `Overflow (log10 LR ${formatNumber(log10LikelihoodRatio)})`;
 }

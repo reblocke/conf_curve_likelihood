@@ -128,11 +128,11 @@ class SummaryPayload(TypedDict):
     null_working: float
     working_scale_se: float
     null_relative_likelihood: float
-    log_null_relative_likelihood: float
+    log_null_relative_likelihood: float | None
     likelihood_ratio_mle_to_null: float | None
-    log_likelihood_ratio_mle_to_null: float
+    log_likelihood_ratio_mle_to_null: float | None
     two_sided_wald_p_value: float
-    null_z_value: float
+    null_z_value: float | None
 
 
 class GridPayload(TypedDict):

@@ -151,5 +151,45 @@ def test_extreme_null_summary_stays_strictly_json_serializable() -> None:
 
     assert response["summary"]["null_relative_likelihood"] == 0.0
     assert response["summary"]["likelihood_ratio_mle_to_null"] is None
-    assert response["summary"]["log_null_relative_likelihood"] < 0.0
+    assert response["summary"]["log_null_relative_likelihood"] is not None
+    json.dumps(response, allow_nan=False)
+
+
+def test_extreme_additive_null_keeps_the_grid_payload_finite() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 0.0,
+            "lower": -1e-320,
+            "upper": 1e-320,
+            "null_value": 1e308,
+            "grid_points": 401,
+        }
+    )
+
+    assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
+    assert all(math.isfinite(value) for value in response["grid"]["z"])
+    assert all(math.isfinite(value) for value in response["grid"]["log_relative_likelihood"])
+    assert response["summary"]["log_null_relative_likelihood"] is None
+    assert any("finite floating-point range" in message for message in response["warnings"])
+    json.dumps(response, allow_nan=False)
+
+
+def test_extreme_ratio_null_keeps_the_natural_axis_payload_finite() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "estimate": 1.8,
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.79e308,
+            "display_natural_axis": True,
+            "grid_points": 401,
+        }
+    )
+
+    assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
+    assert response["grid"]["effect_display"][-1] < float("inf")
+    assert response["summary"]["likelihood_ratio_mle_to_null"] is None
+    assert response["summary"]["log_likelihood_ratio_mle_to_null"] is not None
     json.dumps(response, allow_nan=False)
