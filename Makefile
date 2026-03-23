@@ -34,19 +34,24 @@ lint:
 	uv run ruff check .
 
 .PHONY: test
-test:
+test: stage-web
 	uv run pytest -q -m "not e2e"
 
 .PHONY: e2e
-e2e:
-	uv run pytest -q -m e2e
+e2e: stage-web
+	uv run pytest -q -m e2e \
+		--browser chromium \
+		--tracing retain-on-failure \
+		--video retain-on-failure \
+		--screenshot only-on-failure \
+		--output test-results
 
 .PHONY: serve
 serve:
 	uv run python -m http.server --directory web 8000
 
 .PHONY: verify
-verify: stage-web fmt-check lint test e2e
+verify: fmt-check lint test e2e
 
 .PHONY: clean
 clean:

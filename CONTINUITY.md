@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: UNCONFIRMED
-- Next step: Finish the numerical package, stage it into `web/assets/py/confcurve/`, and wire the browser shell to it.
+- Last known good commit: d4ce951
+- Next step: Commit and open the implementation PR from `codex/wald-confcurve-impl`.
 
 ## Session log
 
@@ -29,12 +29,17 @@ Realign the starter repository into the confidence-curve app repository and impl
 - removed the conflicting starter pipeline and Stata codepaths
 - added the static `web/` shell with pinned Plotly and Pyodide assets
 - rewrote the top-level project framing and decision log for the app
+- implemented the numerical core with `numpy` and `scipy`
+- wired the browser UI to Pyodide and Plotly
+- added unit, property, integration, and Playwright browser tests
+- verified local Chromium E2E, WebKit smoke, and `make verify`
 
 **Verification:**
 
-- pending for the foundation checkpoint
+- `make verify`
+- `uv run pytest -q tests/e2e/test_app.py::test_initial_render_loads_pyodide_and_plots -m e2e --browser webkit --tracing retain-on-failure --video retain-on-failure --screenshot only-on-failure --output test-results`
 
 **Open questions / risks:**
 
-- browser runtime performance depends on Pyodide + SciPy startup cost
-- GitHub Pages is not configured yet and will be added later in the implementation
+- browser runtime performance still depends on Pyodide + SciPy startup cost, though local smoke tests passed
+- the implementation branch still needs to be pushed and checked in GitHub Actions

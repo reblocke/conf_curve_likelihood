@@ -36,3 +36,89 @@ jobs:
 
       - name: Pytest
         run: uv run pytest -q -m "not e2e"
+
+  e2e_chromium:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install Chromium
+        run: uv run playwright install --with-deps chromium
+
+      - name: Stage browser Python package
+        run: uv run python scripts/stage_web_python.py
+
+      - name: Playwright Chromium suite
+        run: |
+          uv run pytest -q -m e2e \
+            --browser chromium \
+            --tracing retain-on-failure \
+            --video retain-on-failure \
+            --screenshot only-on-failure \
+            --output test-results
+
+      - name: Upload Chromium artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-chromium-artifacts
+          path: test-results
+          if-no-files-found: ignore
+
+  e2e_webkit_smoke:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install WebKit
+        run: uv run playwright install --with-deps webkit
+
+      - name: Stage browser Python package
+        run: uv run python scripts/stage_web_python.py
+
+      - name: WebKit smoke test
+        run: |
+          uv run pytest -q tests/e2e/test_app.py::test_initial_render_loads_pyodide_and_plots \
+            --browser webkit \
+            --tracing retain-on-failure \
+            --video retain-on-failure \
+            --screenshot only-on-failure \
+            --output test-results
+
+      - name: Upload WebKit artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-webkit-artifacts
+          path: test-results
+          if-no-files-found: ignore
