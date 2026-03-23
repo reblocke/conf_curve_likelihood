@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: d56feaf
-- Next step: Push the grid-overflow fix branch, open a PR, and merge the finite-payload hardening plus the actionable CI artifact upgrade.
+- Last known good commit: a24b87c
+- Next step: Monitor issue #5 for upstream Node 24-ready releases of the Pages-specific GitHub Actions and update the workflow when they exist.
 
 ## Session log
 
