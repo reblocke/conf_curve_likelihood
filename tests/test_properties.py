@@ -5,6 +5,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from confcurve.core import (
+    LOG_MAX_FLOAT,
     ValidationError,
     confidence_curve,
     from_working_scale,
@@ -84,7 +85,8 @@ def test_null_likelihood_ratio_matches_inverse_relative_likelihood(
     stats = summaries(theta_hat=theta_hat, se=se, null_value=null_value)
 
     if stats["null_relative_likelihood"] == 0.0:
-        assert stats["likelihood_ratio_mle_to_null"] == float("inf")
+        assert stats["likelihood_ratio_mle_to_null"] is None
+        assert stats["log_likelihood_ratio_mle_to_null"] > LOG_MAX_FLOAT
     else:
         assert stats["likelihood_ratio_mle_to_null"] == pytest.approx(
             1.0 / stats["null_relative_likelihood"]

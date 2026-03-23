@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 
 import numpy as np
@@ -116,3 +117,39 @@ def test_even_grid_points_are_normalized_to_an_odd_count() -> None:
     )
 
     assert response["meta"]["grid_points"] == 401
+
+
+def test_distant_null_and_thresholds_expand_the_grid_extent() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "estimate": 1.8,
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 12.0,
+            "thresholds": [8.0],
+            "grid_points": 401,
+        }
+    )
+
+    x_values = response["grid"]["effect_display"]
+    assert x_values[0] < 8.0
+    assert x_values[-1] > 12.0
+
+
+def test_extreme_null_summary_stays_strictly_json_serializable() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 0.0,
+            "lower": -0.0001,
+            "upper": 0.0001,
+            "null_value": 100.0,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["summary"]["null_relative_likelihood"] == 0.0
+    assert response["summary"]["likelihood_ratio_mle_to_null"] is None
+    assert response["summary"]["log_null_relative_likelihood"] < 0.0
+    json.dumps(response, allow_nan=False)

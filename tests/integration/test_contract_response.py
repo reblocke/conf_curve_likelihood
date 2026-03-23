@@ -16,7 +16,7 @@ def test_compute_curves_response_is_json_serializable() -> None:
         }
     )
 
-    payload = json.loads(json.dumps(response))
+    payload = json.loads(json.dumps(response, allow_nan=False))
     assert payload["meta"]["grid_points"] == 401
     assert list(payload["grid"]) == [
         "effect_display",
@@ -27,3 +27,20 @@ def test_compute_curves_response_is_json_serializable() -> None:
         "log_relative_likelihood",
     ]
     assert len(payload["grid"]["effect_display"]) == 401
+
+
+def test_extreme_responses_remain_valid_json_for_the_browser_bridge() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 0.0,
+            "lower": -0.0001,
+            "upper": 0.0001,
+            "null_value": 100.0,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["summary"]["likelihood_ratio_mle_to_null"] is None
+    assert payload["summary"]["log_null_relative_likelihood"] < 0.0

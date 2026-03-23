@@ -65,6 +65,23 @@ function setStatus(state, message) {
   statusCard.textContent = message;
 }
 
+function setExportEnabled(enabled) {
+  exportCsvButton.disabled = !enabled;
+  exportPngButton.disabled = !enabled;
+}
+
+function clearRenderedState() {
+  runtimeState.currentResponse = null;
+  summaryGrid.innerHTML = "";
+  commentaryText.textContent = "";
+  warningsList.innerHTML = "";
+  if (typeof Plotly !== "undefined") {
+    Plotly.purge(plotElement);
+  }
+  plotElement.innerHTML = "";
+  setExportEnabled(false);
+}
+
 function formatNumber(value) {
   if (!Number.isFinite(value)) {
     return String(value);
@@ -76,6 +93,14 @@ function formatNumber(value) {
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 4,
   }).format(value);
+}
+
+function formatLikelihoodRatio(summary) {
+  if (summary.likelihood_ratio_mle_to_null !== null) {
+    return formatNumber(summary.likelihood_ratio_mle_to_null);
+  }
+  const log10LikelihoodRatio = summary.log_likelihood_ratio_mle_to_null / Math.LN10;
+  return `Overflow (log10 LR ${formatNumber(log10LikelihoodRatio)})`;
 }
 
 function parseOptionalNumber(rawValue) {
@@ -191,7 +216,7 @@ function renderSummary(response) {
     ["95% CI", `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`],
     ["Working-scale SE", response.summary.working_scale_se],
     ["Null relative likelihood", response.summary.null_relative_likelihood],
-    ["MLE:null likelihood ratio", response.summary.likelihood_ratio_mle_to_null],
+    ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
     ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
   ];
 
@@ -209,12 +234,15 @@ function renderSummary(response) {
 
 function renderCommentary(response) {
   const nullValue = formatNumber(response.summary.null_display);
-  const likelihoodRatio = formatNumber(response.summary.likelihood_ratio_mle_to_null);
+  const likelihoodRatioClause =
+    response.summary.likelihood_ratio_mle_to_null === null
+      ? `Because the null value is ${nullValue}, the implied MLE:null likelihood ratio exceeds browser floating-point range.`
+      : `Because the null value is ${nullValue}, the observed data are ${formatLikelihoodRatio(response.summary)} times as compatible with the point estimate as with the null.`;
   commentaryText.textContent =
     `These two panels summarize the same Wald approximation in two different ways. ` +
     `The top panel shows how compatible each effect size is with the observed estimate using the two-sided Wald p-value scale. ` +
     `The bottom panel shows the same information as a normalized relative likelihood curve, which peaks at the point estimate. ` +
-    `Because the null value is ${nullValue}, the observed data are ${likelihoodRatio} times as compatible with the point estimate as with the null. ` +
+    `${likelihoodRatioClause} ` +
     `This display is reconstructed from the estimate and confidence interval, so it is an approximation rather than the exact profile likelihood from the fitted model.`;
 }
 
@@ -274,11 +302,13 @@ async function computeAndRender() {
   try {
     payload = buildPayload();
   } catch (error) {
+    clearRenderedState();
     setStatus("error", error.message);
     return;
   }
 
   if (payload.estimate === null || payload.lower === null || payload.upper === null) {
+    clearRenderedState();
     setStatus("loading", "Enter an estimate and confidence interval to compute the curves.");
     return;
   }
@@ -294,8 +324,10 @@ async function computeAndRender() {
     renderCommentary(response);
     renderWarnings(response);
     await renderCurves(plotElement, response);
+    setExportEnabled(true);
     setStatus("ready", "Curves updated.");
   } catch (error) {
+    clearRenderedState();
     const message = error instanceof Error ? error.message : String(error);
     setStatus("error", message);
   }
@@ -330,6 +362,7 @@ function initializeForm() {
 
 function initializeUi() {
   sidebar.dataset.collapsed = "false";
+  setExportEnabled(false);
   toggleButton.addEventListener("click", () => {
     const nextCollapsed = sidebar.dataset.collapsed !== "true";
     sidebar.dataset.collapsed = nextCollapsed ? "true" : "false";
