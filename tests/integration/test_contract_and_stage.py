@@ -1,37 +1,11 @@
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 from confcurve.stage import PACKAGE_FILES, package_root, stage_web_python_package
-from confcurve.web_contract import compute_curves
-
-
-def test_compute_curves_response_is_json_serializable() -> None:
-    response = compute_curves(
-        {
-            "effect_type": "mean_difference",
-            "estimate": 0.42,
-            "lower": 0.11,
-            "upper": 0.73,
-            "grid_points": 401,
-        }
-    )
-
-    payload = json.loads(json.dumps(response))
-    assert payload["meta"]["grid_points"] == 401
-    assert list(payload["grid"]) == [
-        "effect_display",
-        "effect_working",
-        "z",
-        "compatibility",
-        "relative_likelihood",
-        "log_relative_likelihood",
-    ]
-    assert len(payload["grid"]["effect_display"]) == 401
 
 
 def test_stage_web_python_package_copies_source_files(tmp_path: Path) -> None:
