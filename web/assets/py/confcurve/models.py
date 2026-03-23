@@ -1,6 +1,98 @@
 from __future__ import annotations
 
-from typing import TypedDict
+from dataclasses import dataclass
+from typing import Literal, TypedDict
+
+EffectFamily = Literal["additive", "ratio"]
+WorkingScale = Literal["identity", "log"]
+
+
+@dataclass(frozen=True)
+class EffectSpec:
+    key: str
+    label: str
+    family: EffectFamily
+    working_scale: WorkingScale
+    default_null: float
+    positive_only: bool
+
+
+EFFECT_SPECS: dict[str, EffectSpec] = {
+    "odds_ratio": EffectSpec(
+        key="odds_ratio",
+        label="Odds ratio",
+        family="ratio",
+        working_scale="log",
+        default_null=1.0,
+        positive_only=True,
+    ),
+    "risk_ratio": EffectSpec(
+        key="risk_ratio",
+        label="Risk ratio",
+        family="ratio",
+        working_scale="log",
+        default_null=1.0,
+        positive_only=True,
+    ),
+    "hazard_ratio": EffectSpec(
+        key="hazard_ratio",
+        label="Hazard ratio",
+        family="ratio",
+        working_scale="log",
+        default_null=1.0,
+        positive_only=True,
+    ),
+    "incidence_rate_ratio": EffectSpec(
+        key="incidence_rate_ratio",
+        label="Incidence rate ratio",
+        family="ratio",
+        working_scale="log",
+        default_null=1.0,
+        positive_only=True,
+    ),
+    "ratio_of_means": EffectSpec(
+        key="ratio_of_means",
+        label="Ratio of means",
+        family="ratio",
+        working_scale="log",
+        default_null=1.0,
+        positive_only=True,
+    ),
+    "mean_difference": EffectSpec(
+        key="mean_difference",
+        label="Mean difference",
+        family="additive",
+        working_scale="identity",
+        default_null=0.0,
+        positive_only=False,
+    ),
+    "risk_difference": EffectSpec(
+        key="risk_difference",
+        label="Risk difference",
+        family="additive",
+        working_scale="identity",
+        default_null=0.0,
+        positive_only=False,
+    ),
+    "rate_difference": EffectSpec(
+        key="rate_difference",
+        label="Rate difference",
+        family="additive",
+        working_scale="identity",
+        default_null=0.0,
+        positive_only=False,
+    ),
+    "regression_coefficient": EffectSpec(
+        key="regression_coefficient",
+        label="Regression coefficient",
+        family="additive",
+        working_scale="identity",
+        default_null=0.0,
+        positive_only=False,
+    ),
+}
+
+DEFAULT_EFFECT_TYPE = "odds_ratio"
 
 
 class CurveRequest(TypedDict, total=False):
@@ -15,8 +107,44 @@ class CurveRequest(TypedDict, total=False):
     show_cutoffs: bool
 
 
+class MetaPayload(TypedDict):
+    effect_spec: dict[str, object]
+    display_axis_scale: str
+    default_null_applied: bool
+    grid_points: int
+    show_cutoffs: bool
+    se_method: str
+    relative_asymmetry: float
+    thresholds_display: list[float]
+    thresholds_working: list[float]
+
+
+class SummaryPayload(TypedDict):
+    estimate_display: float
+    estimate_working: float
+    ci_display: list[float]
+    ci_working: list[float]
+    null_display: float
+    null_working: float
+    working_scale_se: float
+    null_relative_likelihood: float
+    log_null_relative_likelihood: float
+    likelihood_ratio_mle_to_null: float
+    two_sided_wald_p_value: float
+    null_z_value: float
+
+
+class GridPayload(TypedDict):
+    effect_display: list[float]
+    effect_working: list[float]
+    z: list[float]
+    compatibility: list[float]
+    relative_likelihood: list[float]
+    log_relative_likelihood: list[float]
+
+
 class CurveResponse(TypedDict):
-    meta: dict[str, object]
-    summary: dict[str, object]
+    meta: MetaPayload
+    summary: SummaryPayload
     warnings: list[str]
-    grid: dict[str, list[float]]
+    grid: GridPayload

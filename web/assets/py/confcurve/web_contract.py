@@ -1,15 +1,121 @@
 from __future__ import annotations
 
+from typing import Any
+
+import numpy as np
+
+from .core import (
+    asymmetry_warning,
+    build_grid,
+    confidence_curve,
+    estimate_se_details,
+    from_working_scale,
+    relative_likelihood,
+    summaries,
+    to_working_scale,
+    validate_inputs,
+)
 from .models import CurveRequest, CurveResponse
 
 
-def compute_curves(payload: CurveRequest) -> CurveResponse:
-    """Return a placeholder response until the numerical engine is wired."""
+def _float_list(values: float | np.ndarray) -> list[float]:
+    return [float(value) for value in np.asarray(values, dtype=float).tolist()]
 
-    _ = payload
+
+def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
+    """Compute a JSON-serializable response for the browser app."""
+
+    validated = validate_inputs(
+        effect_type=str(payload.get("effect_type", "odds_ratio")),
+        estimate=payload.get("estimate"),
+        lower=payload.get("lower"),
+        upper=payload.get("upper"),
+        null_value=payload.get("null_value"),
+        thresholds=payload.get("thresholds"),
+        display_natural_axis=bool(payload.get("display_natural_axis", True)),
+        grid_points=int(payload.get("grid_points", 801)),
+        show_cutoffs=bool(payload.get("show_cutoffs", True)),
+    )
+
+    effect_type = validated.effect_spec.key
+    theta_hat = float(to_working_scale(effect_type, validated.estimate))
+    lower_working = float(to_working_scale(effect_type, validated.lower))
+    upper_working = float(to_working_scale(effect_type, validated.upper))
+    null_working = float(to_working_scale(effect_type, validated.null_value))
+    thresholds_working = _float_list(to_working_scale(effect_type, validated.thresholds))
+
+    se_info = estimate_se_details(theta_hat=theta_hat, lower=lower_working, upper=upper_working)
+    grid_working = build_grid(theta_hat=theta_hat, se=se_info.se, n=validated.grid_points)
+    z_values = (grid_working - theta_hat) / se_info.se
+    compatibility = confidence_curve(grid_working, theta_hat=theta_hat, se=se_info.se)
+    rel_likelihood = relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
+    with np.errstate(divide="ignore"):
+        log_rel_likelihood = np.log(rel_likelihood)
+
+    display_axis_scale = "natural" if validated.display_natural_axis else "working"
+    if validated.display_natural_axis:
+        grid_display = from_working_scale(effect_type, grid_working)
+        estimate_display = validated.estimate
+        ci_display = [validated.lower, validated.upper]
+        null_display = validated.null_value
+    else:
+        grid_display = grid_working
+        estimate_display = theta_hat
+        ci_display = [lower_working, upper_working]
+        null_display = null_working
+
+    warning_messages = list(validated.warnings)
+    asymmetry_message = asymmetry_warning(validated.effect_spec, se_info.relative_asymmetry)
+    if asymmetry_message is not None:
+        warning_messages.append(asymmetry_message)
+
+    null_summary = summaries(theta_hat=theta_hat, se=se_info.se, null_value=null_working)
+    threshold_display = (
+        [float(value) for value in validated.thresholds]
+        if validated.display_natural_axis
+        else thresholds_working
+    )
+
     return {
-        "meta": {"status": "placeholder"},
-        "summary": {},
-        "warnings": ["Numerical core has not been staged into the browser yet."],
-        "grid": {},
+        "meta": {
+            "effect_spec": {
+                "key": validated.effect_spec.key,
+                "label": validated.effect_spec.label,
+                "family": validated.effect_spec.family,
+                "working_scale": validated.effect_spec.working_scale,
+                "default_null": validated.effect_spec.default_null,
+                "positive_only": validated.effect_spec.positive_only,
+            },
+            "display_axis_scale": display_axis_scale,
+            "default_null_applied": validated.default_null_applied,
+            "grid_points": len(grid_working),
+            "show_cutoffs": validated.show_cutoffs,
+            "se_method": se_info.method,
+            "relative_asymmetry": se_info.relative_asymmetry,
+            "thresholds_display": threshold_display,
+            "thresholds_working": thresholds_working,
+        },
+        "summary": {
+            "estimate_display": float(estimate_display),
+            "estimate_working": theta_hat,
+            "ci_display": [float(value) for value in ci_display],
+            "ci_working": [lower_working, upper_working],
+            "null_display": float(null_display),
+            "null_working": null_working,
+            "working_scale_se": se_info.se,
+            "null_relative_likelihood": null_summary["null_relative_likelihood"],
+            "log_null_relative_likelihood": null_summary["log_null_relative_likelihood"],
+            "likelihood_ratio_mle_to_null": null_summary["likelihood_ratio_mle_to_null"],
+            "two_sided_wald_p_value": null_summary["two_sided_wald_p_value"],
+            "null_z_value": null_summary["null_z_value"],
+        },
+        "warnings": warning_messages,
+        "grid": {
+            "effect_display": _float_list(grid_display),
+            "effect_working": _float_list(grid_working),
+            "z": _float_list(z_values),
+            "compatibility": _float_list(compatibility),
+            "relative_likelihood": _float_list(rel_likelihood),
+            "log_relative_likelihood": _float_list(log_rel_likelihood),
+        },
     }

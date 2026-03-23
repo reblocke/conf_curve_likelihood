@@ -17,6 +17,7 @@ ENV/
 .pytest_cache/
 .coverage
 htmlcov/
+.hypothesis/
 .playwright/
 .playwright-artifacts/
 test-results/
