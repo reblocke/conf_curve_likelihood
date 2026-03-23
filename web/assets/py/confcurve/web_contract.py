@@ -10,6 +10,7 @@ from .core import (
     confidence_curve,
     estimate_se_details,
     from_working_scale,
+    log_relative_likelihood,
     relative_likelihood,
     summaries,
     to_working_scale,
@@ -45,12 +46,16 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     thresholds_working = _float_list(to_working_scale(effect_type, validated.thresholds))
 
     se_info = estimate_se_details(theta_hat=theta_hat, lower=lower_working, upper=upper_working)
-    grid_working = build_grid(theta_hat=theta_hat, se=se_info.se, n=validated.grid_points)
+    grid_working = build_grid(
+        theta_hat=theta_hat,
+        se=se_info.se,
+        n=validated.grid_points,
+        include_values=(null_working, *thresholds_working),
+    )
     z_values = (grid_working - theta_hat) / se_info.se
     compatibility = confidence_curve(grid_working, theta_hat=theta_hat, se=se_info.se)
     rel_likelihood = relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
-    with np.errstate(divide="ignore"):
-        log_rel_likelihood = np.log(rel_likelihood)
+    log_rel_likelihood = log_relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
 
     display_axis_scale = "natural" if validated.display_natural_axis else "working"
     if validated.display_natural_axis:
@@ -106,6 +111,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
             "null_relative_likelihood": null_summary["null_relative_likelihood"],
             "log_null_relative_likelihood": null_summary["log_null_relative_likelihood"],
             "likelihood_ratio_mle_to_null": null_summary["likelihood_ratio_mle_to_null"],
+            "log_likelihood_ratio_mle_to_null": null_summary["log_likelihood_ratio_mle_to_null"],
             "two_sided_wald_p_value": null_summary["two_sided_wald_p_value"],
             "null_z_value": null_summary["null_z_value"],
         },

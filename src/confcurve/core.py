@@ -12,7 +12,9 @@ from .models import DEFAULT_EFFECT_TYPE, EFFECT_SPECS, EffectSpec
 Z975 = float(norm.ppf(0.975))
 DEFAULT_GRID_POINTS = 801
 DEFAULT_SPAN_MULTIPLIER = 4.5
+GRID_EXPANSION_PADDING_MULTIPLIER = 0.25
 ASYMMETRY_RELATIVE_TOLERANCE = 0.02
+LOG_MAX_FLOAT = float(np.log(np.finfo(float).max))
 
 
 class ValidationError(ValueError):
@@ -241,6 +243,7 @@ def build_grid(
     se: float,
     span_multiplier: float = DEFAULT_SPAN_MULTIPLIER,
     n: int = DEFAULT_GRID_POINTS,
+    include_values: Sequence[float] | None = None,
 ) -> np.ndarray:
     """Build a symmetric working-scale grid around the point estimate."""
 
@@ -255,6 +258,14 @@ def build_grid(
         points += 1
 
     span = span_multiplier * se
+    if include_values is not None:
+        values = _to_array(include_values)
+        if values.size:
+            _require_finite(values, "Included grid values")
+            required_span = float(np.max(np.abs(values - theta_hat)))
+            if required_span > span:
+                span = required_span + (GRID_EXPANSION_PADDING_MULTIPLIER * se)
+
     return np.linspace(theta_hat - span, theta_hat + span, num=points, dtype=float)
 
 
@@ -293,19 +304,32 @@ def relative_likelihood(
     return np.exp(-0.5 * np.square(z_values))
 
 
-def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float]:
+def log_relative_likelihood(
+    theta: float | np.ndarray,
+    theta_hat: float,
+    se: float,
+) -> np.ndarray:
+    """Return the log relative likelihood on the Wald working scale."""
+
+    z_values = standardized_distance(theta, theta_hat=theta_hat, se=se)
+    return -0.5 * np.square(z_values)
+
+
+def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float | None]:
     """Return summary statistics for the null value versus the MLE."""
 
     null_z_value = float(
         standardized_distance(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
     )
-    null_relative_likelihood = float(
-        relative_likelihood(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
+    log_null_relative_likelihood = float(
+        log_relative_likelihood(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
     )
-    with np.errstate(divide="ignore"):
-        log_null_relative_likelihood = float(np.log(null_relative_likelihood))
+    null_relative_likelihood = float(np.exp(log_null_relative_likelihood))
+    log_likelihood_ratio_mle_to_null = -log_null_relative_likelihood
     likelihood_ratio_mle_to_null = (
-        float("inf") if null_relative_likelihood == 0.0 else float(1.0 / null_relative_likelihood)
+        None
+        if log_likelihood_ratio_mle_to_null > LOG_MAX_FLOAT
+        else float(np.exp(log_likelihood_ratio_mle_to_null))
     )
     two_sided_wald_p_value = float(2.0 * norm.sf(abs(null_z_value)))
 
@@ -313,6 +337,7 @@ def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float
         "null_relative_likelihood": null_relative_likelihood,
         "log_null_relative_likelihood": log_null_relative_likelihood,
         "likelihood_ratio_mle_to_null": likelihood_ratio_mle_to_null,
+        "log_likelihood_ratio_mle_to_null": log_likelihood_ratio_mle_to_null,
         "two_sided_wald_p_value": two_sided_wald_p_value,
         "null_z_value": null_z_value,
     }

@@ -129,7 +129,8 @@ class SummaryPayload(TypedDict):
     working_scale_se: float
     null_relative_likelihood: float
     log_null_relative_likelihood: float
-    likelihood_ratio_mle_to_null: float
+    likelihood_ratio_mle_to_null: float | None
+    log_likelihood_ratio_mle_to_null: float
     two_sided_wald_p_value: float
     null_z_value: float
 

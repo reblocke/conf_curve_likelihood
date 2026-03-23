@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: d4ce951
-- Next step: Commit and open the implementation PR from `codex/wald-confcurve-impl`.
+- Last known good commit: 32334dd
+- Next step: Push the follow-up review-fix branch `codex/review-fixes-release`, open a PR, and unblock Pages deployment if repository settings allow it.
 
 ## Session log
 
@@ -42,4 +42,32 @@ Realign the starter repository into the confidence-curve app repository and impl
 **Open questions / risks:**
 
 - browser runtime performance still depends on Pyodide + SciPy startup cost, though local smoke tests passed
-- the implementation branch still needs to be pushed and checked in GitHub Actions
+- GitHub Pages deploys on `main` are still failing at `Configure Pages` because the Pages site has not been created for the repository
+
+**Objective:**
+
+Land the merged review-follow-up fixes and continue the release checkpoint.
+
+**Plan:**
+
+- eliminate non-JSON numeric payloads under extreme null/likelihood cases
+- widen the x-grid when nulls or thresholds fall outside the default Wald span
+- clear stale browser render/export state after failed recomputations
+- push the fix branch through CI, then resolve the remaining Pages deployment blocker if possible
+
+**Work completed:**
+
+- changed the likelihood summary/log calculations to stay strictly JSON-serializable
+- expanded `build_grid()` so distant null and threshold markers are included in the plotted range
+- cleared cached browser response/plot/export state after input or compute failures
+- added unit, integration, property, and browser regressions for the reviewed failure modes
+- reran `make verify` successfully on the follow-up branch
+
+**Verification:**
+
+- `make verify`
+- `uv run pytest -q tests/e2e/test_app.py::test_invalid_ratio_input_surfaces_validation_error tests/e2e/test_app.py::test_distant_markers_expand_the_x_axis_extent --browser chromium`
+
+**Open questions / risks:**
+
+- the remaining release blocker appears to be repository-level GitHub Pages enablement rather than application code

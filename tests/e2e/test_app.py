@@ -43,6 +43,10 @@ def test_invalid_ratio_input_surfaces_validation_error(app_url: str, page: Page)
     page.locator("#ci-lower").blur()
 
     expect(page.locator("#status-card")).to_contain_text("strictly positive", timeout=120000)
+    expect(page.locator("#export-csv")).to_be_disabled()
+    expect(page.locator("#export-png")).to_be_disabled()
+    expect(page.locator("#summary-grid")).to_be_empty()
+    expect(page.locator("#curve-plot .main-svg")).to_have_count(0)
 
 
 def test_threshold_input_adds_plot_markers(app_url: str, page: Page) -> None:
@@ -56,6 +60,28 @@ def test_threshold_input_adds_plot_markers(app_url: str, page: Page) -> None:
         "(element) => element._fullLayout.shapes.length"
     )
     assert shape_count >= 4
+
+
+def test_distant_markers_expand_the_x_axis_extent(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#null-value").fill("12")
+    page.locator("#thresholds").fill("8")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?._fullLayout?.xaxis?.range?.[1] > 12;
+        }
+        """,
+        timeout=120000,
+    )
+
+    x_axis_range = page.locator("#curve-plot").evaluate(
+        "(element) => element._fullLayout.xaxis.range"
+    )
+    assert x_axis_range[1] > 12
 
 
 def test_csv_export_downloads_current_grid(app_url: str, page: Page, tmp_path: Path) -> None:
