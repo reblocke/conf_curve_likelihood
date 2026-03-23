@@ -15,6 +15,8 @@ DEFAULT_SPAN_MULTIPLIER = 4.5
 GRID_EXPANSION_PADDING_MULTIPLIER = 0.25
 ASYMMETRY_RELATIVE_TOLERANCE = 0.02
 LOG_MAX_FLOAT = float(np.log(np.finfo(float).max))
+MAX_FINITE_SPAN = float(np.finfo(float).max / 4.0)
+MAX_FINITE_ABS_Z = float(np.sqrt(np.finfo(float).max))
 
 
 class ValidationError(ValueError):
@@ -244,6 +246,7 @@ def build_grid(
     span_multiplier: float = DEFAULT_SPAN_MULTIPLIER,
     n: int = DEFAULT_GRID_POINTS,
     include_values: Sequence[float] | None = None,
+    max_span: float | None = None,
 ) -> np.ndarray:
     """Build a symmetric working-scale grid around the point estimate."""
 
@@ -265,6 +268,10 @@ def build_grid(
             required_span = float(np.max(np.abs(values - theta_hat)))
             if required_span > span:
                 span = required_span + (GRID_EXPANSION_PADDING_MULTIPLIER * se)
+    if max_span is not None:
+        if max_span <= 0:
+            raise ValidationError("Maximum span must be positive.")
+        span = min(span, max_span)
 
     return np.linspace(theta_hat - span, theta_hat + span, num=points, dtype=float)
 
@@ -315,8 +322,34 @@ def log_relative_likelihood(
     return -0.5 * np.square(z_values)
 
 
+def max_safe_grid_span(
+    theta_hat: float,
+    se: float,
+    *,
+    natural_axis_upper_bound: float | None = None,
+) -> float:
+    """Return the largest span that keeps grid endpoints and z values finite."""
+
+    z_safe_span = float(MAX_FINITE_ABS_Z * se)
+    span_limit = min(MAX_FINITE_SPAN, z_safe_span)
+    if natural_axis_upper_bound is not None:
+        span_limit = min(span_limit, natural_axis_upper_bound - theta_hat)
+    return max(span_limit, 0.0)
+
+
 def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float | None]:
     """Return summary statistics for the null value versus the MLE."""
+
+    null_distance = abs(null_value - theta_hat)
+    if null_distance > (MAX_FINITE_ABS_Z * se):
+        return {
+            "null_relative_likelihood": 0.0,
+            "log_null_relative_likelihood": None,
+            "likelihood_ratio_mle_to_null": None,
+            "log_likelihood_ratio_mle_to_null": None,
+            "two_sided_wald_p_value": 0.0,
+            "null_z_value": None,
+        }
 
     null_z_value = float(
         standardized_distance(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]

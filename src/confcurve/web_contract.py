@@ -5,12 +5,14 @@ from typing import Any
 import numpy as np
 
 from .core import (
+    LOG_MAX_FLOAT,
     asymmetry_warning,
     build_grid,
     confidence_curve,
     estimate_se_details,
     from_working_scale,
     log_relative_likelihood,
+    max_safe_grid_span,
     relative_likelihood,
     summaries,
     to_working_scale,
@@ -46,11 +48,18 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     thresholds_working = _float_list(to_working_scale(effect_type, validated.thresholds))
 
     se_info = estimate_se_details(theta_hat=theta_hat, lower=lower_working, upper=upper_working)
+    natural_axis_upper_bound = LOG_MAX_FLOAT if validated.display_natural_axis else None
+    safe_span = max_safe_grid_span(
+        theta_hat=theta_hat,
+        se=se_info.se,
+        natural_axis_upper_bound=natural_axis_upper_bound,
+    )
     grid_working = build_grid(
         theta_hat=theta_hat,
         se=se_info.se,
         n=validated.grid_points,
         include_values=(null_working, *thresholds_working),
+        max_span=safe_span,
     )
     z_values = (grid_working - theta_hat) / se_info.se
     compatibility = confidence_curve(grid_working, theta_hat=theta_hat, se=se_info.se)
@@ -70,11 +79,24 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         null_display = null_working
 
     warning_messages = list(validated.warnings)
+    if any(
+        value is not None and abs(value - theta_hat) > safe_span
+        for value in (null_working, *thresholds_working)
+    ):
+        warning_messages.append(
+            "Grid expansion was truncated to keep the plotted payload within finite floating-point "
+            "range. Very extreme null or threshold values may fall outside the plotted x-axis."
+        )
     asymmetry_message = asymmetry_warning(validated.effect_spec, se_info.relative_asymmetry)
     if asymmetry_message is not None:
         warning_messages.append(asymmetry_message)
 
     null_summary = summaries(theta_hat=theta_hat, se=se_info.se, null_value=null_working)
+    if null_summary["log_null_relative_likelihood"] is None:
+        warning_messages.append(
+            "The null value is too far from the estimate to summarize with finite floating-point "
+            "precision. Null likelihood summaries are reported as overflow."
+        )
     threshold_display = (
         [float(value) for value in validated.thresholds]
         if validated.display_natural_axis

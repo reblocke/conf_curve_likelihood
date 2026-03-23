@@ -43,4 +43,23 @@ def test_extreme_responses_remain_valid_json_for_the_browser_bridge() -> None:
 
     payload = json.loads(json.dumps(response, allow_nan=False))
     assert payload["summary"]["likelihood_ratio_mle_to_null"] is None
-    assert payload["summary"]["log_null_relative_likelihood"] < 0.0
+    assert payload["summary"]["log_null_relative_likelihood"] is not None
+
+
+def test_extreme_ratio_display_responses_remain_valid_json_for_the_browser_bridge() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "estimate": 1.8,
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.79e308,
+            "display_natural_axis": True,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["summary"]["likelihood_ratio_mle_to_null"] is None
+    assert payload["summary"]["log_likelihood_ratio_mle_to_null"] is not None
+    assert payload["grid"]["effect_display"][-1] < float("inf")

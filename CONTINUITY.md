@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: 9340039
-- Next step: Monitor future Pages deploys for the GitHub Actions Node 20 deprecation warnings and update action versions once GitHub publishes Node 24-ready releases.
+- Last known good commit: d56feaf
+- Next step: Push the grid-overflow fix branch, open a PR, and merge the finite-payload hardening plus the actionable CI artifact upgrade.
 
 ## Session log
 
@@ -71,3 +71,32 @@ Land the merged review-follow-up fixes and continue the release checkpoint.
 **Open questions / risks:**
 
 - the app is deployed successfully on GitHub Pages, but the Pages workflow should be revisited before GitHub enforces Node 24-only JavaScript actions in June 2026
+
+**Objective:**
+
+Close the remaining finite-payload overflow edge case and continue the actionable Node 24 maintenance stage.
+
+**Plan:**
+
+- cap grid expansion before it can overflow the plotted payload
+- make extreme null summaries explicitly overflow-safe for the browser JSON bridge
+- upgrade the CI artifact-upload action to the latest official Node 24 runtime release
+- push the branch through CI and keep the Pages-specific Node 20 warning tracked upstream
+
+**Work completed:**
+
+- reproduced the Codex review finding that extreme finite nulls could still generate `nan`/`inf` payloads
+- capped grid span growth to keep `linspace`, standardized distances, and natural-axis back-transforms finite
+- made extreme null summary fields report overflow with JSON-safe `null` values instead of non-finite floats
+- added regressions for extreme additive and ratio cases that now pass strict `json.dumps(..., allow_nan=False)`
+- upgraded CI artifact uploads from `actions/upload-artifact@v4` to `@v7`
+- updated issue #5 with the current official release status of the Pages-related GitHub Actions
+
+**Verification:**
+
+- `make verify`
+- `uv run python - <<'PY' ... json.dumps(response, allow_nan=False) ... PY` for the extreme additive and ratio reproductions
+
+**Open questions / risks:**
+
+- the Pages-specific actions (`configure-pages`, `deploy-pages`, `upload-pages-artifact`) are already on their latest official releases, so the remaining Node 20 warnings are upstream-blocked for now

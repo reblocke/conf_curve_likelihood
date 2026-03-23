@@ -86,7 +86,10 @@ def test_null_likelihood_ratio_matches_inverse_relative_likelihood(
 
     if stats["null_relative_likelihood"] == 0.0:
         assert stats["likelihood_ratio_mle_to_null"] is None
-        assert stats["log_likelihood_ratio_mle_to_null"] > LOG_MAX_FLOAT
+        if stats["log_likelihood_ratio_mle_to_null"] is None:
+            assert stats["log_null_relative_likelihood"] is None
+        else:
+            assert stats["log_likelihood_ratio_mle_to_null"] > LOG_MAX_FLOAT
     else:
         assert stats["likelihood_ratio_mle_to_null"] == pytest.approx(
             1.0 / stats["null_relative_likelihood"]
