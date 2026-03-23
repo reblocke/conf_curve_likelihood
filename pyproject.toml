@@ -1,0 +1,54 @@
+[project]
+name = "confcurve"
+version = "0.1.0"
+description = "Static GitHub Pages app and Python core for Wald confidence-curve reconstruction"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Reed Blocke"},
+]
+dependencies = [
+  "numpy>=2.2.5,<2.3",
+  "scipy>=1.14.1,<1.15",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2",
+  "hypothesis>=6.151,<7",
+  "playwright>=1.55,<2",
+  "pytest-playwright>=0.7,<1",
+  "ruff>=0.15.1",
+  "pre-commit>=3.7",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = ["-q"]
+testpaths = ["tests"]
+markers = [
+  "e2e: browser end-to-end tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["confcurve"]
+
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
