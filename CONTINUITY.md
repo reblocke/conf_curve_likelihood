@@ -4,9 +4,9 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Maintain the deployed Wald Confidence Curve Explorer after landing the CI-driven reconstruction update and keep the remaining infrastructure follow-up tracked.
+- Goal: Maintain the deployed Wald Confidence Curve Explorer and plan the next UX/statistics refinements, including correct default x-axis display for ratio measures.
 - Last known good commit: 4a024c1 on `main`
-- Next step: Monitor issue #5 for upstream Node 24-ready Pages actions; application code for the CI-driven estimate and critical-effect marker milestone is complete and deployed.
+- Next step: Decide how ratio measures should default to logarithmic display on the x-axis while preserving the current working-scale calculations and keeping issue #5 tracked separately.
 
 ## Open checkpoints
 
