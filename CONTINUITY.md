@@ -4,9 +4,9 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Maintain the deployed Wald Confidence Curve Explorer and plan the next UX/statistics refinements, including correct default x-axis display for ratio measures.
+- Goal: Maintain the deployed Wald Confidence Curve Explorer and triage follow-up review/design work, including the GitHub review feedback on commit `1268f2f30b`.
 - Last known good commit: 4a024c1 on `main`
-- Next step: Decide how ratio measures should default to logarithmic display on the x-axis while preserving the current working-scale calculations and keeping issue #5 tracked separately.
+- Next step: Return to the planned ratio-axis display refinement for ratio measures; the midpoint overflow bug flagged on commit `1268f2f30b` has been patched locally and is ready to push.
 
 ## Open checkpoints
 
@@ -51,6 +51,37 @@ Resume the interrupted CI-driven/critical-markers implementation, audit the exac
 **Open questions / risks:**
 
 - issue #5 remains open because GitHub's current Pages-specific actions still emit Node 20 deprecation warnings; this is upstream-blocked rather than an application defect
+
+**Objective:**
+
+Triage the GitHub review feedback on commit `1268f2f30b` and patch any still-live defects.
+
+**Plan:**
+
+- inspect the inline review comments on PR #8 directly from GitHub
+- reproduce any reported failures against current `main`
+- patch the midpoint/SE reconstruction if the overflow report is still real
+- rerun focused verification, then rerun the non-E2E suite
+
+**Work completed:**
+
+- confirmed there was one substantive inline review comment on PR #8 and reproduced it on current `main`
+- verified that `validate_inputs()` still rejected the valid additive CI `[-1e308, 1e308]` because midpoint inference overflowed on the working scale
+- patched `src/confcurve/core.py` so working-scale midpoint, half-width, and side-width arithmetic avoid overflow for large opposite-signed finite bounds
+- restaged the browser Python package into `web/assets/py/confcurve/`
+- added a regression in `tests/test_core.py` covering the reviewed additive-edge case through `compute_curves()`
+
+**Verification:**
+
+- `uv run python - <<'PY' ... compute_curves({'effect_type': 'mean_difference', 'lower': -1e308, 'upper': 1e308, 'grid_points': 401}) ... PY`
+- `uv run pytest -q tests/test_core.py -k "opposite_signed or additive_ci_only or large_additive_estimate or float_max_ratio_interval or extreme_additive_null"`
+- `uv run ruff format --check src/confcurve/core.py tests/test_core.py`
+- `uv run ruff check src/confcurve/core.py tests/test_core.py`
+- `make test`
+
+**Open questions / risks:**
+
+- the next planned product refinement is still the ratio-measure x-axis display rule; this fix only addresses the reviewed overflow bug
 
 ### 2026-03-23
 

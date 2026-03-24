@@ -67,6 +67,24 @@ def test_additive_ci_only_payload_infers_midpoint_estimate() -> None:
     assert response["summary"]["estimate_working"] == pytest.approx(0.42)
 
 
+def test_large_opposite_signed_additive_ci_infers_a_finite_midpoint() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "lower": -1e308,
+            "upper": 1e308,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["estimate_source"] == "inferred_from_ci"
+    assert response["summary"]["estimate_display"] == pytest.approx(0.0)
+    assert response["summary"]["estimate_working"] == pytest.approx(0.0)
+    assert math.isfinite(response["summary"]["working_scale_se"])
+    assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
+    json.dumps(response, allow_nan=False)
+
+
 def test_ratio_ci_only_payload_infers_geometric_mean_estimate() -> None:
     response = compute_curves(
         {

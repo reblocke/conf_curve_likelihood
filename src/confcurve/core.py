@@ -129,6 +129,29 @@ def _coerce_thresholds(thresholds: Sequence[float] | None) -> tuple[float, ...]:
     return values
 
 
+def _working_scale_midpoint_and_half_width(lower: float, upper: float) -> tuple[float, float]:
+    """Return finite midpoint and half-width for a working-scale interval."""
+
+    midpoint = (lower * 0.5) + (upper * 0.5)
+    half_width = (upper * 0.5) - (lower * 0.5)
+    if not isfinite(midpoint):
+        raise ValidationError("The inferred CI midpoint must be finite on the working scale.")
+    if not isfinite(half_width) or half_width <= 0:
+        raise ValidationError(
+            "The supplied 95% confidence interval must have positive width on the working scale."
+        )
+    return midpoint, half_width
+
+
+def _working_scale_difference(minuend: float, subtrahend: float, *, label: str) -> float:
+    """Return a finite working-scale difference without overflowing on opposite signs."""
+
+    difference = 2.0 * ((minuend * 0.5) - (subtrahend * 0.5))
+    if not isfinite(difference):
+        raise ValidationError(f"{label} must be finite on the working scale.")
+    return difference
+
+
 def validate_inputs(
     effect_type: str = DEFAULT_EFFECT_TYPE,
     estimate: float | int | None = None,
@@ -188,9 +211,11 @@ def validate_inputs(
 
     lower_working = float(to_working_scale(effect_type, lower_value))
     upper_working = float(to_working_scale(effect_type, upper_value))
-    estimate_working = lower_working + ((upper_working - lower_working) / 2.0)
+    estimate_working, ci_half_width_working = _working_scale_midpoint_and_half_width(
+        lower_working,
+        upper_working,
+    )
     estimate_display = float(from_working_scale(effect_type, estimate_working))
-    ci_half_width_working = (upper_working - lower_working) / 2.0
     estimate_match_tolerance = max(
         ESTIMATE_MATCH_ABSOLUTE_TOLERANCE,
         ESTIMATE_MATCH_RELATIVE_TOLERANCE * ci_half_width_working,
@@ -207,11 +232,6 @@ def validate_inputs(
                 "interval on the working scale beyond the rounding tolerance."
             )
         estimate_source = "provided_validated"
-
-    if ci_half_width_working <= 0:
-        raise ValidationError(
-            "The supplied 95% confidence interval must have positive width on the working scale."
-        )
 
     points = int(grid_points)
     if points < 101:
@@ -254,9 +274,24 @@ def critical_effect_markers(null_value: float, se: float) -> tuple[float, float]
 def estimate_se_details(theta_hat: float, lower: float, upper: float) -> StandardErrorEstimate:
     """Reconstruct the working-scale standard error from a symmetric Wald CI."""
 
-    se_width = (upper - lower) / (2.0 * Z975)
-    se_lower = (theta_hat - lower) / Z975
-    se_upper = (upper - theta_hat) / Z975
+    _, ci_half_width = _working_scale_midpoint_and_half_width(lower, upper)
+    se_width = ci_half_width / Z975
+    se_lower = (
+        _working_scale_difference(
+            theta_hat,
+            lower,
+            label="Lower-side CI width",
+        )
+        / Z975
+    )
+    se_upper = (
+        _working_scale_difference(
+            upper,
+            theta_hat,
+            label="Upper-side CI width",
+        )
+        / Z975
+    )
     mean_side_se = float(np.mean([se_lower, se_upper]))
 
     relative_asymmetry = abs(se_upper - se_lower) / max(abs(mean_side_se), np.finfo(float).eps)
