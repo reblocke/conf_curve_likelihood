@@ -14,6 +14,7 @@ DEFAULT_GRID_POINTS = 801
 DEFAULT_SPAN_MULTIPLIER = 4.5
 GRID_EXPANSION_PADDING_MULTIPLIER = 0.25
 ASYMMETRY_RELATIVE_TOLERANCE = 0.02
+MAX_FLOAT = float(np.finfo(float).max)
 LOG_MAX_FLOAT = float(np.log(np.finfo(float).max))
 MAX_FINITE_SPAN = float(np.finfo(float).max / 4.0)
 MAX_FINITE_ABS_Z = float(np.sqrt(np.finfo(float).max))
@@ -269,9 +270,11 @@ def build_grid(
             if required_span > span:
                 span = required_span + (GRID_EXPANSION_PADDING_MULTIPLIER * se)
     if max_span is not None:
-        if max_span <= 0:
-            raise ValidationError("Maximum span must be positive.")
+        if max_span < 0:
+            raise ValidationError("Maximum span must not be negative.")
         span = min(span, max_span)
+    if span == 0:
+        return np.full(points, theta_hat, dtype=float)
 
     return np.linspace(theta_hat - span, theta_hat + span, num=points, dtype=float)
 
@@ -331,8 +334,9 @@ def max_safe_grid_span(
     """Return the largest span that keeps grid endpoints and z values finite."""
 
     z_safe_span = float(MAX_FINITE_ABS_Z * se)
-    span_limit = min(MAX_FINITE_SPAN, z_safe_span)
-    if natural_axis_upper_bound is not None:
+    endpoint_headroom = max(MAX_FLOAT - abs(theta_hat), 0.0)
+    span_limit = min(MAX_FINITE_SPAN, z_safe_span, endpoint_headroom)
+    if natural_axis_upper_bound is not None and natural_axis_upper_bound > theta_hat:
         span_limit = min(span_limit, natural_axis_upper_bound - theta_hat)
     return max(span_limit, 0.0)
 

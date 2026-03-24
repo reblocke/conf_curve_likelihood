@@ -6,7 +6,14 @@ import math
 import numpy as np
 import pytest
 
-from confcurve.core import Z975, ValidationError, confidence_curve, estimate_se, relative_likelihood
+from confcurve.core import (
+    MAX_FLOAT,
+    Z975,
+    ValidationError,
+    confidence_curve,
+    estimate_se,
+    relative_likelihood,
+)
 from confcurve.web_contract import compute_curves
 
 
@@ -192,4 +199,39 @@ def test_extreme_ratio_null_keeps_the_natural_axis_payload_finite() -> None:
     assert response["grid"]["effect_display"][-1] < float("inf")
     assert response["summary"]["likelihood_ratio_mle_to_null"] is None
     assert response["summary"]["log_likelihood_ratio_mle_to_null"] is not None
+    json.dumps(response, allow_nan=False)
+
+
+def test_large_additive_estimate_keeps_grid_endpoints_finite() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 1.6e308,
+            "lower": 1.5e308,
+            "upper": 1.7e308,
+            "grid_points": 401,
+        }
+    )
+
+    assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
+    assert response["grid"]["effect_display"][-1] <= MAX_FLOAT
+    assert any("finite floating-point range" in message for message in response["warnings"])
+    json.dumps(response, allow_nan=False)
+
+
+def test_float_max_ratio_estimate_returns_a_finite_natural_axis_response() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "estimate": MAX_FLOAT,
+            "lower": MAX_FLOAT / 2.0,
+            "upper": MAX_FLOAT,
+            "display_natural_axis": True,
+            "grid_points": 401,
+        }
+    )
+
+    assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
+    assert response["grid"]["effect_display"][-1] == MAX_FLOAT
+    assert any("Natural-axis x-values were clipped" in message for message in response["warnings"])
     json.dumps(response, allow_nan=False)

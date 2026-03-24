@@ -6,6 +6,7 @@ import numpy as np
 
 from .core import (
     LOG_MAX_FLOAT,
+    MAX_FLOAT,
     asymmetry_warning,
     build_grid,
     confidence_curve,
@@ -23,6 +24,24 @@ from .models import CurveRequest, CurveResponse
 
 def _float_list(values: float | np.ndarray) -> list[float]:
     return [float(value) for value in np.asarray(values, dtype=float).tolist()]
+
+
+def _safe_display_grid(
+    effect_type: str,
+    working_scale: str,
+    grid_working: np.ndarray,
+) -> tuple[np.ndarray, bool]:
+    working_values = np.asarray(grid_working, dtype=float)
+    if working_scale != "log":
+        return np.asarray(from_working_scale(effect_type, working_values), dtype=float), False
+
+    clipped_mask = working_values >= LOG_MAX_FLOAT
+    safe_working = np.minimum(working_values, LOG_MAX_FLOAT)
+    display_values = np.asarray(from_working_scale(effect_type, safe_working), dtype=float)
+    if np.any(clipped_mask):
+        display_values = display_values.copy()
+        display_values[clipped_mask] = MAX_FLOAT
+    return display_values, bool(np.any(clipped_mask))
 
 
 def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
@@ -67,8 +86,13 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     log_rel_likelihood = log_relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
 
     display_axis_scale = "natural" if validated.display_natural_axis else "working"
+    natural_axis_clipped = False
     if validated.display_natural_axis:
-        grid_display = from_working_scale(effect_type, grid_working)
+        grid_display, natural_axis_clipped = _safe_display_grid(
+            effect_type,
+            validated.effect_spec.working_scale,
+            grid_working,
+        )
         estimate_display = validated.estimate
         ci_display = [validated.lower, validated.upper]
         null_display = validated.null_value
@@ -86,6 +110,16 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         warning_messages.append(
             "Grid expansion was truncated to keep the plotted payload within finite floating-point "
             "range. Very extreme null or threshold values may fall outside the plotted x-axis."
+        )
+    if safe_span == 0.0:
+        warning_messages.append(
+            "The estimate sits at the finite floating-point boundary on the working scale, "
+            "so the plotted x-grid collapses to the estimate."
+        )
+    if natural_axis_clipped:
+        warning_messages.append(
+            "Natural-axis x-values were clipped at the largest finite floating-point value. "
+            "Working-scale calculations are unchanged."
         )
     asymmetry_message = asymmetry_warning(validated.effect_spec, se_info.relative_asymmetry)
     if asymmetry_message is not None:
