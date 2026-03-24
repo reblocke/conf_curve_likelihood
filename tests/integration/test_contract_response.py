@@ -10,7 +10,6 @@ def test_compute_curves_response_is_json_serializable() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 0.42,
             "lower": 0.11,
             "upper": 0.73,
             "grid_points": 401,
@@ -19,6 +18,10 @@ def test_compute_curves_response_is_json_serializable() -> None:
 
     payload = json.loads(json.dumps(response, allow_nan=False))
     assert payload["meta"]["grid_points"] == 401
+    assert payload["meta"]["estimate_source"] == "inferred_from_ci"
+    assert payload["summary"]["estimate_display"] == 0.42
+    assert payload["summary"]["null_display"] == 0.0
+    assert payload["summary"]["critical_effect_distance_working"] > 0
     assert list(payload["grid"]) == [
         "effect_display",
         "effect_working",
@@ -30,11 +33,26 @@ def test_compute_curves_response_is_json_serializable() -> None:
     assert len(payload["grid"]["effect_display"]) == 401
 
 
+def test_provided_estimate_sets_provided_validated_meta_flag() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 0.423,
+            "lower": 0.11,
+            "upper": 0.73,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["meta"]["estimate_source"] == "provided_validated"
+    assert payload["summary"]["estimate_display"] == 0.42
+
+
 def test_extreme_responses_remain_valid_json_for_the_browser_bridge() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 0.0,
             "lower": -0.0001,
             "upper": 0.0001,
             "null_value": 100.0,
@@ -51,7 +69,6 @@ def test_extreme_ratio_display_responses_remain_valid_json_for_the_browser_bridg
     response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": 1.8,
             "lower": 1.2,
             "upper": 2.7,
             "null_value": 1.79e308,
@@ -70,7 +87,6 @@ def test_float_max_boundary_responses_remain_valid_json_for_the_browser_bridge()
     response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": MAX_FLOAT,
             "lower": MAX_FLOAT / 2.0,
             "upper": MAX_FLOAT,
             "display_natural_axis": True,
@@ -79,5 +95,6 @@ def test_float_max_boundary_responses_remain_valid_json_for_the_browser_bridge()
     )
 
     payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["meta"]["estimate_source"] == "inferred_from_ci"
     assert payload["grid"]["effect_display"][-1] == MAX_FLOAT
     assert any("Natural-axis x-values were clipped" in message for message in payload["warnings"])

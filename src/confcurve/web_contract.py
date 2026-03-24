@@ -10,6 +10,8 @@ from .core import (
     asymmetry_warning,
     build_grid,
     confidence_curve,
+    critical_effect_distance,
+    critical_effect_markers,
     estimate_se_details,
     from_working_scale,
     log_relative_likelihood,
@@ -26,17 +28,17 @@ def _float_list(values: float | np.ndarray) -> list[float]:
     return [float(value) for value in np.asarray(values, dtype=float).tolist()]
 
 
-def _safe_display_grid(
+def _safe_display_values(
     effect_type: str,
     working_scale: str,
-    grid_working: np.ndarray,
+    working_values: float | np.ndarray,
 ) -> tuple[np.ndarray, bool]:
-    working_values = np.asarray(grid_working, dtype=float)
+    working_array = np.asarray(working_values, dtype=float)
     if working_scale != "log":
-        return np.asarray(from_working_scale(effect_type, working_values), dtype=float), False
+        return np.asarray(from_working_scale(effect_type, working_array), dtype=float), False
 
-    clipped_mask = working_values >= LOG_MAX_FLOAT
-    safe_working = np.minimum(working_values, LOG_MAX_FLOAT)
+    clipped_mask = working_array >= LOG_MAX_FLOAT
+    safe_working = np.minimum(working_array, LOG_MAX_FLOAT)
     display_values = np.asarray(from_working_scale(effect_type, safe_working), dtype=float)
     if np.any(clipped_mask):
         display_values = display_values.copy()
@@ -67,6 +69,8 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     thresholds_working = _float_list(to_working_scale(effect_type, validated.thresholds))
 
     se_info = estimate_se_details(theta_hat=theta_hat, lower=lower_working, upper=upper_working)
+    critical_distance_working = critical_effect_distance(se_info.se)
+    critical_markers_working = critical_effect_markers(null_working, se=se_info.se)
     natural_axis_upper_bound = LOG_MAX_FLOAT if validated.display_natural_axis else None
     safe_span = max_safe_grid_span(
         theta_hat=theta_hat,
@@ -77,7 +81,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         theta_hat=theta_hat,
         se=se_info.se,
         n=validated.grid_points,
-        include_values=(null_working, *thresholds_working),
+        include_values=(null_working, *thresholds_working, *critical_markers_working),
         max_span=safe_span,
     )
     z_values = (grid_working - theta_hat) / se_info.se
@@ -88,7 +92,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     display_axis_scale = "natural" if validated.display_natural_axis else "working"
     natural_axis_clipped = False
     if validated.display_natural_axis:
-        grid_display, natural_axis_clipped = _safe_display_grid(
+        grid_display, natural_axis_clipped = _safe_display_values(
             effect_type,
             validated.effect_spec.working_scale,
             grid_working,
@@ -96,20 +100,28 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         estimate_display = validated.estimate
         ci_display = [validated.lower, validated.upper]
         null_display = validated.null_value
+        critical_markers_display, critical_markers_clipped = _safe_display_values(
+            effect_type,
+            validated.effect_spec.working_scale,
+            np.asarray(critical_markers_working, dtype=float),
+        )
+        natural_axis_clipped = natural_axis_clipped or critical_markers_clipped
     else:
         grid_display = grid_working
         estimate_display = theta_hat
         ci_display = [lower_working, upper_working]
         null_display = null_working
+        critical_markers_display = np.asarray(critical_markers_working, dtype=float)
 
     warning_messages = list(validated.warnings)
     if any(
         value is not None and abs(value - theta_hat) > safe_span
-        for value in (null_working, *thresholds_working)
+        for value in (null_working, *thresholds_working, *critical_markers_working)
     ):
         warning_messages.append(
             "Grid expansion was truncated to keep the plotted payload within finite floating-point "
-            "range. Very extreme null or threshold values may fall outside the plotted x-axis."
+            "range. Very extreme null, threshold, or critical-effect values may fall "
+            "outside the plotted x-axis."
         )
     if safe_span == 0.0:
         warning_messages.append(
@@ -121,7 +133,18 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
             "Natural-axis x-values were clipped at the largest finite floating-point value. "
             "Working-scale calculations are unchanged."
         )
-    asymmetry_message = asymmetry_warning(validated.effect_spec, se_info.relative_asymmetry)
+    observed_estimate = (
+        validated.estimate if validated.provided_estimate is None else validated.provided_estimate
+    )
+    observed_estimate_working = float(to_working_scale(effect_type, observed_estimate))
+    observed_estimate_info = estimate_se_details(
+        theta_hat=observed_estimate_working,
+        lower=lower_working,
+        upper=upper_working,
+    )
+    asymmetry_message = asymmetry_warning(
+        validated.effect_spec, observed_estimate_info.relative_asymmetry
+    )
     if asymmetry_message is not None:
         warning_messages.append(asymmetry_message)
 
@@ -148,11 +171,12 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
                 "positive_only": validated.effect_spec.positive_only,
             },
             "display_axis_scale": display_axis_scale,
+            "estimate_source": validated.estimate_source,
             "default_null_applied": validated.default_null_applied,
             "grid_points": len(grid_working),
             "show_cutoffs": validated.show_cutoffs,
             "se_method": se_info.method,
-            "relative_asymmetry": se_info.relative_asymmetry,
+            "relative_asymmetry": observed_estimate_info.relative_asymmetry,
             "thresholds_display": threshold_display,
             "thresholds_working": thresholds_working,
         },
@@ -170,6 +194,9 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
             "log_likelihood_ratio_mle_to_null": null_summary["log_likelihood_ratio_mle_to_null"],
             "two_sided_wald_p_value": null_summary["two_sided_wald_p_value"],
             "null_z_value": null_summary["null_z_value"],
+            "critical_effect_markers_display": _float_list(critical_markers_display),
+            "critical_effect_markers_working": [float(value) for value in critical_markers_working],
+            "critical_effect_distance_working": critical_distance_working,
         },
         "warnings": warning_messages,
         "grid": {

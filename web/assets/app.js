@@ -21,7 +21,7 @@ const EFFECT_OPTIONS = [
 ];
 const DEFAULT_VALUES = {
   effect_type: "odds_ratio",
-  estimate: "1.8",
+  estimate: "",
   lower: "1.2",
   upper: "2.7",
   null_value: "1",
@@ -58,6 +58,7 @@ const runtimeState = {
   computeCurvesJson: null,
   currentResponse: null,
   debounceId: null,
+  lastDefaultNull: null,
 };
 
 function setStatus(state, message) {
@@ -106,6 +107,19 @@ function formatLikelihoodRatio(summary) {
   return `Overflow (log10 LR ${formatNumber(log10LikelihoodRatio)})`;
 }
 
+function formatRange(values) {
+  if (!Array.isArray(values) || values.length !== 2) {
+    return "";
+  }
+  return `${formatNumber(values[0])} to ${formatNumber(values[1])}`;
+}
+
+function estimateSourceLabel(estimateSource) {
+  return estimateSource === "provided_validated"
+    ? "Provided and validated"
+    : "CI-implied from 95% CI";
+}
+
 function parseOptionalNumber(rawValue) {
   const trimmed = rawValue.trim();
   if (trimmed === "") {
@@ -138,13 +152,24 @@ function getSelectedEffect() {
   return EFFECT_OPTIONS.find((option) => option.key === effectTypeSelect.value) ?? EFFECT_OPTIONS[0];
 }
 
+function shouldReplaceWithDefaultNull(rawValue, previousDefaultNull) {
+  const trimmed = rawValue.trim();
+  if (trimmed === "") {
+    return true;
+  }
+  if (previousDefaultNull === null) {
+    return false;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed === previousDefaultNull;
+}
+
 function updateEffectControls() {
   const effect = getSelectedEffect();
-  const currentNull = nullInput.value.trim();
-  const shouldReplaceNull = currentNull === "" || currentNull === "0" || currentNull === "1";
-  if (shouldReplaceNull) {
+  if (shouldReplaceWithDefaultNull(nullInput.value, runtimeState.lastDefaultNull)) {
     nullInput.value = String(effect.defaultNull);
   }
+  runtimeState.lastDefaultNull = effect.defaultNull;
 
   naturalAxisInput.disabled = effect.family !== "ratio";
   if (effect.family !== "ratio") {
@@ -216,8 +241,10 @@ def compute_curves_json(payload_json):
 function renderSummary(response) {
   const items = [
     ["Estimate", response.summary.estimate_display],
+    ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
     ["95% CI", `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`],
     ["Working-scale SE", response.summary.working_scale_se],
+    ["Critical effect markers", formatRange(response.summary.critical_effect_markers_display)],
     ["Null relative likelihood", response.summary.null_relative_likelihood],
     ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
     ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
@@ -237,16 +264,22 @@ function renderSummary(response) {
 
 function renderCommentary(response) {
   const nullValue = formatNumber(response.summary.null_display);
+  const estimateClause =
+    response.meta.estimate_source === "provided_validated"
+      ? "The supplied point estimate matched the 95% CI within rounding tolerance, and the plotted estimate uses the CI-implied midpoint on the working scale."
+      : "No point estimate was supplied, so the plotted estimate is the CI-implied midpoint of the 95% CI on the working scale.";
   const likelihoodRatioClause =
     response.summary.likelihood_ratio_mle_to_null === null
       ? `Because the null value is ${nullValue}, the implied MLE:null likelihood ratio exceeds browser floating-point range.`
-      : `Because the null value is ${nullValue}, the observed data are ${formatLikelihoodRatio(response.summary)} times as compatible with the point estimate as with the null.`;
+      : `Because the null value is ${nullValue}, the observed data are ${formatLikelihoodRatio(response.summary)} times as compatible with the CI-implied estimate as with the null.`;
   commentaryText.textContent =
     `These two panels summarize the same Wald approximation in two different ways. ` +
-    `The top panel shows how compatible each effect size is with the observed estimate using the two-sided Wald p-value scale. ` +
-    `The bottom panel shows the same information as a normalized relative likelihood curve, which peaks at the point estimate. ` +
+    `The top panel shows how compatible each effect size is with the CI-driven estimate using the two-sided Wald p-value scale. ` +
+    `The bottom panel shows the same information as a normalized relative likelihood curve, which peaks at the CI-implied estimate. ` +
+    `${estimateClause} ` +
+    `The paired critical-effect markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
-    `This display is reconstructed from the estimate and confidence interval, so it is an approximation rather than the exact profile likelihood from the fitted model.`;
+    `This display is reconstructed from the confidence interval, so it is an approximation rather than the exact profile likelihood from the fitted model.`;
 }
 
 function renderWarnings(response) {
@@ -256,6 +289,9 @@ function renderWarnings(response) {
       : "Computations are performed on the natural additive working scale.",
     `Standard error reconstruction method: ${response.meta.se_method}.`,
   ];
+  if (response.meta.show_cutoffs) {
+    notes.push("Horizontal guide lines mark 90%, 95%, and 99% confidence cutoffs.");
+  }
   const messages = [...notes, ...response.warnings];
 
   warningsList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
@@ -310,9 +346,9 @@ async function computeAndRender() {
     return;
   }
 
-  if (payload.estimate === null || payload.lower === null || payload.upper === null) {
+  if (payload.lower === null || payload.upper === null) {
     clearRenderedState();
-    setStatus("loading", "Enter an estimate and confidence interval to compute the curves.");
+    setStatus("loading", "Enter a 95% confidence interval to compute the curves.");
     return;
   }
 
@@ -359,6 +395,7 @@ function initializeForm() {
   gridPointsOutput.value = DEFAULT_VALUES.grid_points;
   gridPointsOutput.textContent = DEFAULT_VALUES.grid_points;
   showCutoffsInput.checked = DEFAULT_VALUES.show_cutoffs;
+  runtimeState.lastDefaultNull = getSelectedEffect().defaultNull;
 
   updateEffectControls();
 }

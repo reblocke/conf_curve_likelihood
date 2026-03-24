@@ -7,13 +7,16 @@ from math import isfinite
 import numpy as np
 from scipy.stats import norm
 
-from .models import DEFAULT_EFFECT_TYPE, EFFECT_SPECS, EffectSpec
+from .models import DEFAULT_EFFECT_TYPE, EFFECT_SPECS, EffectSpec, EstimateSource
 
 Z975 = float(norm.ppf(0.975))
+Z80 = float(norm.ppf(0.80))
 DEFAULT_GRID_POINTS = 801
 DEFAULT_SPAN_MULTIPLIER = 4.5
 GRID_EXPANSION_PADDING_MULTIPLIER = 0.25
 ASYMMETRY_RELATIVE_TOLERANCE = 0.02
+ESTIMATE_MATCH_RELATIVE_TOLERANCE = 0.02
+ESTIMATE_MATCH_ABSOLUTE_TOLERANCE = 1e-12
 MAX_FLOAT = float(np.finfo(float).max)
 LOG_MAX_FLOAT = float(np.log(np.finfo(float).max))
 MAX_FINITE_SPAN = float(np.finfo(float).max / 4.0)
@@ -28,6 +31,8 @@ class ValidationError(ValueError):
 class ValidatedInputs:
     effect_spec: EffectSpec
     estimate: float
+    estimate_source: EstimateSource
+    provided_estimate: float | None
     lower: float
     upper: float
     null_value: float
@@ -138,20 +143,21 @@ def validate_inputs(
     """Validate and normalize user inputs for the Wald reconstruction."""
 
     spec = get_effect_spec(effect_type)
-    if estimate is None or lower is None or upper is None:
-        raise ValidationError("Estimate and confidence limits are required.")
+    if lower is None or upper is None:
+        raise ValidationError("Lower and upper confidence limits are required.")
 
-    estimate_value = float(estimate)
+    estimate_value = None if estimate is None else float(estimate)
     lower_value = float(lower)
     upper_value = float(upper)
 
     for label, value in (
-        ("Estimate", estimate_value),
         ("Lower confidence limit", lower_value),
         ("Upper confidence limit", upper_value),
     ):
         if not isfinite(value):
             raise ValidationError(f"{label} must be finite.")
+    if estimate_value is not None and not isfinite(estimate_value):
+        raise ValidationError("Estimate must be finite.")
 
     if lower_value >= upper_value:
         raise ValidationError(
@@ -168,21 +174,43 @@ def validate_inputs(
 
     if spec.positive_only:
         positive_values = [
-            estimate_value,
             lower_value,
             upper_value,
             normalized_null,
             *normalized_thresholds,
         ]
+        if estimate_value is not None:
+            positive_values.append(estimate_value)
         if any(value <= 0 for value in positive_values):
             raise ValidationError(
                 f"{spec.label} inputs must be strictly positive on the natural scale."
             )
 
-    if estimate_value < lower_value or estimate_value > upper_value:
-        warnings.append(
-            "Estimate falls outside the supplied 95% confidence interval. "
-            "The plotted curves may reflect rounding or a non-Wald interval."
+    lower_working = float(to_working_scale(effect_type, lower_value))
+    upper_working = float(to_working_scale(effect_type, upper_value))
+    estimate_working = lower_working + ((upper_working - lower_working) / 2.0)
+    estimate_display = float(from_working_scale(effect_type, estimate_working))
+    ci_half_width_working = (upper_working - lower_working) / 2.0
+    estimate_match_tolerance = max(
+        ESTIMATE_MATCH_ABSOLUTE_TOLERANCE,
+        ESTIMATE_MATCH_RELATIVE_TOLERANCE * ci_half_width_working,
+    )
+
+    estimate_source: EstimateSource
+    if estimate_value is None:
+        estimate_source = "inferred_from_ci"
+    else:
+        provided_estimate_working = float(to_working_scale(effect_type, estimate_value))
+        if abs(provided_estimate_working - estimate_working) > estimate_match_tolerance:
+            raise ValidationError(
+                "Provided estimate is inconsistent with the supplied 95% confidence "
+                "interval on the working scale beyond the rounding tolerance."
+            )
+        estimate_source = "provided_validated"
+
+    if ci_half_width_working <= 0:
+        raise ValidationError(
+            "The supplied 95% confidence interval must have positive width on the working scale."
         )
 
     points = int(grid_points)
@@ -193,7 +221,9 @@ def validate_inputs(
 
     return ValidatedInputs(
         effect_spec=spec,
-        estimate=estimate_value,
+        estimate=estimate_display,
+        estimate_source=estimate_source,
+        provided_estimate=estimate_value,
         lower=lower_value,
         upper=upper_value,
         null_value=normalized_null,
@@ -204,6 +234,21 @@ def validate_inputs(
         default_null_applied=default_null_applied,
         warnings=tuple(warnings),
     )
+
+
+def critical_effect_distance(se: float) -> float:
+    """Return the working-scale critical effect distance for alpha=.05 and power=.80."""
+
+    if se <= 0:
+        raise ValidationError("Standard error must be positive.")
+    return float((Z975 + Z80) * se)
+
+
+def critical_effect_markers(null_value: float, se: float) -> tuple[float, float]:
+    """Return symmetric critical-effect markers around the null on the working scale."""
+
+    distance = critical_effect_distance(se)
+    return (null_value - distance, null_value + distance)
 
 
 def estimate_se_details(theta_hat: float, lower: float, upper: float) -> StandardErrorEstimate:

@@ -12,12 +12,33 @@ def wait_for_ready(page: Page) -> None:
     expect(page.locator("#status-card")).to_contain_text("Curves updated", timeout=120000)
 
 
+def paper_shape_x_values(page: Page) -> list[float]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.shapes
+          .filter((shape) => shape.yref === "paper")
+          .map((shape) => shape.x0)
+          .sort((left, right) => left - right)
+        """
+    )
+
+
+def horizontal_cutoff_count(page: Page) -> int:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.shapes
+          .filter((shape) => shape.yref === "y")
+          .length
+        """
+    )
+
+
 def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
 
-    expect(page.locator("#summary-grid")).to_contain_text("Working-scale SE")
-    expect(page.locator("#commentary-text")).to_contain_text("Wald approximation")
+    expect(page.locator("#summary-grid")).to_contain_text("Estimate source")
+    expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 
 
@@ -26,13 +47,59 @@ def test_effect_type_switch_updates_controls(app_url: str, page: Page) -> None:
     wait_for_ready(page)
 
     page.select_option("#effect-type", "mean_difference")
-    page.locator("#estimate").fill("0.42")
     page.locator("#ci-lower").fill("0.11")
     page.locator("#ci-upper").fill("0.73")
     wait_for_ready(page)
 
     expect(page.locator("#display-natural-axis")).to_be_disabled()
     expect(page.locator("#null-value")).to_have_value("0")
+
+
+def test_blank_estimate_still_computes_successfully(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    expect(page.locator("#estimate")).to_have_value("")
+    expect(page.locator("#summary-grid")).to_contain_text("CI-implied from 95% CI")
+
+
+def test_effect_type_switch_preserves_custom_null_but_updates_defaults(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.select_option("#effect-type", "mean_difference")
+    page.locator("#ci-lower").fill("0.11")
+    page.locator("#ci-upper").fill("0.73")
+    wait_for_ready(page)
+    expect(page.locator("#null-value")).to_have_value("0")
+
+    page.locator("#null-value").fill("1.5")
+    page.select_option("#effect-type", "odds_ratio")
+    page.locator("#ci-lower").fill("1.2")
+    page.locator("#ci-upper").fill("2.7")
+    wait_for_ready(page)
+    expect(page.locator("#null-value")).to_have_value("1.5")
+
+
+def test_estimate_mismatch_surfaces_validation_error(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.select_option("#effect-type", "mean_difference")
+    page.locator("#estimate").fill("0.5")
+    page.locator("#ci-lower").fill("0.11")
+    page.locator("#ci-upper").fill("0.73")
+    page.locator("#estimate").blur()
+
+    expect(page.locator("#status-card")).to_contain_text(
+        "inconsistent with the supplied 95% confidence interval", timeout=120000
+    )
+    expect(page.locator("#export-csv")).to_be_disabled()
+    expect(page.locator("#export-png")).to_be_disabled()
+    expect(page.locator("#summary-grid")).to_be_empty()
+    expect(page.locator("#curve-plot .main-svg")).to_have_count(0)
 
 
 def test_invalid_ratio_input_surfaces_validation_error(app_url: str, page: Page) -> None:
@@ -53,13 +120,59 @@ def test_threshold_input_adds_plot_markers(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
 
+    assert len(paper_shape_x_values(page)) == 4
     page.locator("#thresholds").fill("0.8, 1.25")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?._fullLayout?.shapes?.filter((shape) => shape.yref === "paper").length === 6;
+        }
+        """,
+        timeout=120000,
+    )
+
+    assert len(paper_shape_x_values(page)) == 6
+
+
+def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> None:
+    page.goto(app_url)
     wait_for_ready(page)
 
-    shape_count = page.locator("#curve-plot").evaluate(
-        "(element) => element._fullLayout.shapes.length"
+    assert horizontal_cutoff_count(page) == 3
+    page.locator("#show-cutoffs").uncheck()
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?._fullLayout?.shapes?.filter((shape) => shape.yref === "y").length === 0;
+        }
+        """,
+        timeout=120000,
     )
-    assert shape_count >= 4
+    assert horizontal_cutoff_count(page) == 0
+
+    page.locator("#show-cutoffs").check()
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?._fullLayout?.shapes?.filter((shape) => shape.yref === "y").length === 3;
+        }
+        """,
+        timeout=120000,
+    )
+    assert horizontal_cutoff_count(page) == 3
+
+
+def test_critical_effect_markers_are_visible_on_plot(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    x_values = paper_shape_x_values(page)
+    assert len(x_values) == 4
+    assert x_values[0] < 1.0
+    assert x_values[-1] > 1.0
 
 
 def test_distant_markers_expand_the_x_axis_extent(app_url: str, page: Page) -> None:

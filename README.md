@@ -2,19 +2,20 @@
 
 This repository builds a static web app that reconstructs:
 
-- a confidence / compatibility curve, and
-- an approximate profile likelihood under Wald assumptions
+- a confidence / compatibility curve,
+- an approximate profile likelihood under Wald assumptions, and
+- critical effect markers for `alpha = 0.05` and `power = 0.80`
 
-from a point estimate and 95% confidence interval.
+from a 95% confidence interval and an optional validating point estimate.
 
 The numerical source of truth lives in `src/confcurve/`. The deployed app lives in `web/` and loads that same Python package in the browser via Pyodide.
 
 ## What the app does
 
-- accepts a point estimate, 95% CI, effect type, optional null, and optional clinical thresholds
+- accepts a 95% CI, effect type, optional point estimate, optional null, and optional clinical thresholds
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding confidence curve and normalized relative likelihood curve
-- reports summary quantities such as reconstructed SE, null relative likelihood, and two-sided Wald p-value
+- reports summary quantities such as the CI-implied estimate, reconstructed SE, critical effect markers, null relative likelihood, and two-sided Wald p-value
 
 ## What the app does not do
 
@@ -86,8 +87,8 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ## Worked examples
 
-- Additive example: estimate `0.42`, 95% CI `0.11` to `0.73`, null `0`
-- Ratio example: odds ratio `1.8`, 95% CI `1.2` to `2.7`, null `1`
+- Additive example: 95% CI `0.11` to `0.73`, implied estimate `0.42`, null `0`
+- Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied estimate `1.8`, null `1`
 
 ## Documentation and citation
 
