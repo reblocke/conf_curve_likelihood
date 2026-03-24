@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from confcurve.core import MAX_FLOAT
 from confcurve.web_contract import compute_curves
 
 
@@ -63,3 +64,20 @@ def test_extreme_ratio_display_responses_remain_valid_json_for_the_browser_bridg
     assert payload["summary"]["likelihood_ratio_mle_to_null"] is None
     assert payload["summary"]["log_likelihood_ratio_mle_to_null"] is not None
     assert payload["grid"]["effect_display"][-1] < float("inf")
+
+
+def test_float_max_boundary_responses_remain_valid_json_for_the_browser_bridge() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "estimate": MAX_FLOAT,
+            "lower": MAX_FLOAT / 2.0,
+            "upper": MAX_FLOAT,
+            "display_natural_axis": True,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["grid"]["effect_display"][-1] == MAX_FLOAT
+    assert any("Natural-axis x-values were clipped" in message for message in payload["warnings"])

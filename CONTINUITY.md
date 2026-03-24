@@ -5,8 +5,8 @@ Use this file to maintain continuity across coding sessions (human or agent).
 ## Current status
 
 - Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: a24b87c
-- Next step: Monitor issue #5 for upstream Node 24-ready releases of the Pages-specific GitHub Actions and update the workflow when they exist.
+- Last known good commit: 67e4883
+- Next step: Monitor issue #5 for upstream Node 24-ready releases of the Pages-specific GitHub Actions and update the workflow when GitHub ships them; the latest published `configure-pages`/`deploy-pages` releases still declare `using: node20`.
 
 ## Session log
 
@@ -100,3 +100,34 @@ Close the remaining finite-payload overflow edge case and continue the actionabl
 **Open questions / risks:**
 
 - the Pages-specific actions (`configure-pages`, `deploy-pages`, `upload-pages-artifact`) are already on their latest official releases, so the remaining Node 20 warnings are upstream-blocked for now
+
+**Objective:**
+
+Address the remaining span/headroom review findings on commit `14d360ba9f` and re-check the outstanding Pages-maintenance step.
+
+**Plan:**
+
+- clamp grid spans against the estimate's remaining finite headroom on the working scale
+- make natural-axis boundary rendering finite when ratio grids extend past `float.max`
+- add focused regressions for large additive estimates and ratio estimates at `float.max`
+- confirm whether issue #5 is still actionable with the latest official Pages action releases
+
+**Work completed:**
+
+- reproduced the review-reported overflow for a large additive estimate and the `Maximum span must be positive` failure at a ratio estimate of `float.max`
+- capped `max_safe_grid_span()` by the estimate's remaining `±float.max` headroom on the working scale
+- made `build_grid()` return a degenerate finite grid instead of hard-failing when the safe span collapses to zero
+- clipped natural-axis ratio displays at the exact largest finite float while keeping the working-scale calculations unchanged
+- added unit and integration regressions for both edge cases and reran the staged browser package
+- rechecked the latest official Pages action releases and their published `action.yml` metadata; `configure-pages@v5.0.0` and `deploy-pages@v4.0.5` still run on `node20`, so issue #5 remains upstream-blocked
+
+**Verification:**
+
+- `make verify`
+- `uv run pytest tests/test_core.py tests/integration/test_contract_response.py -q`
+- `uv run python - <<'PY' ... compute_curves(...) ... json.dumps(..., allow_nan=False) ... PY` for the large-additive and `float.max` ratio reproductions
+
+**Open questions / risks:**
+
+- ratio estimates at the natural-axis ceiling necessarily flatten the right tail against `float.max`; the app now warns explicitly, but that display remains a numeric-boundary artifact rather than a fully faithful natural-scale view
+- issue #5 is still pending upstream because GitHub's latest Pages-specific JavaScript actions continue to publish `using: node20`
