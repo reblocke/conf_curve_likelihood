@@ -5,6 +5,7 @@ from typing import Literal, TypedDict
 
 EffectFamily = Literal["additive", "ratio"]
 WorkingScale = Literal["identity", "log"]
+EstimateSource = Literal["inferred_from_ci", "provided_validated"]
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,7 @@ DEFAULT_EFFECT_TYPE = "odds_ratio"
 
 class CurveRequest(TypedDict, total=False):
     effect_type: str
-    estimate: float
+    estimate: float | None
     lower: float
     upper: float
     null_value: float
@@ -110,6 +111,7 @@ class CurveRequest(TypedDict, total=False):
 class MetaPayload(TypedDict):
     effect_spec: dict[str, object]
     display_axis_scale: str
+    estimate_source: EstimateSource
     default_null_applied: bool
     grid_points: int
     show_cutoffs: bool
@@ -133,6 +135,9 @@ class SummaryPayload(TypedDict):
     log_likelihood_ratio_mle_to_null: float | None
     two_sided_wald_p_value: float
     null_z_value: float | None
+    critical_effect_markers_display: list[float]
+    critical_effect_markers_working: list[float]
+    critical_effect_distance_working: float
 
 
 class GridPayload(TypedDict):

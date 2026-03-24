@@ -9,7 +9,7 @@
     <title>Wald Confidence Curve Explorer</title>
     <meta
       name="description"
-      content="Explore the transformation from a point estimate and confidence interval to a Wald confidence curve and approximate profile likelihood."
+      content="Explore the transformation from a 95% confidence interval and optional estimate to a Wald confidence curve and approximate profile likelihood."
     />
     <link rel="stylesheet" href="./assets/styles.css" />
     <script
@@ -32,7 +32,7 @@
           <h1>Wald Confidence Curve Explorer</h1>
           <p class="intro">
             A static GitHub Pages applet that reconstructs a confidence curve and
-            an approximate profile likelihood from an estimate and 95% confidence interval.
+            an approximate profile likelihood from a 95% confidence interval and an optional estimate.
           </p>
         </div>
 
@@ -47,8 +47,17 @@
           </section>
 
           <section class="control-grid">
-            <label for="estimate">Estimate</label>
-            <input id="estimate" name="estimate" type="number" step="any" required />
+            <label for="estimate">Estimate (optional)</label>
+            <input
+              id="estimate"
+              name="estimate"
+              type="number"
+              step="any"
+              aria-describedby="estimate-note"
+            />
+            <p id="estimate-note" class="field-note">
+              Leave blank to infer the estimate from the 95% CI midpoint on the working scale.
+            </p>
 
             <label for="ci-lower">95% CI lower</label>
             <input id="ci-lower" name="lower" type="number" step="any" required />
@@ -81,7 +90,7 @@
             </label>
             <label class="checkbox">
               <input id="show-cutoffs" name="show_cutoffs" type="checkbox" checked />
-              <span>Show 90%, 95%, and 99% confidence cutoffs</span>
+              <span>Show horizontal 90%, 95%, and 99% confidence guide lines</span>
             </label>
           </section>
 
@@ -104,7 +113,7 @@
               <h2>Confidence curve and relative likelihood</h2>
             </div>
             <p class="plot-note">
-              Both panels are deterministic transformations of the same standardized distance from the estimate.
+              Both panels are deterministic transformations of the same standardized distance from the CI-driven estimate.
             </p>
           </div>
           <div id="curve-plot" class="plot-surface" aria-label="Confidence curve and likelihood plots"></div>

@@ -13,6 +13,7 @@ function formatHoverNumber(value) {
 
 function makeVerticalShapes(response) {
   const thresholds = response.meta.thresholds_display ?? [];
+  const criticalMarkers = response.summary.critical_effect_markers_display ?? [];
   const markers = [
     {
       value: response.summary.estimate_display,
@@ -26,6 +27,12 @@ function makeVerticalShapes(response) {
       dash: "dot",
       width: 2,
     },
+    ...criticalMarkers.map((value) => ({
+      value,
+      color: "#8f6b1f",
+      dash: "dashdot",
+      width: 2,
+    })),
     ...thresholds.map((value) => ({
       value,
       color: "#5c7f67",

@@ -75,6 +75,7 @@ textarea {
 }
 
 .intro,
+.field-note,
 .plot-note,
 #commentary-text,
 #warnings-list,
@@ -119,6 +120,11 @@ textarea {
 label {
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.field-note {
+  margin: -2px 0 0;
+  font-size: 0.84rem;
 }
 
 input,

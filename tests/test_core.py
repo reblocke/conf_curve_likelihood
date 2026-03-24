@@ -8,6 +8,7 @@ import pytest
 
 from confcurve.core import (
     MAX_FLOAT,
+    Z80,
     Z975,
     ValidationError,
     confidence_curve,
@@ -51,11 +52,41 @@ def test_relative_likelihood_matches_wald_value_at_ci_bounds() -> None:
     assert rel_likelihood.tolist() == pytest.approx([expected, expected], rel=1e-4)
 
 
+def test_additive_ci_only_payload_infers_midpoint_estimate() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "lower": 0.11,
+            "upper": 0.73,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["estimate_source"] == "inferred_from_ci"
+    assert response["summary"]["estimate_display"] == pytest.approx(0.42)
+    assert response["summary"]["estimate_working"] == pytest.approx(0.42)
+
+
+def test_ratio_ci_only_payload_infers_geometric_mean_estimate() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "grid_points": 401,
+        }
+    )
+
+    expected_estimate = math.sqrt(1.2 * 2.7)
+    assert response["meta"]["estimate_source"] == "inferred_from_ci"
+    assert response["summary"]["estimate_display"] == pytest.approx(expected_estimate)
+    assert response["summary"]["estimate_working"] == pytest.approx(math.log(expected_estimate))
+
+
 def test_ratio_inputs_match_pre_logged_working_scale_inputs() -> None:
     natural_response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": 1.8,
             "lower": 1.2,
             "upper": 2.7,
             "null_value": 1.0,
@@ -66,7 +97,6 @@ def test_ratio_inputs_match_pre_logged_working_scale_inputs() -> None:
     working_response = compute_curves(
         {
             "effect_type": "regression_coefficient",
-            "estimate": math.log(1.8),
             "lower": math.log(1.2),
             "upper": math.log(2.7),
             "null_value": 0.0,
@@ -86,37 +116,64 @@ def test_ratio_inputs_match_pre_logged_working_scale_inputs() -> None:
     )
 
 
+def test_provided_estimate_within_tolerance_is_validated_but_curves_use_ci_midpoint() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "estimate": 0.423,
+            "lower": 0.11,
+            "upper": 0.73,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["estimate_source"] == "provided_validated"
+    assert response["summary"]["estimate_display"] == pytest.approx(0.42)
+
+
+def test_provided_estimate_outside_tolerance_raises_a_validation_error() -> None:
+    with pytest.raises(
+        ValidationError, match="inconsistent with the supplied 95% confidence interval"
+    ):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "estimate": 0.5,
+                "lower": 0.11,
+                "upper": 0.73,
+            }
+        )
+
+
 def test_invalid_ratio_inputs_raise_errors() -> None:
     with pytest.raises(ValidationError):
         compute_curves(
             {
                 "effect_type": "odds_ratio",
-                "estimate": 1.2,
                 "lower": 0.0,
                 "upper": 2.0,
             }
         )
 
 
-def test_asymmetric_intervals_trigger_warning() -> None:
+def test_estimate_within_tolerance_can_still_trigger_asymmetry_warning() -> None:
     response = compute_curves(
         {
-            "effect_type": "odds_ratio",
-            "estimate": 2.0,
-            "lower": 1.1,
-            "upper": 3.9,
+            "effect_type": "mean_difference",
+            "estimate": 0.425,
+            "lower": 0.11,
+            "upper": 0.73,
             "grid_points": 401,
         }
     )
 
-    assert any("log scale" in message for message in response["warnings"])
+    assert any("working scale" in message for message in response["warnings"])
 
 
 def test_even_grid_points_are_normalized_to_an_odd_count() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 0.42,
             "lower": 0.11,
             "upper": 0.73,
             "grid_points": 400,
@@ -126,11 +183,54 @@ def test_even_grid_points_are_normalized_to_an_odd_count() -> None:
     assert response["meta"]["grid_points"] == 401
 
 
-def test_distant_null_and_thresholds_expand_the_grid_extent() -> None:
+def test_critical_effect_markers_for_additive_measures_match_expected_distance() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "lower": 0.11,
+            "upper": 0.73,
+            "null_value": 0.0,
+            "grid_points": 401,
+        }
+    )
+
+    expected_distance = (Z975 + Z80) * response["summary"]["working_scale_se"]
+    assert response["summary"]["critical_effect_distance_working"] == pytest.approx(
+        expected_distance
+    )
+    assert response["summary"]["critical_effect_markers_working"] == pytest.approx(
+        [-expected_distance, expected_distance]
+    )
+    assert response["summary"]["critical_effect_markers_display"] == pytest.approx(
+        [-expected_distance, expected_distance]
+    )
+
+
+def test_critical_effect_markers_for_ratio_measures_back_transform_correctly() -> None:
     response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": 1.8,
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.0,
+            "display_natural_axis": True,
+            "grid_points": 401,
+        }
+    )
+
+    expected_distance = (Z975 + Z80) * response["summary"]["working_scale_se"]
+    assert response["summary"]["critical_effect_markers_working"] == pytest.approx(
+        [-expected_distance, expected_distance]
+    )
+    assert response["summary"]["critical_effect_markers_display"] == pytest.approx(
+        [math.exp(-expected_distance), math.exp(expected_distance)]
+    )
+
+
+def test_distant_null_thresholds_and_critical_markers_expand_the_grid_extent() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
             "lower": 1.2,
             "upper": 2.7,
             "null_value": 12.0,
@@ -140,15 +240,15 @@ def test_distant_null_and_thresholds_expand_the_grid_extent() -> None:
     )
 
     x_values = response["grid"]["effect_display"]
-    assert x_values[0] < 8.0
-    assert x_values[-1] > 12.0
+    critical_markers = response["summary"]["critical_effect_markers_display"]
+    assert x_values[0] < min(*critical_markers, 8.0)
+    assert x_values[-1] > max(*critical_markers, 12.0)
 
 
 def test_extreme_null_summary_stays_strictly_json_serializable() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 0.0,
             "lower": -0.0001,
             "upper": 0.0001,
             "null_value": 100.0,
@@ -166,7 +266,6 @@ def test_extreme_additive_null_keeps_the_grid_payload_finite() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 0.0,
             "lower": -1e-320,
             "upper": 1e-320,
             "null_value": 1e308,
@@ -186,7 +285,6 @@ def test_extreme_ratio_null_keeps_the_natural_axis_payload_finite() -> None:
     response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": 1.8,
             "lower": 1.2,
             "upper": 2.7,
             "null_value": 1.79e308,
@@ -206,7 +304,6 @@ def test_large_additive_estimate_keeps_grid_endpoints_finite() -> None:
     response = compute_curves(
         {
             "effect_type": "mean_difference",
-            "estimate": 1.6e308,
             "lower": 1.5e308,
             "upper": 1.7e308,
             "grid_points": 401,
@@ -219,11 +316,10 @@ def test_large_additive_estimate_keeps_grid_endpoints_finite() -> None:
     json.dumps(response, allow_nan=False)
 
 
-def test_float_max_ratio_estimate_returns_a_finite_natural_axis_response() -> None:
+def test_float_max_ratio_interval_returns_a_finite_natural_axis_response() -> None:
     response = compute_curves(
         {
             "effect_type": "odds_ratio",
-            "estimate": MAX_FLOAT,
             "lower": MAX_FLOAT / 2.0,
             "upper": MAX_FLOAT,
             "display_natural_axis": True,
@@ -231,6 +327,7 @@ def test_float_max_ratio_estimate_returns_a_finite_natural_axis_response() -> No
         }
     )
 
+    assert response["meta"]["estimate_source"] == "inferred_from_ci"
     assert all(math.isfinite(value) for value in response["grid"]["effect_display"])
     assert response["grid"]["effect_display"][-1] == MAX_FLOAT
     assert any("Natural-axis x-values were clipped" in message for message in response["warnings"])
