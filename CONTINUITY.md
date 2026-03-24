@@ -4,11 +4,53 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Build the Wald Confidence Curve Explorer as a static GitHub Pages app with a Python numerical core staged into Pyodide.
-- Last known good commit: 67e4883
-- Next step: Monitor issue #5 for upstream Node 24-ready releases of the Pages-specific GitHub Actions and update the workflow when GitHub ships them; the latest published `configure-pages`/`deploy-pages` releases still declare `using: node20`.
+- Goal: Maintain the deployed Wald Confidence Curve Explorer after landing the CI-driven reconstruction update and keep the remaining infrastructure follow-up tracked.
+- Last known good commit: 4a024c1 on `main`
+- Next step: Monitor issue #5 for upstream Node 24-ready Pages actions; application code for the CI-driven estimate and critical-effect marker milestone is complete and deployed.
+
+## Open checkpoints
+
+- Branch: `main`
+- PR: #8 merged (`feat: make the Wald reconstruction CI-driven`)
+- Expected gates:
+  - local `make verify`: passed before merge on the feature branch
+  - post-merge `CI` on `main`: passed (`23511197395`)
+  - post-merge `Deploy Pages` on `main`: passed (`23511197402`)
+  - live Pages smoke: confirmed the deployed HTML serves the new optional-estimate wording
 
 ## Session log
+
+### 2026-03-24
+
+**Objective:**
+
+Resume the interrupted CI-driven/critical-markers implementation, audit the exact handoff point, and finish the merge/deploy checkpoint cleanly.
+
+**Plan:**
+
+- inspect git/PR/ledger state to find the interrupted checkpoint
+- watch PR #8 to completion and merge it if green
+- verify the `main` CI and Pages deploy after merge
+- refresh the continuity ledger to the merged state
+
+**Work completed:**
+
+- confirmed the interrupted work was fully implemented on `codex/ci-driven-critical-markers` and already pushed as PR #8
+- watched PR #8 checks through green (`test`, `e2e_chromium`, `e2e_webkit_smoke`) and merged it to `main`
+- verified the merge commit was `4a024c1` and the remote feature branch was deleted
+- verified post-merge `CI` and `Deploy Pages` both succeeded on `main`
+- confirmed the live Pages site serves the new optional-estimate/cutoff copy from the merged build
+
+**Verification:**
+
+- `gh pr checks 8 --watch --interval 10`
+- `gh run watch 23511197395`
+- `gh run watch 23511197402`
+- `curl -fsSL https://reblocke.github.io/conf_curve_likelihood/ | rg -n "Estimate \\(optional\\)|95% confidence interval and optional estimate|Show horizontal 90%, 95%, and 99% confidence guide lines"`
+
+**Open questions / risks:**
+
+- issue #5 remains open because GitHub's current Pages-specific actions still emit Node 20 deprecation warnings; this is upstream-blocked rather than an application defect
 
 ### 2026-03-23
 
