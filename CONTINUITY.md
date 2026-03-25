@@ -4,9 +4,9 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Implement the parsimonious browser/UI fixes for ratio-axis spacing, threshold/grid-point controls, cutoff visibility, point-estimate copy, and README deployment/docs updates.
-- Last known good commit: 5371685 on `main`
-- Next step: Push the verified browser/UI fix set to `main`, then monitor the resulting CI and Pages runs.
+- Goal: Fix the ratio/log x-axis tick labels so natural-scale displays use readable decimal labels instead of Plotly's compact log digits.
+- Last known good commit: 276bbc9 on `main`
+- Next step: Commit the verified frontend tick-label fix if the user wants it persisted to git; otherwise the working tree is ready for review.
 
 ## Open checkpoints
 
@@ -84,6 +84,31 @@ Triage the GitHub review feedback on commit `1268f2f30b` and patch any still-liv
 - the next planned product refinement is still the ratio-measure x-axis display rule; this fix only addresses the reviewed overflow bug
 
 ### 2026-03-25
+
+**Objective:**
+
+Fix the incorrect x-axis tick labels on ratio measures when the plot uses logarithmic spacing on the natural scale.
+
+**Plan:**
+
+- add explicit natural-scale tick values/text for ratio-log Plotly axes
+- keep additive and ratio-linear displays unchanged
+- add a browser regression that checks for decimal tick labels below 1 on the log axis
+- rerun focused lint and browser verification
+
+**Work completed:**
+
+- added explicit log-axis tick generation in `web/assets/plot.js` so ratio displays use readable natural-scale labels instead of Plotly's compact minor-log digits
+- kept additive and ratio-linear axes unchanged; the fix applies only to natural-scale ratio views with logarithmic spacing
+- added a focused browser regression in `tests/e2e/test_app.py` that confirms the default ratio/log plot now renders decimal labels below 1
+
+**Verification:**
+
+- `uv run pytest -q tests/e2e/test_app.py -k 'ratio_default_view_uses_natural_labels_with_logarithmic_spacing or ratio_spacing_toggle_changes_axis_type_but_keeps_the_same_point_estimate' --browser chromium --tracing retain-on-failure --video retain-on-failure --screenshot only-on-failure --output test-results`
+
+**Open questions / risks:**
+
+- the fix should remain frontend-only; no Python contract changes are expected
 
 **Objective:**
 

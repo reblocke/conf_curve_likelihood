@@ -92,12 +92,109 @@ function axisType(response, displayOptions) {
     : "linear";
 }
 
+function formatAxisTick(value) {
+  if (!Number.isFinite(value)) {
+    return String(value);
+  }
+  return new Intl.NumberFormat("en-US", {
+    maximumSignificantDigits: 3,
+  }).format(value);
+}
+
+function roundToSignificantDigits(value, digits) {
+  if (!Number.isFinite(value) || value === 0) {
+    return value;
+  }
+  return Number.parseFloat(value.toPrecision(digits));
+}
+
+function deduplicateSortedValues(values) {
+  return [...values]
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((left, right) => left - right)
+    .filter((value, index, sortedValues) => {
+      if (index === 0) {
+        return true;
+      }
+      const previousValue = sortedValues[index - 1];
+      return Math.abs(value - previousValue) > Math.max(1e-12, Math.abs(value) * 1e-9);
+    });
+}
+
+function logTickMantissas(logSpan) {
+  if (logSpan <= 0.35) {
+    return [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
+  }
+  if (logSpan <= 1.1) {
+    return [1, 2, 3, 4, 5, 6, 8];
+  }
+  if (logSpan <= 2.5) {
+    return [1, 2, 5];
+  }
+  return [1];
+}
+
+function fallbackLogTickValues(lowerBound, upperBound) {
+  const tickCount = 4;
+  const growthFactor = Math.pow(upperBound / lowerBound, 1 / (tickCount - 1));
+  return Array.from({ length: tickCount }, (_, index) =>
+    roundToSignificantDigits(lowerBound * Math.pow(growthFactor, index), 2),
+  );
+}
+
+function logAxisTickConfig(xValues) {
+  const finitePositiveValues = xValues.filter((value) => Number.isFinite(value) && value > 0);
+  if (finitePositiveValues.length < 2) {
+    return {};
+  }
+
+  const lowerBound = finitePositiveValues[0];
+  const upperBound = finitePositiveValues[finitePositiveValues.length - 1];
+  if (!(lowerBound < upperBound)) {
+    return {};
+  }
+
+  const logSpan = Math.log10(upperBound) - Math.log10(lowerBound);
+  const candidateTickValues = [];
+  const mantissas = logTickMantissas(logSpan);
+  const startExponent = Math.floor(Math.log10(lowerBound));
+  const endExponent = Math.ceil(Math.log10(upperBound));
+
+  for (let exponent = startExponent; exponent <= endExponent; exponent += 1) {
+    const scale = 10 ** exponent;
+    for (const mantissa of mantissas) {
+      const tickValue = mantissa * scale;
+      if (tickValue < lowerBound * 0.999999 || tickValue > upperBound * 1.000001) {
+        continue;
+      }
+      candidateTickValues.push(roundToSignificantDigits(tickValue, 6));
+    }
+  }
+
+  if (lowerBound <= 1 && upperBound >= 1) {
+    candidateTickValues.push(1);
+  }
+
+  const tickvals = deduplicateSortedValues(
+    candidateTickValues.length >= 3
+      ? candidateTickValues
+      : [...candidateTickValues, ...fallbackLogTickValues(lowerBound, upperBound)],
+  );
+
+  return {
+    tickmode: "array",
+    tickvals,
+    ticktext: tickvals.map((value) => formatAxisTick(value)),
+  };
+}
+
 export async function renderCurves(plotElement, response, displayOptions) {
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
   );
   const xAxisType = axisType(response, displayOptions);
+  const xAxisTicks = xAxisType === "log" ? logAxisTickConfig(response.grid.effect_display) : {};
   const previousAxisType = plotElement._fullLayout?.xaxis?.type || "linear";
 
   if (previousAxisType !== xAxisType) {
@@ -174,6 +271,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
+      ...xAxisTicks,
     },
     yaxis: {
       title: {
@@ -200,6 +298,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
+      ...xAxisTicks,
     },
     yaxis2: {
       title: {

@@ -31,6 +31,14 @@ def xaxis_type(page: Page) -> str:
     )
 
 
+def xaxis_tick_labels(page: Page) -> list[str]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => (element._fullLayout.xaxis.ticktext || []).map((label) => String(label))
+        """
+    )
+
+
 def xaxis_upper_bound(page: Page) -> float:
     return page.locator("#curve-plot").evaluate(
         """
@@ -100,6 +108,7 @@ def test_ratio_default_view_uses_natural_labels_with_logarithmic_spacing(
     expect(page.locator("#axis-spacing-group")).to_be_visible()
     expect(page.locator("#axis-spacing")).to_have_value("log")
     assert xaxis_type(page) == "log"
+    assert any(label.startswith("0.") for label in xaxis_tick_labels(page))
 
 
 def test_ratio_spacing_toggle_changes_axis_type_but_keeps_the_same_point_estimate(
