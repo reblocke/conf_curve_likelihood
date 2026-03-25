@@ -9,7 +9,7 @@
     <title>Wald Confidence Curve Explorer</title>
     <meta
       name="description"
-      content="Explore the transformation from a 95% confidence interval and optional estimate to a Wald confidence curve and approximate profile likelihood."
+      content="Explore the transformation from a 95% confidence interval and optional point estimate to a Wald confidence curve and approximate profile likelihood."
     />
     <link rel="stylesheet" href="./assets/styles.css" />
     <script
@@ -32,7 +32,7 @@
           <h1>Wald Confidence Curve Explorer</h1>
           <p class="intro">
             A static GitHub Pages applet that reconstructs a confidence curve and
-            an approximate profile likelihood from a 95% confidence interval and an optional estimate.
+            an approximate profile likelihood from a 95% confidence interval and an optional point estimate.
           </p>
         </div>
 
@@ -47,7 +47,7 @@
           </section>
 
           <section class="control-grid">
-            <label for="estimate">Estimate (optional)</label>
+            <label for="estimate">Point Estimate (optional)</label>
             <input
               id="estimate"
               name="estimate"
@@ -69,7 +69,18 @@
             <input id="null-value" name="null_value" type="number" step="any" />
           </section>
 
-          <section class="control-grid">
+          <section class="control-group" id="axis-spacing-group">
+            <label for="axis-spacing">Axis spacing</label>
+            <select id="axis-spacing" name="axis_spacing">
+              <option value="log">Logarithmic</option>
+              <option value="linear">Linear</option>
+            </select>
+            <p class="field-note">
+              Ratio measures always use natural-scale labels. This control changes only the spacing.
+            </p>
+          </section>
+
+          <section class="control-group">
             <label for="thresholds">Clinical thresholds</label>
             <input
               id="thresholds"
@@ -77,20 +88,26 @@
               type="text"
               placeholder="e.g. 0.8, 1.25"
             />
+            <p class="field-note">
+              Comma-separated vertical reference values on the effect-size axis.
+            </p>
+          </section>
 
-            <label for="grid-points">Grid points</label>
+          <section class="control-group">
+            <div class="label-row">
+              <label for="grid-points">Grid points</label>
+              <output id="grid-points-output" for="grid-points">801</output>
+            </div>
             <input id="grid-points" name="grid_points" type="range" min="201" max="1601" step="200" />
-            <output id="grid-points-output" for="grid-points">801</output>
+            <p class="field-note">
+              Higher values smooth the curves but increase browser compute time.
+            </p>
           </section>
 
           <section class="toggle-list">
             <label class="checkbox">
-              <input id="display-natural-axis" name="display_natural_axis" type="checkbox" />
-              <span>Display natural scale axis for ratio measures</span>
-            </label>
-            <label class="checkbox">
               <input id="show-cutoffs" name="show_cutoffs" type="checkbox" checked />
-              <span>Show horizontal 90%, 95%, and 99% confidence guide lines</span>
+              <span>Show 90%, 95%, and 99% compatibility guide lines on the upper panel</span>
             </label>
           </section>
 

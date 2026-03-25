@@ -4,9 +4,9 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Maintain the deployed Wald Confidence Curve Explorer and triage follow-up review/design work, including the GitHub review feedback on commit `1268f2f30b`.
-- Last known good commit: 4a024c1 on `main`
-- Next step: Return to the planned ratio-axis display refinement for ratio measures; the midpoint overflow bug flagged on commit `1268f2f30b` has been patched locally and is ready to push.
+- Goal: Implement the parsimonious browser/UI fixes for ratio-axis spacing, threshold/grid-point controls, cutoff visibility, point-estimate copy, and README deployment/docs updates.
+- Last known good commit: 5371685 on `main`
+- Next step: Push the verified browser/UI fix set to `main`, then monitor the resulting CI and Pages runs.
 
 ## Open checkpoints
 
@@ -82,6 +82,43 @@ Triage the GitHub review feedback on commit `1268f2f30b` and patch any still-liv
 **Open questions / risks:**
 
 - the next planned product refinement is still the ratio-measure x-axis display rule; this fix only addresses the reviewed overflow bug
+
+### 2026-03-25
+
+**Objective:**
+
+Implement the requested browser/UI fixes for ratio-axis spacing, threshold/grid-point control separation, cutoff visibility, point-estimate copy, and README updates.
+
+**Plan:**
+
+- replace the ratio natural/working checkbox with a frontend-only axis-spacing control
+- keep ratio labels on the natural scale while switching Plotly between logarithmic and linear spacing
+- separate the threshold and grid-point controls visually
+- tighten render error handling and make the upper-panel cutoff guides more legible
+- update the README and browser tests to match the new UI
+
+**Work completed:**
+
+- replaced the ratio-only checkbox with an `Axis spacing` select that defaults to `Logarithmic` and is hidden for additive measures
+- changed the browser payload path so ratio measures always request natural-scale labels from the backend while the frontend controls only the Plotly axis type
+- updated Plotly rendering to use log spacing for ratio measures by default, allow linear spacing as a display option, preserve natural-scale labels, and keep both y-axis titles visible
+- separated `Clinical thresholds` and `Grid points` into distinct control sections and moved the grid-point output next to its own label
+- changed UI copy from `Estimate` to `Point Estimate` and clarified that cutoff guides belong to the upper compatibility panel
+- added a post-render guard so an empty Plotly surface becomes a visible status-card error
+- refreshed the README with the deployed site URL and the updated CI-driven / natural-labels-with-log-spacing methodology wording
+- updated Chromium E2E coverage for ratio-axis type changes, control separation, cutoff behavior, and y-axis title visibility
+
+**Verification:**
+
+- `uv run ruff format --check tests/e2e/test_app.py`
+- `uv run ruff check tests/e2e/test_app.py`
+- `make test`
+- `make e2e`
+- `uv run pytest -q tests/e2e/test_app.py::test_initial_render_loads_pyodide_and_plots -m e2e --browser webkit --tracing retain-on-failure --video retain-on-failure --screenshot only-on-failure --output test-results`
+
+**Open questions / risks:**
+
+- the backend still exposes `display_natural_axis` internally even though the main UI now always keeps ratio labels on the natural scale; that is intentional for parsimony, but it is now effectively an internal compatibility detail
 
 ### 2026-03-23
 

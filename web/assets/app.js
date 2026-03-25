@@ -26,7 +26,7 @@ const DEFAULT_VALUES = {
   upper: "2.7",
   null_value: "1",
   thresholds: "",
-  display_natural_axis: true,
+  axis_spacing: "log",
   grid_points: "801",
   show_cutoffs: true,
 };
@@ -45,9 +45,10 @@ const lowerInput = document.getElementById("ci-lower");
 const upperInput = document.getElementById("ci-upper");
 const nullInput = document.getElementById("null-value");
 const thresholdsInput = document.getElementById("thresholds");
+const axisSpacingGroup = document.getElementById("axis-spacing-group");
+const axisSpacingSelect = document.getElementById("axis-spacing");
 const gridPointsInput = document.getElementById("grid-points");
 const gridPointsOutput = document.getElementById("grid-points-output");
-const naturalAxisInput = document.getElementById("display-natural-axis");
 const showCutoffsInput = document.getElementById("show-cutoffs");
 const exportPngButton = document.getElementById("export-png");
 const exportCsvButton = document.getElementById("export-csv");
@@ -57,6 +58,7 @@ const runtimeState = {
   pyodide: null,
   computeCurvesJson: null,
   currentResponse: null,
+  currentDisplayOptions: null,
   debounceId: null,
   lastDefaultNull: null,
 };
@@ -73,6 +75,7 @@ function setExportEnabled(enabled) {
 
 function clearRenderedState() {
   runtimeState.currentResponse = null;
+  runtimeState.currentDisplayOptions = null;
   summaryGrid.innerHTML = "";
   commentaryText.textContent = "";
   warningsList.innerHTML = "";
@@ -152,6 +155,10 @@ function getSelectedEffect() {
   return EFFECT_OPTIONS.find((option) => option.key === effectTypeSelect.value) ?? EFFECT_OPTIONS[0];
 }
 
+function currentAxisSpacing() {
+  return getSelectedEffect().family === "ratio" ? axisSpacingSelect.value : "linear";
+}
+
 function shouldReplaceWithDefaultNull(rawValue, previousDefaultNull) {
   const trimmed = rawValue.trim();
   if (trimmed === "") {
@@ -171,23 +178,20 @@ function updateEffectControls() {
   }
   runtimeState.lastDefaultNull = effect.defaultNull;
 
-  naturalAxisInput.disabled = effect.family !== "ratio";
-  if (effect.family !== "ratio") {
-    naturalAxisInput.checked = false;
-  } else if (!naturalAxisInput.checked) {
-    naturalAxisInput.checked = true;
-  }
+  axisSpacingGroup.hidden = effect.family !== "ratio";
+  axisSpacingSelect.disabled = effect.family !== "ratio";
 }
 
 function buildPayload() {
+  const effect = getSelectedEffect();
   return {
-    effect_type: effectTypeSelect.value,
+    effect_type: effect.key,
     estimate: parseOptionalNumber(estimateInput.value),
     lower: parseOptionalNumber(lowerInput.value),
     upper: parseOptionalNumber(upperInput.value),
     null_value: parseOptionalNumber(nullInput.value),
     thresholds: parseThresholds(thresholdsInput.value),
-    display_natural_axis: naturalAxisInput.checked,
+    display_natural_axis: effect.family === "ratio",
     grid_points: Number(gridPointsInput.value),
     show_cutoffs: showCutoffsInput.checked,
   };
@@ -240,7 +244,7 @@ def compute_curves_json(payload_json):
 
 function renderSummary(response) {
   const items = [
-    ["Estimate", response.summary.estimate_display],
+    ["Point Estimate", response.summary.estimate_display],
     ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
     ["95% CI", `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`],
     ["Working-scale SE", response.summary.working_scale_se],
@@ -262,12 +266,16 @@ function renderSummary(response) {
     .join("");
 }
 
-function renderCommentary(response) {
+function renderCommentary(response, displayOptions) {
   const nullValue = formatNumber(response.summary.null_display);
   const estimateClause =
     response.meta.estimate_source === "provided_validated"
       ? "The supplied point estimate matched the 95% CI within rounding tolerance, and the plotted estimate uses the CI-implied midpoint on the working scale."
       : "No point estimate was supplied, so the plotted estimate is the CI-implied midpoint of the 95% CI on the working scale.";
+  const spacingClause =
+    response.meta.effect_spec.family === "ratio"
+      ? `The ratio axis is labeled on the natural scale and uses ${displayOptions.axisSpacing} spacing.`
+      : "The additive axis is displayed on its natural linear scale.";
   const likelihoodRatioClause =
     response.summary.likelihood_ratio_mle_to_null === null
       ? `Because the null value is ${nullValue}, the implied MLE:null likelihood ratio exceeds browser floating-point range.`
@@ -277,20 +285,24 @@ function renderCommentary(response) {
     `The top panel shows how compatible each effect size is with the CI-driven estimate using the two-sided Wald p-value scale. ` +
     `The bottom panel shows the same information as a normalized relative likelihood curve, which peaks at the CI-implied estimate. ` +
     `${estimateClause} ` +
+    `${spacingClause} ` +
     `The paired critical-effect markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
     `This display is reconstructed from the confidence interval, so it is an approximation rather than the exact profile likelihood from the fitted model.`;
 }
 
-function renderWarnings(response) {
+function renderWarnings(response, displayOptions) {
   const notes = [
     response.meta.effect_spec.family === "ratio"
-      ? "Computations are performed on the log scale and optionally displayed back on the natural ratio scale."
+      ? `Computations are performed on the log scale and displayed with natural-scale labels using ${displayOptions.axisSpacing} spacing.`
       : "Computations are performed on the natural additive working scale.",
     `Standard error reconstruction method: ${response.meta.se_method}.`,
   ];
+  if (response.meta.thresholds_display.length > 0) {
+    notes.push("Clinical thresholds are shown as dashed green vertical reference lines.");
+  }
   if (response.meta.show_cutoffs) {
-    notes.push("Horizontal guide lines mark 90%, 95%, and 99% confidence cutoffs.");
+    notes.push("Horizontal guide lines on the upper panel mark 90%, 95%, and 99% compatibility cutoffs.");
   }
   const messages = [...notes, ...response.warnings];
 
@@ -353,16 +365,21 @@ async function computeAndRender() {
   }
 
   try {
+    const displayOptions = { axisSpacing: currentAxisSpacing() };
     await ensureRuntime();
     setStatus("loading", "Computing Wald confidence and likelihood curves.");
     const resultJson = runtimeState.computeCurvesJson(JSON.stringify(payload));
     const response = JSON.parse(resultJson);
-    runtimeState.currentResponse = response;
 
     renderSummary(response);
-    renderCommentary(response);
-    renderWarnings(response);
-    await renderCurves(plotElement, response);
+    renderCommentary(response, displayOptions);
+    renderWarnings(response, displayOptions);
+    await renderCurves(plotElement, response, displayOptions);
+    if (!plotElement.querySelector(".main-svg") || !plotElement._fullLayout) {
+      throw new Error("Plot could not be rendered for the current inputs.");
+    }
+    runtimeState.currentResponse = response;
+    runtimeState.currentDisplayOptions = displayOptions;
     setExportEnabled(true);
     setStatus("ready", "Curves updated.");
   } catch (error) {
@@ -390,7 +407,7 @@ function initializeForm() {
   upperInput.value = DEFAULT_VALUES.upper;
   nullInput.value = DEFAULT_VALUES.null_value;
   thresholdsInput.value = DEFAULT_VALUES.thresholds;
-  naturalAxisInput.checked = DEFAULT_VALUES.display_natural_axis;
+  axisSpacingSelect.value = DEFAULT_VALUES.axis_spacing;
   gridPointsInput.value = DEFAULT_VALUES.grid_points;
   gridPointsOutput.value = DEFAULT_VALUES.grid_points;
   gridPointsOutput.textContent = DEFAULT_VALUES.grid_points;

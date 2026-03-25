@@ -35,9 +35,9 @@ function makeVerticalShapes(response) {
     })),
     ...thresholds.map((value) => ({
       value,
-      color: "#5c7f67",
+      color: "#4c8a5b",
       dash: "dash",
-      width: 2,
+      width: 3,
     })),
   ];
 
@@ -73,9 +73,9 @@ function makeGuideShapes(response) {
     y0: level,
     y1: level,
     line: {
-      color: "rgba(19, 42, 58, 0.18)",
-      dash: "dot",
-      width: 1,
+      color: "rgba(19, 42, 58, 0.28)",
+      dash: "dash",
+      width: 1.5,
     },
     layer: "below",
   }));
@@ -83,15 +83,27 @@ function makeGuideShapes(response) {
 
 function axisTitle(response) {
   const label = response.meta.effect_spec.label;
-  const axisScale = response.meta.display_axis_scale;
-  return axisScale === "natural" ? `${label} (display scale)` : `${label} (working scale)`;
+  return response.meta.effect_spec.family === "ratio" ? `${label} (natural scale)` : label;
 }
 
-export async function renderCurves(plotElement, response) {
+function axisType(response, displayOptions) {
+  return response.meta.effect_spec.family === "ratio" && displayOptions.axisSpacing === "log"
+    ? "log"
+    : "linear";
+}
+
+export async function renderCurves(plotElement, response, displayOptions) {
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
   );
+  const xAxisType = axisType(response, displayOptions);
+  const previousAxisType = plotElement._fullLayout?.xaxis?.type || "linear";
+
+  if (previousAxisType !== xAxisType) {
+    Plotly.purge(plotElement);
+    plotElement.innerHTML = "";
+  }
 
   const topTrace = {
     type: "scatter",
@@ -148,35 +160,55 @@ export async function renderCurves(plotElement, response) {
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(255, 252, 247, 0.65)",
-    margin: { l: 65, r: 30, t: 18, b: 60 },
+    margin: { l: 92, r: 30, t: 18, b: 60 },
     hovermode: "closest",
     xaxis: {
-      title: axisTitle(response),
+      title: {
+        text: axisTitle(response),
+        standoff: 12,
+      },
       anchor: "y",
+      type: xAxisType,
+      autorange: true,
+      automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
     },
     yaxis: {
-      title: "Compatibility",
+      title: {
+        text: "Compatibility",
+        standoff: 12,
+      },
       domain: [0.56, 1],
       range: [0, 1.02],
+      automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
     },
     xaxis2: {
-      title: axisTitle(response),
+      title: {
+        text: axisTitle(response),
+        standoff: 12,
+      },
       anchor: "y2",
       matches: "x",
+      type: xAxisType,
+      autorange: true,
+      automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
     },
     yaxis2: {
-      title: "Relative likelihood",
+      title: {
+        text: "Relative likelihood",
+        standoff: 12,
+      },
       domain: [0, 0.42],
       range: [0, 1.02],
+      automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,

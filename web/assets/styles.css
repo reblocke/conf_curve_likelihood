@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -112,9 +116,27 @@ textarea {
   padding: 18px;
 }
 
+.control-group {
+  display: grid;
+  gap: 10px;
+}
+
 .control-grid {
   display: grid;
   gap: 10px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label-row output {
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 label {

@@ -23,6 +23,35 @@ def paper_shape_x_values(page: Page) -> list[float]:
     )
 
 
+def xaxis_type(page: Page) -> str:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.xaxis.type || "linear"
+        """
+    )
+
+
+def xaxis_upper_bound(page: Page) -> float:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => {
+          const axis = element._fullLayout.xaxis;
+          return axis.type === "log" ? 10 ** axis.range[1] : axis.range[1];
+        }
+        """
+    )
+
+
+def xaxis_pixel_positions(page: Page, values: list[float]) -> list[float]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element, requestedValues) =>
+          requestedValues.map((value) => element._fullLayout.xaxis.d2p(value))
+        """,
+        values,
+    )
+
+
 def horizontal_cutoff_count(page: Page) -> int:
     return page.locator("#curve-plot").evaluate(
         """
@@ -37,6 +66,7 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     page.goto(app_url)
     wait_for_ready(page)
 
+    expect(page.locator("label[for='estimate']")).to_have_text("Point Estimate (optional)")
     expect(page.locator("#summary-grid")).to_contain_text("Estimate source")
     expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
@@ -49,10 +79,52 @@ def test_effect_type_switch_updates_controls(app_url: str, page: Page) -> None:
     page.select_option("#effect-type", "mean_difference")
     page.locator("#ci-lower").fill("0.11")
     page.locator("#ci-upper").fill("0.73")
+    page.wait_for_function(
+        """
+        () => document.getElementById("curve-plot")?._fullLayout?.xaxis?.type === "linear"
+        """,
+        timeout=120000,
+    )
+
+    expect(page.locator("#axis-spacing-group")).to_be_hidden()
+    expect(page.locator("#null-value")).to_have_value("0")
+    assert xaxis_type(page) == "linear"
+
+
+def test_ratio_default_view_uses_natural_labels_with_logarithmic_spacing(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
     wait_for_ready(page)
 
-    expect(page.locator("#display-natural-axis")).to_be_disabled()
-    expect(page.locator("#null-value")).to_have_value("0")
+    expect(page.locator("#axis-spacing-group")).to_be_visible()
+    expect(page.locator("#axis-spacing")).to_have_value("log")
+    assert xaxis_type(page) == "log"
+
+
+def test_ratio_spacing_toggle_changes_axis_type_but_keeps_the_same_point_estimate(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    log_positions = xaxis_pixel_positions(page, [1.0, 1.8])
+    page.select_option("#axis-spacing", "linear")
+    page.wait_for_function(
+        """
+        () => document.getElementById("curve-plot")?._fullLayout?.xaxis?.type === "linear"
+        """,
+        timeout=120000,
+    )
+
+    expect(page.locator("#summary-grid")).to_contain_text("Point Estimate")
+    expect(page.locator("#summary-grid")).to_contain_text("1.8")
+    assert xaxis_type(page) == "linear"
+
+    linear_positions = xaxis_pixel_positions(page, [1.0, 1.8])
+    assert (linear_positions[1] - linear_positions[0]) != pytest.approx(
+        log_positions[1] - log_positions[0]
+    )
 
 
 def test_blank_estimate_still_computes_successfully(app_url: str, page: Page) -> None:
@@ -135,6 +207,33 @@ def test_threshold_input_adds_plot_markers(app_url: str, page: Page) -> None:
     assert len(paper_shape_x_values(page)) == 6
 
 
+def test_threshold_and_grid_point_controls_are_visibly_separated(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    thresholds_section_text = page.locator("#thresholds").evaluate(
+        "(input) => input.closest('section').textContent"
+    )
+    grid_points_section_text = page.locator("#grid-points").evaluate(
+        "(input) => input.closest('section').textContent"
+    )
+
+    assert "Grid points" not in thresholds_section_text
+    assert "Clinical thresholds" not in grid_points_section_text
+
+    page.locator("#grid-points").evaluate(
+        """
+        (input, value) => {
+          input.value = value;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        """,
+        "1001",
+    )
+    assert page.locator("#grid-points-output").text_content() == "1001"
+    assert page.locator("#thresholds").input_value() == ""
+
+
 def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
@@ -185,16 +284,49 @@ def test_distant_markers_expand_the_x_axis_extent(app_url: str, page: Page) -> N
         """
         () => {
           const plot = document.getElementById("curve-plot");
-          return plot?._fullLayout?.xaxis?.range?.[1] > 12;
+          if (!plot?._fullLayout?.xaxis?.range) {
+            return false;
+          }
+          const axis = plot._fullLayout.xaxis;
+          const upperBound = axis.type === "log" ? 10 ** axis.range[1] : axis.range[1];
+          return upperBound > 12;
         }
         """,
         timeout=120000,
     )
 
-    x_axis_range = page.locator("#curve-plot").evaluate(
-        "(element) => element._fullLayout.xaxis.range"
+    assert xaxis_upper_bound(page) > 12
+
+
+def test_y_axis_titles_are_visible(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          const titles = Array.from(
+            plot?.querySelectorAll(".g-ytitle text, .g-y2title text") ?? []
+          )
+            .map((node) => node.textContent?.trim())
+            .filter(Boolean);
+          return titles.includes("Compatibility") && titles.includes("Relative likelihood");
+        }
+        """,
+        timeout=120000,
     )
-    assert x_axis_range[1] > 12
+
+    y_axis_titles = page.locator("#curve-plot").evaluate(
+        """
+        (element) => Array.from(element.querySelectorAll(".g-ytitle text, .g-y2title text"))
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean)
+        """
+    )
+
+    assert "Compatibility" in y_axis_titles
+    assert "Relative likelihood" in y_axis_titles
 
 
 def test_csv_export_downloads_current_grid(app_url: str, page: Page, tmp_path: Path) -> None:

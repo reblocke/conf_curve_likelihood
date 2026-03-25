@@ -10,9 +10,11 @@ from a 95% confidence interval and an optional validating point estimate.
 
 The numerical source of truth lives in `src/confcurve/`. The deployed app lives in `web/` and loads that same Python package in the browser via Pyodide.
 
+Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
+
 ## What the app does
 
-- accepts a 95% CI, effect type, optional point estimate, optional null, and optional clinical thresholds
+- accepts a 95% CI, effect type, optional point estimate, optional null, optional clinical thresholds, and ratio-axis spacing
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding confidence curve and normalized relative likelihood curve
 - reports summary quantities such as the CI-implied estimate, reconstructed SE, critical effect markers, null relative likelihood, and two-sided Wald p-value
@@ -39,7 +41,7 @@ Use the wording “approximate profile likelihood under Wald assumptions” cons
   - incidence rate ratio
   - ratio of means
 
-For ratio measures, the app computes on the log scale and can display the x-axis back on the natural scale.
+For ratio measures, the app computes on the log scale, labels the x-axis on the natural ratio scale, and can display that natural-scale axis with logarithmic or linear spacing.
 
 ## Quickstart
 
@@ -87,8 +89,8 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ## Worked examples
 
-- Additive example: 95% CI `0.11` to `0.73`, implied estimate `0.42`, null `0`
-- Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied estimate `1.8`, null `1`
+- Additive example: 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
+- Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default
 
 ## Documentation and citation
 
