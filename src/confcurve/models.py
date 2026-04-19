@@ -110,6 +110,19 @@ class CurveRequest(TypedDict, total=False):
     show_cutoffs: bool
 
 
+class ThresholdSupportPayload(TypedDict):
+    threshold_display: float
+    threshold_working: float
+    relative_likelihood: float
+    log_relative_likelihood: float
+    likelihood_ratio_mle_to_threshold: float | None
+    log_likelihood_ratio_mle_to_threshold: float
+    likelihood_ratio_threshold_to_null: float | None
+    log_likelihood_ratio_threshold_to_null: float | None
+    direction_from_estimate: str
+    direction_from_null: str
+
+
 class MetaPayload(TypedDict):
     effect_spec: dict[str, object]
     display_axis_scale: str
@@ -124,6 +137,7 @@ class MetaPayload(TypedDict):
     display_range_active: bool
     display_range_display: list[float] | None
     display_range_working: list[float] | None
+    threshold_support_summaries: list[ThresholdSupportPayload]
 
 
 class SummaryPayload(TypedDict):

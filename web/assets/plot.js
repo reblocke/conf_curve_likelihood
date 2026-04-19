@@ -1,4 +1,26 @@
 const GUIDE_LEVELS = [0.1, 0.05, 0.01];
+const REFERENCE_STYLES = {
+  estimate: {
+    color: "#b04a2f",
+    dash: "solid",
+    width: 3,
+  },
+  null: {
+    color: "#132a3a",
+    dash: "dot",
+    width: 2,
+  },
+  critical: {
+    color: "#8f6b1f",
+    dash: "dashdot",
+    width: 2,
+  },
+  threshold: {
+    color: "#4c8a5b",
+    dash: "dash",
+    width: 3,
+  },
+};
 
 function formatHoverNumber(value) {
   if (!Number.isFinite(value)) {
@@ -11,37 +33,35 @@ function formatHoverNumber(value) {
   return value.toFixed(4);
 }
 
-function makeVerticalShapes(response) {
+function makeReferenceMarkers(response) {
   const thresholds = response.meta.thresholds_display ?? [];
   const criticalMarkers = response.summary.critical_effect_markers_display ?? [];
-  const markers = [
+  return [
     {
+      key: "estimate",
       value: response.summary.estimate_display,
-      color: "#b04a2f",
-      dash: "solid",
-      width: 3,
+      label: "Estimate",
     },
     {
+      key: "null",
       value: response.summary.null_display,
-      color: "#132a3a",
-      dash: "dot",
-      width: 2,
+      label: "Null",
     },
     ...criticalMarkers.map((value) => ({
+      key: "critical",
       value,
-      color: "#8f6b1f",
-      dash: "dashdot",
-      width: 2,
+      label: "Design threshold",
     })),
     ...thresholds.map((value) => ({
+      key: "threshold",
       value,
-      color: "#4c8a5b",
-      dash: "dash",
-      width: 3,
+      label: `Threshold ${formatAxisTick(value)}`,
     })),
   ];
+}
 
-  return markers.map((marker) => ({
+function makeVerticalShapes(response) {
+  return makeReferenceMarkers(response).map((marker) => ({
     type: "line",
     xref: "x",
     yref: "paper",
@@ -50,9 +70,9 @@ function makeVerticalShapes(response) {
     y0: 0,
     y1: 1,
     line: {
-      color: marker.color,
-      dash: marker.dash,
-      width: marker.width,
+      color: REFERENCE_STYLES[marker.key].color,
+      dash: REFERENCE_STYLES[marker.key].dash,
+      width: REFERENCE_STYLES[marker.key].width,
     },
     layer: "below",
   }));
@@ -99,6 +119,157 @@ function formatAxisTick(value) {
   return new Intl.NumberFormat("en-US", {
     maximumSignificantDigits: 3,
   }).format(value);
+}
+
+function valuePosition(value, xAxisType) {
+  if (xAxisType === "log") {
+    return value > 0 ? Math.log10(value) : Number.NaN;
+  }
+  return value;
+}
+
+function visibleRange(response) {
+  const values = response.grid.effect_display;
+  return [values[0], values[values.length - 1]];
+}
+
+function shouldShowDirectLabel(marker, displayOptions, thresholdCount) {
+  const isCompact = !displayOptions.manuscript && window.innerWidth < 700;
+  if (!isCompact) {
+    return true;
+  }
+  if (marker.key === "estimate" || marker.key === "null") {
+    return true;
+  }
+  return marker.key === "threshold" && thresholdCount === 1;
+}
+
+function makeDirectLabelAnnotations(response, displayOptions, xAxisType) {
+  const [lowerBound, upperBound] = visibleRange(response);
+  const lowerPosition = valuePosition(lowerBound, xAxisType);
+  const upperPosition = valuePosition(upperBound, xAxisType);
+  const span = upperPosition - lowerPosition;
+  if (!Number.isFinite(span) || span <= 0) {
+    return [];
+  }
+
+  const thresholdCount = response.meta.thresholds_display?.length ?? 0;
+  const markers = makeReferenceMarkers(response)
+    .filter((marker) => {
+      if (!Number.isFinite(marker.value)) {
+        return false;
+      }
+      if (marker.value < lowerBound || marker.value > upperBound) {
+        return false;
+      }
+      return shouldShowDirectLabel(marker, displayOptions, thresholdCount);
+    })
+    .map((marker) => ({
+      ...marker,
+      position: valuePosition(marker.value, xAxisType),
+    }))
+    .filter((marker) => Number.isFinite(marker.position))
+    .sort((left, right) => left.position - right.position);
+
+  const fontSize = displayOptions.manuscript ? 15 : 12;
+  const annotations = [];
+  let previousPosition = Number.NEGATIVE_INFINITY;
+  let staggerIndex = 0;
+  const collisionDistance = span * 0.08;
+
+  for (const marker of markers) {
+    if (marker.position - previousPosition < collisionDistance) {
+      staggerIndex = (staggerIndex + 1) % 3;
+    } else {
+      staggerIndex = 0;
+    }
+    previousPosition = marker.position;
+    const normalizedPosition = (marker.position - lowerPosition) / span;
+    const xAnchor =
+      normalizedPosition < 0.08 ? "left" : normalizedPosition > 0.92 ? "right" : "center";
+
+    annotations.push({
+      x: Math.min(1, Math.max(0, normalizedPosition)),
+      y: 1.015,
+      xref: "paper",
+      yref: "paper",
+      text: marker.label,
+      showarrow: false,
+      xanchor: xAnchor,
+      yanchor: "bottom",
+      yshift: -18 * staggerIndex,
+      font: {
+        size: fontSize,
+        color: REFERENCE_STYLES[marker.key].color,
+      },
+      bgcolor: "rgba(255, 255, 255, 0.86)",
+      bordercolor: "rgba(19, 42, 58, 0.14)",
+      borderpad: 3,
+    });
+  }
+
+  return annotations;
+}
+
+function makePanelAnnotations(viewMode, manuscript) {
+  const font = {
+    size: manuscript ? 16 : 13,
+    color: "#132a3a",
+  };
+  if (viewMode === "likelihood") {
+    return [
+      {
+        x: 0,
+        y: 1.105,
+        xref: "paper",
+        yref: "paper",
+        text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+        showarrow: false,
+        xanchor: "left",
+        yanchor: "bottom",
+        font,
+      },
+    ];
+  }
+  if (viewMode === "compatibility") {
+    return [
+      {
+        x: 0,
+        y: 1.105,
+        xref: "paper",
+        yref: "paper",
+        text: "A. Compatibility curve (two-sided Wald p-value function)",
+        showarrow: false,
+        xanchor: "left",
+        yanchor: "bottom",
+        font,
+      },
+    ];
+  }
+  return [
+    {
+      x: 0,
+      y: 1.105,
+      xref: "paper",
+      yref: "paper",
+      text: "A. Compatibility curve (two-sided Wald p-value function)",
+      showarrow: false,
+      xanchor: "left",
+      yanchor: "bottom",
+      font,
+    },
+    {
+      x: 0,
+      y: 0.485,
+      xref: "paper",
+      yref: "paper",
+      text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+      showarrow: false,
+      xanchor: "left",
+      yanchor: "bottom",
+      font,
+    },
+  ];
 }
 
 function roundToSignificantDigits(value, digits) {
@@ -216,6 +387,7 @@ function explicitAxisRange(response, xAxisType) {
 
 export async function renderCurves(plotElement, response, displayOptions) {
   const viewMode = displayOptions.viewMode ?? "both";
+  const manuscript = displayOptions.manuscript === true;
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
@@ -240,6 +412,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
     yaxis,
     line: {
       color: "#b04a2f",
+      dash: manuscript ? "solid" : "solid",
       width: 3,
     },
     hovertemplate:
@@ -265,6 +438,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
     yaxis,
     line: {
       color: "#132a3a",
+      dash: manuscript ? "dash" : "solid",
       width: 3,
     },
     hovertemplate:
@@ -297,9 +471,14 @@ export async function renderCurves(plotElement, response, displayOptions) {
     ...xAxisTicks,
   };
   const layout = {
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(255, 252, 247, 0.65)",
-    margin: { l: 92, r: 30, t: 18, b: 60 },
+    paper_bgcolor: manuscript ? "#ffffff" : "rgba(0,0,0,0)",
+    plot_bgcolor: manuscript ? "#ffffff" : "rgba(255, 252, 247, 0.65)",
+    font: {
+      family: '"Avenir Next", "Segoe UI", Arial, sans-serif',
+      size: manuscript ? 15 : 13,
+      color: "#132a3a",
+    },
+    margin: { l: manuscript ? 110 : 92, r: manuscript ? 70 : 36, t: 96, b: manuscript ? 78 : 66 },
     hovermode: "closest",
     xaxis: {
       ...xAxisLayout,
@@ -319,6 +498,10 @@ export async function renderCurves(plotElement, response, displayOptions) {
       zeroline: false,
     },
     shapes: [...makeVerticalShapes(response), ...makeGuideShapes(response, viewMode)],
+    annotations: [
+      ...makePanelAnnotations(viewMode, manuscript),
+      ...makeDirectLabelAnnotations(response, displayOptions, xAxisType),
+    ],
   };
   let traces;
   if (viewMode === "likelihood") {
@@ -347,7 +530,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
   }
 
   const config = {
-    responsive: true,
+    responsive: !manuscript,
     displaylogo: false,
     modeBarButtonsToRemove: [
       "lasso2d",
@@ -373,4 +556,34 @@ export async function exportPlotPng(plotElement, filename) {
   link.href = dataUrl;
   link.download = filename;
   link.click();
+}
+
+export async function exportManuscriptPng(response, displayOptions, filename) {
+  const exportElement = document.createElement("div");
+  exportElement.style.position = "fixed";
+  exportElement.style.left = "-10000px";
+  exportElement.style.top = "0";
+  exportElement.style.width = "1400px";
+  exportElement.style.height = "1000px";
+  document.body.append(exportElement);
+
+  try {
+    await renderCurves(exportElement, response, {
+      ...displayOptions,
+      manuscript: true,
+    });
+    const dataUrl = await Plotly.toImage(exportElement, {
+      format: "png",
+      height: 1000,
+      width: 1400,
+      scale: 2,
+    });
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    link.click();
+  } finally {
+    Plotly.purge(exportElement);
+    exportElement.remove();
+  }
 }

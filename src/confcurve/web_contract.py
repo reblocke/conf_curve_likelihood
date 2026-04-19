@@ -22,11 +22,17 @@ from .core import (
     to_working_scale,
     validate_inputs,
 )
-from .models import CurveRequest, CurveResponse
+from .models import CurveRequest, CurveResponse, ThresholdSupportPayload
 
 
 def _float_list(values: float | np.ndarray) -> list[float]:
     return [float(value) for value in np.asarray(values, dtype=float).tolist()]
+
+
+def _exp_or_none(log_value: float | None) -> float | None:
+    if log_value is None or log_value > LOG_MAX_FLOAT:
+        return None
+    return float(np.exp(log_value))
 
 
 def _safe_display_values(
@@ -79,6 +85,66 @@ def _display_range_exclusion_warnings(
     if any(outside_range(value) for value in critical_markers_working):
         warnings.append("The chosen display range excludes one or more critical-effect markers.")
     return warnings
+
+
+def _direction_label(value: float, reference: float, reference_name: str) -> str:
+    if np.isclose(value, reference, rtol=1e-12, atol=1e-12):
+        return f"at_{reference_name}"
+    if value < reference:
+        return f"below_{reference_name}"
+    return f"above_{reference_name}"
+
+
+def _threshold_support_summaries(
+    *,
+    thresholds_display: list[float],
+    thresholds_working: list[float],
+    theta_hat: float,
+    null_working: float,
+    se: float,
+    log_null_relative_likelihood: float | None,
+) -> list[ThresholdSupportPayload]:
+    summaries_payload: list[ThresholdSupportPayload] = []
+    if not thresholds_working:
+        return summaries_payload
+
+    log_threshold_likelihoods = _float_list(
+        log_relative_likelihood(np.asarray(thresholds_working), theta_hat=theta_hat, se=se)
+    )
+    threshold_likelihoods = _float_list(np.exp(np.asarray(log_threshold_likelihoods)))
+
+    for threshold_display, threshold_working, threshold_likelihood, log_threshold in zip(
+        thresholds_display,
+        thresholds_working,
+        threshold_likelihoods,
+        log_threshold_likelihoods,
+        strict=True,
+    ):
+        log_mle_to_threshold = -log_threshold
+        if log_null_relative_likelihood is None:
+            log_threshold_to_null = None
+        else:
+            log_threshold_to_null = log_threshold - log_null_relative_likelihood
+
+        summaries_payload.append(
+            {
+                "threshold_display": float(threshold_display),
+                "threshold_working": float(threshold_working),
+                "relative_likelihood": float(threshold_likelihood),
+                "log_relative_likelihood": float(log_threshold),
+                "likelihood_ratio_mle_to_threshold": _exp_or_none(log_mle_to_threshold),
+                "log_likelihood_ratio_mle_to_threshold": float(log_mle_to_threshold),
+                "likelihood_ratio_threshold_to_null": _exp_or_none(log_threshold_to_null),
+                "log_likelihood_ratio_threshold_to_null": (
+                    None if log_threshold_to_null is None else float(log_threshold_to_null)
+                ),
+                "direction_from_estimate": _direction_label(
+                    threshold_working, theta_hat, "estimate"
+                ),
+                "direction_from_null": _direction_label(threshold_working, null_working, "null"),
+            }
+        )
+    return summaries_payload
 
 
 def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
@@ -226,6 +292,14 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         if validated.display_natural_axis
         else thresholds_working
     )
+    threshold_summaries = _threshold_support_summaries(
+        thresholds_display=threshold_display,
+        thresholds_working=thresholds_working,
+        theta_hat=theta_hat,
+        null_working=null_working,
+        se=se_info.se,
+        log_null_relative_likelihood=null_summary["log_null_relative_likelihood"],
+    )
 
     return {
         "meta": {
@@ -257,6 +331,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
                 if validated.display_range_working is None
                 else [float(grid_working[0]), float(grid_working[-1])]
             ),
+            "threshold_support_summaries": threshold_summaries,
         },
         "summary": {
             "estimate_display": float(estimate_display),

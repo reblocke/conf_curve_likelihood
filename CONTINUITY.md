@@ -4,9 +4,9 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Implement Tickets 01 and 02: optional plausible display range, clearer evidentiary interpretation, frontend view modes, plot key, and grouped summary.
+- Goal: Implement comparison-first presentation pass on top of Tickets 01 and 02, keeping formulas unchanged while improving manuscript/readability presentation.
 - Last known good commit: 276bbc9 on `main`
-- Next step: Review the combined Ticket 01 + Ticket 02 working tree and commit if acceptable.
+- Next step: Review the comparison-first working tree, then commit or continue polishing as needed.
 
 ## Open checkpoints
 
@@ -20,6 +20,55 @@ Use this file to maintain continuity across coding sessions (human or agent).
   - live Pages smoke: confirmed the deployed HTML serves the new optional-estimate wording
 
 ## Session log
+
+### 2026-04-19
+
+**Objective:**
+
+Implement comparison-first presentation pass for faster null-vs-estimate-vs-threshold interpretation and manuscript-quality export.
+
+**Plan:**
+
+- add backend threshold-support metadata using existing Wald likelihood functions
+- reframe titles, subtitles, and takeaway around candidate effect comparisons
+- add direct plot labels and panel labels while retaining grayscale-safe encodings
+- reorganize summary and controls, reduce chrome, and support sidebar collapse
+- add manuscript PNG export and copyable caption text
+- update tests and run full verification
+
+**Work completed:**
+
+- added backend `threshold_support_summaries` metadata using existing Wald relative-likelihood calculations
+- staged the updated Python package into `web/assets/py/confcurve/`
+- reframed the UI around candidate effect comparisons with dynamic title, subtitle, and one-sentence takeaway
+- reorganized summaries into `Main comparison` and `Technical reconstruction`
+- moved axis spacing, plausible display range, grid points, and compatibility cutoffs into `Advanced display options`
+- added direct Plotly labels for estimate, null, design threshold markers, and clinical thresholds, plus panel annotations
+- fixed direct-label annotations so they do not expand the x-axis autorange and compress the plotted curves
+- added desktop control collapse/restore, reduced card chrome, and narrowed the sidebar
+- fixed Plotly resizing after desktop control collapse/restore so the SVG fills the widened plot panel
+- added manuscript PNG export from an offscreen figure-only Plotly render and a separate copyable caption
+- updated unit, integration, and E2E tests for threshold metadata, comparison-first presentation, direct labels, advanced controls, sidebar collapse, and manuscript export
+
+**Verification:**
+
+- `make stage-web` passed
+- `node --check web/assets/app.js` passed
+- `node --check web/assets/plot.js` passed
+- `uv run pytest -q tests/test_core.py -k 'threshold_support'` passed
+- `uv run pytest -q tests/integration/test_contract_response.py -k 'threshold_support or json_serializable'` passed
+- focused Chromium E2E comparison/export slice passed
+- `uv run ruff format --check .` passed
+- `uv run ruff check .` passed
+- `make test` passed
+- `make e2e` passed
+- focused sidebar-collapse width regression passed
+- focused direct-label/default-range regression passed
+- final `make verify` passed
+
+**Open questions / risks:**
+
+- no open implementation questions; remaining risk is ordinary visual review beyond automated Chromium coverage
 
 ### 2026-04-19
 

@@ -57,6 +57,20 @@ def y_axis_titles(page: Page) -> list[str]:
     )
 
 
+def plot_annotation_texts(page: Page) -> list[str]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => (element._fullLayout.annotations || [])
+          .map((annotation) => String(annotation.text))
+        """
+    )
+
+
+def open_advanced_options(page: Page) -> None:
+    page.locator("#advanced-display-options").evaluate("(element) => { element.open = true; }")
+    expect(page.locator("#advanced-display-options")).to_have_attribute("open", "")
+
+
 def xaxis_upper_bound(page: Page) -> float:
     return page.locator("#curve-plot").evaluate(
         """
@@ -101,26 +115,145 @@ def horizontal_cutoff_count(page: Page) -> int:
     )
 
 
+def plot_width_metrics(page: Page) -> dict[str, float]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => {
+          const surface = element.getBoundingClientRect();
+          const svg = element.querySelector(".main-svg")?.getBoundingClientRect();
+          return {
+            surface: surface.width,
+            svg: svg?.width ?? 0,
+            layout: element._fullLayout?.width ?? 0,
+          };
+        }
+        """
+    )
+
+
 def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
 
     expect(page.locator("label[for='estimate']")).to_have_text("Point Estimate (optional)")
-    expect(page.locator("h2")).to_contain_text("Evidentiary support across effect sizes")
+    expect(page.locator("#plot-title")).to_contain_text(
+        "How the data compare candidate odds ratios"
+    )
+    expect(page.locator("#plot-subtitle")).to_contain_text(
+        "Relative to the null and the CI-implied estimate"
+    )
+    expect(page.locator("#comparison-takeaway")).to_contain_text("Peak support is at OR")
     expect(page.locator("#read-guide")).to_contain_text("two-sided Wald p-value function")
     expect(page.locator("#read-guide")).to_contain_text(
         "does not reconstruct the exact fitted-model profile likelihood"
     )
     expect(page.locator("#summary-grid")).to_contain_text("Estimate source")
-    expect(page.locator("#summary-grid")).to_contain_text("Core reconstruction")
-    expect(page.locator("#summary-grid")).to_contain_text("Null comparison")
+    expect(page.locator("#summary-grid")).to_contain_text("Main comparison")
+    expect(page.locator("#summary-grid")).to_contain_text("Technical reconstruction")
     expect(page.locator("#plot-key")).to_contain_text("Point estimate")
     expect(page.locator("#plot-key")).to_contain_text("Null value")
-    expect(page.locator("#plot-key")).to_contain_text("Critical-effect markers")
+    expect(page.locator("#plot-key")).to_contain_text("Design threshold markers")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
     expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
     expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
+    expect(page.locator("#figure-caption")).to_contain_text("Wald reconstruction")
+    expect(page.locator("#figure-caption")).to_contain_text(
+        "not exact fitted-model profile likelihood"
+    )
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
+
+
+def test_comparison_header_updates_for_thresholds_and_effect_measure(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#thresholds").fill("1.25")
+    page.wait_for_function(
+        """
+        () => document.getElementById("plot-subtitle")
+          ?.textContent?.includes("clinical thresholds")
+        """,
+        timeout=120000,
+    )
+    expect(page.locator("#plot-subtitle")).to_contain_text(
+        "Relative to the null OR = 1 and clinical thresholds"
+    )
+    expect(page.locator("#comparison-takeaway")).to_contain_text("clinical threshold OR = 1.25")
+
+    page.select_option("#effect-type", "mean_difference")
+    page.locator("#ci-lower").fill("0.11")
+    page.locator("#ci-upper").fill("0.73")
+    page.locator("#thresholds").fill("0.5")
+    page.wait_for_function(
+        """
+        () => document.getElementById("plot-title")
+          ?.textContent?.includes("candidate mean differences")
+        """,
+        timeout=120000,
+    )
+
+    expect(page.locator("#plot-title")).to_contain_text("candidate mean differences")
+    expect(page.locator("#plot-subtitle")).to_contain_text(
+        "Relative to the null mean difference = 0 and clinical thresholds"
+    )
+
+
+def test_advanced_display_options_hide_and_show_moved_controls(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    expect(page.locator("#advanced-display-options")).not_to_have_attribute("open", "")
+    expect(page.locator("#axis-spacing-group")).to_be_hidden()
+
+    open_advanced_options(page)
+
+    expect(page.locator("#axis-spacing-group")).to_be_visible()
+    expect(page.locator("#display-range-group")).to_be_visible()
+    expect(page.locator("#grid-points")).to_be_visible()
+    expect(page.locator("#show-cutoffs")).to_be_visible()
+
+    page.locator("#show-cutoffs").uncheck()
+    wait_for_ready(page)
+    expect(page.locator("#status-card")).to_contain_text("Curves updated")
+
+
+def test_direct_labels_and_panel_annotations_render_on_plot(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    annotations = plot_annotation_texts(page)
+    assert "Estimate" in annotations
+    assert "Null" in annotations
+    assert "Design threshold" in annotations
+    assert "A. Compatibility curve (two-sided Wald p-value function)" in annotations
+    assert "B. Relative likelihood (normalized to 1 at the CI-implied estimate)" in annotations
+    _, default_upper_bound = xaxis_bounds(page)
+    assert default_upper_bound < 10
+
+    page.locator("#thresholds").fill("1.25")
+    page.wait_for_function(
+        """
+        () => (document.getElementById("curve-plot")?._fullLayout?.annotations || [])
+          .some((annotation) => String(annotation.text).includes("Threshold 1.25"))
+        """,
+        timeout=120000,
+    )
+    assert "Threshold 1.25" in plot_annotation_texts(page)
+
+
+def test_summary_puts_main_comparison_before_technical_reconstruction(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    headings = page.locator("#summary-grid .summary-group-title").all_text_contents()
+    assert headings[:2] == ["Main comparison", "Technical reconstruction"]
+    expect(page.locator("#summary-grid")).to_contain_text("Point Estimate")
+    expect(page.locator("#summary-grid")).to_contain_text("95% CI")
+    expect(page.locator("#summary-grid")).to_contain_text("Working-scale SE")
 
 
 def test_effect_type_switch_updates_controls(app_url: str, page: Page) -> None:
@@ -136,6 +269,7 @@ def test_effect_type_switch_updates_controls(app_url: str, page: Page) -> None:
         """,
         timeout=120000,
     )
+    open_advanced_options(page)
 
     expect(page.locator("#axis-spacing-group")).to_be_hidden()
     expect(page.locator("#null-value")).to_have_value("0")
@@ -147,6 +281,7 @@ def test_ratio_default_view_uses_natural_labels_with_logarithmic_spacing(
 ) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     expect(page.locator("#axis-spacing-group")).to_be_visible()
     expect(page.locator("#axis-spacing")).to_have_value("log")
@@ -159,6 +294,7 @@ def test_ratio_spacing_toggle_changes_axis_type_but_keeps_the_same_point_estimat
 ) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     log_positions = xaxis_pixel_positions(page, [1.0, 1.8])
     page.select_option("#axis-spacing", "linear")
@@ -262,6 +398,7 @@ def test_threshold_input_adds_plot_markers(app_url: str, page: Page) -> None:
 def test_threshold_and_grid_point_controls_are_visibly_separated(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     thresholds_section_text = page.locator("#thresholds").evaluate(
         "(input) => input.closest('section').textContent"
@@ -289,6 +426,7 @@ def test_threshold_and_grid_point_controls_are_visibly_separated(app_url: str, p
 def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     assert horizontal_cutoff_count(page) == 3
     page.locator("#show-cutoffs").uncheck()
@@ -319,6 +457,7 @@ def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> 
 def test_plot_key_tracks_thresholds_and_cutoffs(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
@@ -379,6 +518,7 @@ def test_distant_markers_expand_the_x_axis_extent(app_url: str, page: Page) -> N
 def test_ratio_plausible_display_range_constrains_plot_and_warns(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     page.locator("#display-range-lower").fill("0.9")
     page.locator("#display-range-upper").fill("1.1")
@@ -418,6 +558,7 @@ def test_plausible_display_range_csv_exports_current_grid(
 ) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     page.locator("#display-range-lower").fill("0.9")
     page.locator("#display-range-upper").fill("1.1")
@@ -452,6 +593,7 @@ def test_plausible_display_range_csv_exports_current_grid(
 def test_invalid_plausible_display_range_clears_rendered_state(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     page.locator("#display-range-lower").fill("1.2")
     page.locator("#display-range-upper").fill("1.1")
@@ -462,6 +604,7 @@ def test_invalid_plausible_display_range_clears_rendered_state(app_url: str, pag
     )
     expect(page.locator("#export-csv")).to_be_disabled()
     expect(page.locator("#export-png")).to_be_disabled()
+    expect(page.locator("#export-manuscript-png")).to_be_disabled()
     expect(page.locator("#summary-grid")).to_be_empty()
     expect(page.locator("#curve-plot .main-svg")).to_have_count(0)
 
@@ -469,6 +612,7 @@ def test_invalid_plausible_display_range_clears_rendered_state(app_url: str, pag
 def test_clearing_plausible_display_range_restores_auto_behavior(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
+    open_advanced_options(page)
 
     page.locator("#display-range-lower").fill("0.9")
     page.locator("#display-range-upper").fill("1.1")
@@ -634,6 +778,86 @@ def test_png_export_works_in_single_panel_view_modes(
         png_path = tmp_path / f"{mode}-{download.suggested_filename}"
         download.save_as(png_path)
         assert png_path.stat().st_size > 0
+
+
+def test_manuscript_png_export_works_without_embedding_caption(
+    app_url: str, page: Page, tmp_path: Path
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    expect(page.locator("#figure-caption")).to_contain_text("Wald reconstruction")
+    expect(page.locator("#copy-caption")).to_be_visible()
+
+    for mode in ("both", "likelihood"):
+        if mode != "both":
+            page.locator(f"#view-mode-{mode}").check()
+            page.wait_for_function(
+                """
+                (expectedMode) => {
+                  const plot = document.getElementById("curve-plot");
+                  return plot?.dataset?.viewMode === expectedMode;
+                }
+                """,
+                arg=mode,
+                timeout=120000,
+            )
+
+        with page.expect_download() as download_info:
+            page.locator("#export-manuscript-png").click()
+        download = download_info.value
+
+        assert download.suggested_filename == "wald-confidence-curves-manuscript.png"
+        png_path = tmp_path / f"{mode}-{download.suggested_filename}"
+        download.save_as(png_path)
+        assert png_path.stat().st_size > 0
+
+    expect(page.locator("#figure-caption")).to_contain_text(
+        "not exact fitted-model profile likelihood"
+    )
+
+
+def test_desktop_sidebar_can_collapse_and_restore(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    initial_widths = plot_width_metrics(page)
+
+    page.locator("#desktop-controls-toggle").click()
+    expect(page.locator(".page-shell")).to_have_attribute("data-controls-collapsed", "true")
+    expect(page.locator("#controls-panel")).to_be_hidden()
+    page.wait_for_function(
+        """
+        (initialSurface) => {
+          const plot = document.getElementById("curve-plot");
+          const surface = plot.getBoundingClientRect();
+          const svg = plot.querySelector(".main-svg")?.getBoundingClientRect();
+          return svg
+            && surface.width > initialSurface
+            && Math.abs(svg.width - surface.width) < 2;
+        }
+        """,
+        arg=initial_widths["surface"],
+        timeout=120000,
+    )
+    collapsed_widths = plot_width_metrics(page)
+    assert collapsed_widths["surface"] > initial_widths["surface"]
+    assert collapsed_widths["svg"] == pytest.approx(collapsed_widths["surface"], abs=2)
+
+    page.locator("#desktop-controls-toggle").click()
+    expect(page.locator(".page-shell")).to_have_attribute("data-controls-collapsed", "false")
+    expect(page.locator("#controls-panel")).to_be_visible()
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          const surface = plot.getBoundingClientRect();
+          const svg = plot.querySelector(".main-svg")?.getBoundingClientRect();
+          return svg && Math.abs(svg.width - surface.width) < 2;
+        }
+        """,
+        timeout=120000,
+    )
 
 
 def test_mobile_controls_toggle_remains_usable(app_url: str, page: Page) -> None:

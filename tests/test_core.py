@@ -445,6 +445,63 @@ def test_distant_null_thresholds_and_critical_markers_expand_the_grid_extent() -
     assert x_values[-1] > max(*critical_markers, 12.0)
 
 
+def test_threshold_support_summaries_match_wald_likelihood_values() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.0,
+            "thresholds": [1.25],
+            "grid_points": 401,
+        }
+    )
+
+    threshold_summary = response["meta"]["threshold_support_summaries"][0]
+    estimate_working = response["summary"]["estimate_working"]
+    se = response["summary"]["working_scale_se"]
+    threshold_working = math.log(1.25)
+    expected_log_relative_likelihood = -0.5 * ((threshold_working - estimate_working) / se) ** 2
+    expected_relative_likelihood = math.exp(expected_log_relative_likelihood)
+    expected_threshold_to_null = (
+        expected_log_relative_likelihood - response["summary"]["log_null_relative_likelihood"]
+    )
+
+    assert threshold_summary["threshold_display"] == pytest.approx(1.25)
+    assert threshold_summary["threshold_working"] == pytest.approx(threshold_working)
+    assert threshold_summary["log_relative_likelihood"] == pytest.approx(
+        expected_log_relative_likelihood
+    )
+    assert threshold_summary["relative_likelihood"] == pytest.approx(expected_relative_likelihood)
+    assert threshold_summary["log_likelihood_ratio_mle_to_threshold"] == pytest.approx(
+        -expected_log_relative_likelihood
+    )
+    assert threshold_summary["likelihood_ratio_mle_to_threshold"] == pytest.approx(
+        1.0 / expected_relative_likelihood
+    )
+    assert threshold_summary["log_likelihood_ratio_threshold_to_null"] == pytest.approx(
+        expected_threshold_to_null
+    )
+    assert threshold_summary["likelihood_ratio_threshold_to_null"] == pytest.approx(
+        math.exp(expected_threshold_to_null)
+    )
+    assert threshold_summary["direction_from_estimate"] == "below_estimate"
+    assert threshold_summary["direction_from_null"] == "above_null"
+
+
+def test_threshold_support_summaries_are_empty_without_thresholds() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["threshold_support_summaries"] == []
+
+
 def test_extreme_null_summary_stays_strictly_json_serializable() -> None:
     response = compute_curves(
         {

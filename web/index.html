@@ -28,7 +28,7 @@
     <div class="page-shell">
       <aside class="sidebar" id="controls-panel">
         <div class="sidebar-header">
-          <p class="eyebrow">Evidentiary Framework</p>
+          <p class="eyebrow">Comparison Framework</p>
           <h1>Wald Confidence Curve Explorer</h1>
           <p class="intro">
             A static GitHub Pages applet that reconstructs a confidence curve and
@@ -69,52 +69,6 @@
             <input id="null-value" name="null_value" type="number" step="any" />
           </section>
 
-          <section class="control-group" id="axis-spacing-group">
-            <label for="axis-spacing">Axis spacing</label>
-            <select id="axis-spacing" name="axis_spacing">
-              <option value="log">Logarithmic</option>
-              <option value="linear">Linear</option>
-            </select>
-            <p class="field-note">
-              Ratio measures always use natural-scale labels. This control changes only the spacing.
-            </p>
-          </section>
-
-          <section class="control-group" id="display-range-group">
-            <label>Plausible display range</label>
-            <div class="range-input-grid">
-              <div>
-                <label for="display-range-lower">Plausible display range lower</label>
-                <input
-                  id="display-range-lower"
-                  name="display_range_lower"
-                  type="number"
-                  step="any"
-                />
-              </div>
-              <div>
-                <label for="display-range-upper">Plausible display range upper</label>
-                <input
-                  id="display-range-upper"
-                  name="display_range_upper"
-                  type="number"
-                  step="any"
-                />
-              </div>
-            </div>
-            <p class="field-note">
-              Optional. Limits the x-axis only; it does not change the CI-derived reconstruction.
-            </p>
-            <details class="field-details">
-              <summary>Choosing a plausible range</summary>
-              <p>
-                Choose this range by reasoning backward from the maximum attributable burden of the targeted physiology,
-                how strongly assignment could plausibly mediate that pathway, and what immediate and downstream differences
-                in the outcome group assignment could realistically produce.
-              </p>
-            </details>
-          </section>
-
           <section class="control-group">
             <label for="thresholds">Clinical thresholds</label>
             <input
@@ -128,26 +82,78 @@
             </p>
           </section>
 
-          <section class="control-group">
-            <div class="label-row">
-              <label for="grid-points">Grid points</label>
-              <output id="grid-points-output" for="grid-points">801</output>
-            </div>
-            <input id="grid-points" name="grid_points" type="range" min="201" max="1601" step="200" />
-            <p class="field-note">
-              Higher values smooth the curves but increase browser compute time.
-            </p>
-          </section>
+          <details class="advanced-controls" id="advanced-display-options">
+            <summary>Advanced display options</summary>
+            <div class="advanced-controls-body">
+              <section class="control-group control-subgroup" id="axis-spacing-group">
+                <label for="axis-spacing">Axis spacing</label>
+                <select id="axis-spacing" name="axis_spacing">
+                  <option value="log">Logarithmic</option>
+                  <option value="linear">Linear</option>
+                </select>
+                <p class="field-note">
+                  Ratio measures always use natural-scale labels. This control changes only the spacing.
+                </p>
+              </section>
 
-          <section class="toggle-list">
-            <label class="checkbox">
-              <input id="show-cutoffs" name="show_cutoffs" type="checkbox" checked />
-              <span>Show 90%, 95%, and 99% compatibility guide lines on the upper panel</span>
-            </label>
-          </section>
+              <section class="control-group control-subgroup" id="display-range-group">
+                <label>Plausible display range</label>
+                <div class="range-input-grid">
+                  <div>
+                    <label for="display-range-lower">Lower</label>
+                    <input
+                      id="display-range-lower"
+                      name="display_range_lower"
+                      type="number"
+                      step="any"
+                    />
+                  </div>
+                  <div>
+                    <label for="display-range-upper">Upper</label>
+                    <input
+                      id="display-range-upper"
+                      name="display_range_upper"
+                      type="number"
+                      step="any"
+                    />
+                  </div>
+                </div>
+                <p class="field-note">
+                  Optional x-axis-only window; reconstruction stays unchanged.
+                </p>
+                <details class="field-details">
+                  <summary>Choosing a plausible range</summary>
+                  <p>
+                    Choose this range by reasoning backward from the maximum attributable burden of the targeted physiology,
+                    how strongly assignment could plausibly mediate that pathway, and what immediate and downstream differences
+                    in the outcome group assignment could realistically produce.
+                  </p>
+                </details>
+              </section>
+
+              <section class="control-group control-subgroup">
+                <div class="label-row">
+                  <label for="grid-points">Grid points</label>
+                  <output id="grid-points-output" for="grid-points">801</output>
+                </div>
+                <input id="grid-points" name="grid_points" type="range" min="201" max="1601" step="200" />
+                <p class="field-note">
+                  Higher values smooth the curves but increase browser compute time.
+                </p>
+              </section>
+
+              <section class="toggle-list control-subgroup">
+                <label class="checkbox">
+                  <input id="show-cutoffs" name="show_cutoffs" type="checkbox" checked />
+                  <span>Show 90%, 95%, and 99% compatibility guide lines</span>
+                </label>
+              </section>
+            </div>
+          </details>
 
           <div class="button-row">
             <button id="export-png" type="button">Export PNG</button>
+            <button id="export-manuscript-png" type="button">Export manuscript PNG</button>
             <button id="export-csv" type="button">Export CSV</button>
           </div>
         </form>
@@ -161,9 +167,20 @@
         <section class="plot-card">
           <div class="plot-header">
             <div>
-              <p class="eyebrow">Evidentiary Display</p>
-              <h2>Evidentiary support across effect sizes</h2>
+              <p class="eyebrow">Comparison display</p>
+              <h2 id="plot-title">How the data compare candidate odds ratios</h2>
+              <p id="plot-subtitle" class="plot-subtitle">
+                Relative to the null and the CI-implied estimate
+              </p>
             </div>
+            <button
+              class="desktop-controls-toggle"
+              id="desktop-controls-toggle"
+              type="button"
+              aria-pressed="false"
+            >
+              Hide controls
+            </button>
             <fieldset class="view-mode-control" aria-label="View mode">
               <legend>View</legend>
               <label>
@@ -180,14 +197,16 @@
               </label>
             </fieldset>
           </div>
+          <p id="comparison-takeaway" class="comparison-takeaway">
+            Computing the main comparison.
+          </p>
           <div class="read-guide" id="read-guide">
-            <p>
-              <strong>How to read this.</strong>
-              Compatibility / confidence curve = the two-sided Wald p-value function across candidate effect sizes.
-              Relative likelihood = a monotone transform of the same Wald distance, normalized to 1 at the CI-implied estimate.
-            </p>
             <details class="field-details">
-              <summary>More interpretation context</summary>
+              <summary>How to read the Wald reconstruction</summary>
+              <p>
+                Compatibility / confidence curve = the two-sided Wald p-value function across candidate effect sizes.
+                Relative likelihood = a monotone transform of the same Wald distance, normalized to 1 at the CI-implied estimate.
+              </p>
               <p>
                 Both views come from the same CI-based Wald reconstruction. The likelihood view is often easier to read as
                 relative evidentiary support across effect sizes under that Wald approximation. This app does not reconstruct
@@ -198,6 +217,10 @@
           </div>
           <div id="plot-key" class="plot-key" aria-label="Plot key"></div>
           <div id="curve-plot" class="plot-surface" aria-label="Confidence curve and likelihood plots"></div>
+          <div class="figure-caption-block">
+            <p id="figure-caption"></p>
+            <button id="copy-caption" type="button">Copy caption</button>
+          </div>
         </section>
 
         <section class="card-grid">
@@ -207,13 +230,13 @@
           </article>
 
           <article class="commentary-card">
-            <p class="eyebrow">Commentary</p>
+            <p class="eyebrow">Interpretation</p>
             <p id="commentary-text"></p>
           </article>
         </section>
 
         <section class="warnings-card">
-          <p class="eyebrow">Technical notes</p>
+          <p class="eyebrow">Technical reconstruction notes</p>
           <ul id="warnings-list"></ul>
         </section>
       </main>

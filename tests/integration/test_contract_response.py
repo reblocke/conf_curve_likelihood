@@ -24,6 +24,7 @@ def test_compute_curves_response_is_json_serializable() -> None:
     assert payload["meta"]["display_range_active"] is False
     assert payload["meta"]["display_range_display"] is None
     assert payload["meta"]["display_range_working"] is None
+    assert payload["meta"]["threshold_support_summaries"] == []
     assert payload["summary"]["estimate_display"] == 0.42
     assert payload["summary"]["null_display"] == 0.0
     assert payload["summary"]["critical_effect_distance_working"] > 0
@@ -56,6 +57,25 @@ def test_active_display_range_response_metadata_is_json_serializable() -> None:
     assert payload["meta"]["display_range_working"][0] < payload["meta"]["display_range_working"][1]
     assert payload["grid"]["effect_display"][0] == pytest.approx(0.9)
     assert payload["grid"]["effect_display"][-1] == pytest.approx(1.1)
+
+
+def test_threshold_support_response_metadata_is_json_serializable() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "thresholds": [1.25],
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    threshold_summary = payload["meta"]["threshold_support_summaries"][0]
+    assert threshold_summary["threshold_display"] == pytest.approx(1.25)
+    assert threshold_summary["relative_likelihood"] > 0
+    assert threshold_summary["likelihood_ratio_mle_to_threshold"] > 1
+    assert threshold_summary["log_likelihood_ratio_threshold_to_null"] is not None
 
 
 def test_provided_estimate_sets_provided_validated_meta_flag() -> None:

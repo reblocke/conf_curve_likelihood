@@ -1,21 +1,79 @@
-import { exportPlotPng, renderCurves } from "./plot.js";
+import { exportManuscriptPng, exportPlotPng, renderCurves } from "./plot.js";
 
 const PYODIDE_VERSION = "0.29.3";
 const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 const PYTHON_PACKAGE_FILES = ["__init__.py", "core.py", "models.py", "stage.py", "web_contract.py"];
 const DEFAULT_VIEW_MODE = "both";
 const EFFECT_OPTIONS = [
-  { key: "odds_ratio", label: "Odds ratio", family: "ratio", defaultNull: 1 },
-  { key: "risk_ratio", label: "Risk ratio", family: "ratio", defaultNull: 1 },
-  { key: "hazard_ratio", label: "Hazard ratio", family: "ratio", defaultNull: 1 },
-  { key: "incidence_rate_ratio", label: "Incidence rate ratio", family: "ratio", defaultNull: 1 },
-  { key: "ratio_of_means", label: "Ratio of means", family: "ratio", defaultNull: 1 },
-  { key: "mean_difference", label: "Mean difference", family: "additive", defaultNull: 0 },
-  { key: "risk_difference", label: "Risk difference", family: "additive", defaultNull: 0 },
-  { key: "rate_difference", label: "Rate difference", family: "additive", defaultNull: 0 },
+  {
+    key: "odds_ratio",
+    label: "Odds ratio",
+    shortLabel: "OR",
+    candidateLabel: "odds ratios",
+    family: "ratio",
+    defaultNull: 1,
+  },
+  {
+    key: "risk_ratio",
+    label: "Risk ratio",
+    shortLabel: "RR",
+    candidateLabel: "risk ratios",
+    family: "ratio",
+    defaultNull: 1,
+  },
+  {
+    key: "hazard_ratio",
+    label: "Hazard ratio",
+    shortLabel: "HR",
+    candidateLabel: "hazard ratios",
+    family: "ratio",
+    defaultNull: 1,
+  },
+  {
+    key: "incidence_rate_ratio",
+    label: "Incidence rate ratio",
+    shortLabel: "IRR",
+    candidateLabel: "incidence rate ratios",
+    family: "ratio",
+    defaultNull: 1,
+  },
+  {
+    key: "ratio_of_means",
+    label: "Ratio of means",
+    shortLabel: "ratio",
+    candidateLabel: "ratios of means",
+    family: "ratio",
+    defaultNull: 1,
+  },
+  {
+    key: "mean_difference",
+    label: "Mean difference",
+    shortLabel: "mean difference",
+    candidateLabel: "mean differences",
+    family: "additive",
+    defaultNull: 0,
+  },
+  {
+    key: "risk_difference",
+    label: "Risk difference",
+    shortLabel: "risk difference",
+    candidateLabel: "risk differences",
+    family: "additive",
+    defaultNull: 0,
+  },
+  {
+    key: "rate_difference",
+    label: "Rate difference",
+    shortLabel: "rate difference",
+    candidateLabel: "rate differences",
+    family: "additive",
+    defaultNull: 0,
+  },
   {
     key: "regression_coefficient",
     label: "Regression coefficient",
+    shortLabel: "coefficient",
+    candidateLabel: "regression coefficients",
     family: "additive",
     defaultNull: 0,
   },
@@ -34,14 +92,21 @@ const DEFAULT_VALUES = {
   show_cutoffs: true,
 };
 
+const pageShell = document.querySelector(".page-shell");
 const sidebar = document.getElementById("controls-panel");
 const toggleButton = document.getElementById("controls-toggle");
+const desktopControlsToggle = document.getElementById("desktop-controls-toggle");
 const form = document.getElementById("curve-form");
 const statusCard = document.getElementById("status-card");
 const summaryGrid = document.getElementById("summary-grid");
 const commentaryText = document.getElementById("commentary-text");
 const warningsList = document.getElementById("warnings-list");
 const plotElement = document.getElementById("curve-plot");
+const plotTitle = document.getElementById("plot-title");
+const plotSubtitle = document.getElementById("plot-subtitle");
+const comparisonTakeaway = document.getElementById("comparison-takeaway");
+const figureCaption = document.getElementById("figure-caption");
+const copyCaptionButton = document.getElementById("copy-caption");
 const effectTypeSelect = document.getElementById("effect-type");
 const estimateInput = document.getElementById("estimate");
 const lowerInput = document.getElementById("ci-lower");
@@ -56,6 +121,7 @@ const gridPointsInput = document.getElementById("grid-points");
 const gridPointsOutput = document.getElementById("grid-points-output");
 const showCutoffsInput = document.getElementById("show-cutoffs");
 const exportPngButton = document.getElementById("export-png");
+const exportManuscriptPngButton = document.getElementById("export-manuscript-png");
 const exportCsvButton = document.getElementById("export-csv");
 const plotKey = document.getElementById("plot-key");
 const viewModeInputs = Array.from(document.querySelectorAll("input[name='view_mode']"));
@@ -78,6 +144,7 @@ function setStatus(state, message) {
 function setExportEnabled(enabled) {
   exportCsvButton.disabled = !enabled;
   exportPngButton.disabled = !enabled;
+  exportManuscriptPngButton.disabled = !enabled;
 }
 
 function clearRenderedState() {
@@ -87,6 +154,9 @@ function clearRenderedState() {
   commentaryText.textContent = "";
   warningsList.innerHTML = "";
   plotKey.innerHTML = "";
+  comparisonTakeaway.textContent = "Enter a 95% confidence interval to compute the main comparison.";
+  figureCaption.textContent = "";
+  copyCaptionButton.disabled = true;
   if (typeof Plotly !== "undefined") {
     Plotly.purge(plotElement);
   }
@@ -118,6 +188,17 @@ function formatLikelihoodRatio(summary) {
   return `Overflow (log10 LR ${formatNumber(log10LikelihoodRatio)})`;
 }
 
+function formatOptionalLikelihoodRatio(value, logValue) {
+  if (value !== null) {
+    return `${formatNumber(value)}x`;
+  }
+  if (logValue === null) {
+    return "not finite";
+  }
+  const log10LikelihoodRatio = logValue / Math.LN10;
+  return `log10 ratio ${formatNumber(log10LikelihoodRatio)}`;
+}
+
 function formatRange(values) {
   if (!Array.isArray(values) || values.length !== 2) {
     return "";
@@ -125,10 +206,101 @@ function formatRange(values) {
   return `${formatNumber(values[0])} to ${formatNumber(values[1])}`;
 }
 
+function effectOptionForResponse(response) {
+  return (
+    EFFECT_OPTIONS.find((option) => option.key === response.meta.effect_spec.key) ??
+    getSelectedEffect()
+  );
+}
+
 function estimateSourceLabel(estimateSource) {
   return estimateSource === "provided_validated"
     ? "Provided and validated"
     : "CI-implied from 95% CI";
+}
+
+function effectValueLabel(effect, value) {
+  return `${effect.shortLabel} = ${formatNumber(value)}`;
+}
+
+function supportPhrase(relativeLikelihood) {
+  if (relativeLikelihood >= 0.5) {
+    return "substantial support";
+  }
+  if (relativeLikelihood >= 0.1) {
+    return "moderate support";
+  }
+  if (relativeLikelihood >= 0.01) {
+    return "limited support";
+  }
+  return "very weak support";
+}
+
+function thresholdVsNullPhrase(thresholdSummary) {
+  const value = thresholdSummary.likelihood_ratio_threshold_to_null;
+  const logValue = thresholdSummary.log_likelihood_ratio_threshold_to_null;
+  if (value === null && logValue === null) {
+    return "cannot be compared with the null using finite likelihood values";
+  }
+  if (value === null) {
+    return `has more support than the null (${formatOptionalLikelihoodRatio(value, logValue)})`;
+  }
+  if (value >= 1) {
+    return `is ${formatNumber(value)}x as supported as the null`;
+  }
+  return `has ${formatNumber(value)}x the null support`;
+}
+
+function buildComparisonTakeaway(response) {
+  const effect = effectOptionForResponse(response);
+  const estimateLabel = effectValueLabel(effect, response.summary.estimate_display);
+  const nullLabel = effectValueLabel(effect, response.summary.null_display);
+  const nullSupport = supportPhrase(response.summary.null_relative_likelihood);
+  const thresholdSummaries = response.meta.threshold_support_summaries ?? [];
+
+  let takeaway = `Peak support is at ${estimateLabel}; the null ${nullLabel} has ${nullSupport} (relative likelihood ${formatNumber(response.summary.null_relative_likelihood)}).`;
+
+  if (thresholdSummaries.length > 0) {
+    const thresholdSummary = thresholdSummaries[0];
+    takeaway += ` The clinical threshold ${effectValueLabel(effect, thresholdSummary.threshold_display)} ${thresholdVsNullPhrase(thresholdSummary)}.`;
+  } else {
+    takeaway += ` The CI-implied estimate is ${formatLikelihoodRatio(response.summary)}x as supported as the null under this reconstruction.`;
+  }
+
+  return takeaway;
+}
+
+function renderComparisonHeader(response) {
+  const effect = effectOptionForResponse(response);
+  const hasThresholds = (response.meta.threshold_support_summaries ?? []).length > 0;
+
+  plotTitle.textContent = `How the data compare candidate ${effect.candidateLabel}`;
+  plotSubtitle.textContent = hasThresholds
+    ? `Relative to the null ${effect.shortLabel} = ${formatNumber(response.summary.null_display)} and clinical thresholds`
+    : "Relative to the null and the CI-implied estimate";
+  comparisonTakeaway.textContent = buildComparisonTakeaway(response);
+}
+
+function buildFigureCaption(response, displayOptions) {
+  const effect = effectOptionForResponse(response);
+  const panelText =
+    displayOptions.viewMode === "likelihood"
+      ? "The figure shows relative likelihood only."
+      : displayOptions.viewMode === "compatibility"
+        ? "The figure shows the compatibility curve only."
+        : "Panel A shows the compatibility curve and Panel B shows relative likelihood.";
+  const thresholdValues = response.meta.thresholds_display ?? [];
+  const thresholdText =
+    thresholdValues.length > 0
+      ? ` Clinical thresholds are marked at ${thresholdValues.map(formatNumber).join(", ")}.`
+      : "";
+
+  return (
+    `Figure. Wald reconstruction from the reported 95% CI (${formatRange(response.summary.ci_display)}) for ${effect.label.toLowerCase()}. ` +
+    `The CI-implied point estimate is ${effectValueLabel(effect, response.summary.estimate_display)} and the null is ${effectValueLabel(effect, response.summary.null_display)}. ` +
+    `${panelText} Relative likelihood is normalized to 1 at the CI-implied estimate; compatibility is the two-sided Wald p-value function across candidate effect sizes.` +
+    `${thresholdText} This is not exact fitted-model profile likelihood.`
+  );
 }
 
 function parseOptionalNumber(rawValue) {
@@ -179,6 +351,20 @@ function currentDisplayOptions() {
   };
 }
 
+function resizeCurrentPlot() {
+  if (typeof Plotly === "undefined" || !plotElement._fullLayout) {
+    return;
+  }
+  Plotly.Plots.resize(plotElement);
+}
+
+function schedulePlotResize() {
+  window.requestAnimationFrame(() => {
+    resizeCurrentPlot();
+    window.setTimeout(resizeCurrentPlot, 220);
+  });
+}
+
 function hasCompatibilityPanel(viewMode) {
   return viewMode !== "likelihood";
 }
@@ -204,6 +390,7 @@ function updateEffectControls() {
 
   axisSpacingGroup.hidden = effect.family !== "ratio";
   axisSpacingSelect.disabled = effect.family !== "ratio";
+  plotTitle.textContent = `How the data compare candidate ${effect.candidateLabel}`;
 }
 
 function buildPayload() {
@@ -269,27 +456,41 @@ def compute_curves_json(payload_json):
 }
 
 function renderSummary(response) {
+  const thresholdRows = (response.meta.threshold_support_summaries ?? []).map((thresholdSummary) => [
+    `Threshold ${formatNumber(thresholdSummary.threshold_display)} support`,
+    `${formatNumber(thresholdSummary.relative_likelihood)} relative; ${thresholdVsNullPhrase(thresholdSummary)}`,
+  ]);
+  const technicalItems = [
+    ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
+    ["Working-scale SE", response.summary.working_scale_se],
+    [
+      "Computation scale",
+      response.meta.effect_spec.working_scale === "log" ? "Log working scale" : "Natural working scale",
+    ],
+    ["Design threshold markers", formatRange(response.summary.critical_effect_markers_display)],
+  ];
+  if (response.meta.display_range_active && response.meta.display_range_display) {
+    technicalItems.push(["Display range", formatRange(response.meta.display_range_display)]);
+  }
+
   const groups = [
     {
-      title: "Core reconstruction",
+      title: "Main comparison",
       items: [
         ["Point Estimate", response.summary.estimate_display],
-        ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
         [
           "95% CI",
           `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`,
         ],
-        ["Working-scale SE", response.summary.working_scale_se],
-        ["Critical effect markers", formatRange(response.summary.critical_effect_markers_display)],
-      ],
-    },
-    {
-      title: "Null comparison",
-      items: [
         ["Null relative likelihood", response.summary.null_relative_likelihood],
         ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
         ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
+        ...thresholdRows,
       ],
+    },
+    {
+      title: "Technical reconstruction",
+      items: technicalItems,
     },
   ];
 
@@ -320,7 +521,7 @@ function renderPlotKey(response, displayOptions) {
   const keyRows = [
     ["estimate", "Point estimate"],
     ["null", "Null value"],
-    ["critical", "Critical-effect markers"],
+    ["critical", "Design threshold markers"],
   ];
   if (response.meta.thresholds_display.length > 0) {
     keyRows.push(["threshold", "Clinical thresholds"]);
@@ -365,7 +566,7 @@ function renderCommentary(response, displayOptions) {
     `${viewClause} ` +
     `${estimateClause} ` +
     `${spacingClause} ` +
-    `The paired critical-effect markers show the alpha=0.05, power=0.80 distance around the null. ` +
+    `The paired design threshold markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
     `This display is reconstructed from the confidence interval; it is not the exact fitted-model profile likelihood from the original study.`;
 }
@@ -398,10 +599,13 @@ function renderWarnings(response, displayOptions) {
 }
 
 async function renderResponse(response, displayOptions) {
+  renderComparisonHeader(response);
   renderSummary(response);
   renderCommentary(response, displayOptions);
   renderWarnings(response, displayOptions);
   renderPlotKey(response, displayOptions);
+  figureCaption.textContent = buildFigureCaption(response, displayOptions);
+  copyCaptionButton.disabled = false;
   await renderCurves(plotElement, response, displayOptions);
   if (!plotElement.querySelector(".main-svg") || !plotElement._fullLayout) {
     throw new Error("Plot could not be rendered for the current inputs.");
@@ -532,13 +736,36 @@ function initializeForm() {
 }
 
 function initializeUi() {
+  pageShell.dataset.controlsCollapsed = "false";
   sidebar.dataset.collapsed = "false";
   setExportEnabled(false);
+  copyCaptionButton.disabled = true;
   toggleButton.addEventListener("click", () => {
     const nextCollapsed = sidebar.dataset.collapsed !== "true";
     sidebar.dataset.collapsed = nextCollapsed ? "true" : "false";
     toggleButton.setAttribute("aria-expanded", String(!nextCollapsed));
   });
+  desktopControlsToggle.addEventListener("click", () => {
+    const nextCollapsed = pageShell.dataset.controlsCollapsed !== "true";
+    pageShell.dataset.controlsCollapsed = nextCollapsed ? "true" : "false";
+    desktopControlsToggle.setAttribute("aria-pressed", String(nextCollapsed));
+    desktopControlsToggle.textContent = nextCollapsed ? "Show controls" : "Hide controls";
+    schedulePlotResize();
+  });
+
+  if (typeof ResizeObserver !== "undefined") {
+    let resizeFrame = null;
+    const resizeObserver = new ResizeObserver(() => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        resizeCurrentPlot();
+      });
+    });
+    resizeObserver.observe(plotElement);
+  }
 
   gridPointsInput.addEventListener("input", (event) => {
     const nextValue = event.target.value;
@@ -581,6 +808,44 @@ function initializeUi() {
       return;
     }
     await exportPlotPng(plotElement, "wald-confidence-curves.png");
+  });
+
+  exportManuscriptPngButton.addEventListener("click", async () => {
+    if (!runtimeState.currentResponse || !runtimeState.currentDisplayOptions) {
+      return;
+    }
+    await exportManuscriptPng(
+      runtimeState.currentResponse,
+      runtimeState.currentDisplayOptions,
+      "wald-confidence-curves-manuscript.png",
+    );
+  });
+
+  copyCaptionButton.addEventListener("click", async () => {
+    const captionText = figureCaption.textContent.trim();
+    if (!captionText) {
+      return;
+    }
+    const originalText = copyCaptionButton.textContent;
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(captionText);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = captionText;
+        document.body.append(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      copyCaptionButton.textContent = "Copied";
+      window.setTimeout(() => {
+        copyCaptionButton.textContent = originalText;
+      }, 1400);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus("error", `Could not copy caption: ${message}`);
+    }
   });
 }
 
