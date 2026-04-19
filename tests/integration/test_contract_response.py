@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from confcurve.core import MAX_FLOAT
 from confcurve.web_contract import compute_curves
 
@@ -19,6 +21,9 @@ def test_compute_curves_response_is_json_serializable() -> None:
     payload = json.loads(json.dumps(response, allow_nan=False))
     assert payload["meta"]["grid_points"] == 401
     assert payload["meta"]["estimate_source"] == "inferred_from_ci"
+    assert payload["meta"]["display_range_active"] is False
+    assert payload["meta"]["display_range_display"] is None
+    assert payload["meta"]["display_range_working"] is None
     assert payload["summary"]["estimate_display"] == 0.42
     assert payload["summary"]["null_display"] == 0.0
     assert payload["summary"]["critical_effect_distance_working"] > 0
@@ -31,6 +36,26 @@ def test_compute_curves_response_is_json_serializable() -> None:
         "log_relative_likelihood",
     ]
     assert len(payload["grid"]["effect_display"]) == 401
+
+
+def test_active_display_range_response_metadata_is_json_serializable() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "display_range_lower": 0.9,
+            "display_range_upper": 1.1,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    assert payload["meta"]["display_range_active"] is True
+    assert payload["meta"]["display_range_display"] == pytest.approx([0.9, 1.1])
+    assert payload["meta"]["display_range_working"][0] < payload["meta"]["display_range_working"][1]
+    assert payload["grid"]["effect_display"][0] == pytest.approx(0.9)
+    assert payload["grid"]["effect_display"][-1] == pytest.approx(1.1)
 
 
 def test_provided_estimate_sets_provided_validated_meta_flag() -> None:

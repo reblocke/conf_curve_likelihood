@@ -58,8 +58,8 @@ function makeVerticalShapes(response) {
   }));
 }
 
-function makeGuideShapes(response) {
-  if (!response.meta.show_cutoffs) {
+function makeGuideShapes(response, viewMode) {
+  if (!response.meta.show_cutoffs || viewMode === "likelihood") {
     return [];
   }
 
@@ -188,27 +188,56 @@ function logAxisTickConfig(xValues) {
   };
 }
 
+function explicitAxisRange(response, xAxisType) {
+  const displayRange = response.meta.display_range_display;
+  if (!response.meta.display_range_active || !Array.isArray(displayRange)) {
+    return { autorange: true };
+  }
+
+  const [lowerBound, upperBound] = displayRange;
+  if (!Number.isFinite(lowerBound) || !Number.isFinite(upperBound) || lowerBound >= upperBound) {
+    return { autorange: true };
+  }
+  if (xAxisType === "log") {
+    if (lowerBound <= 0 || upperBound <= 0) {
+      return { autorange: true };
+    }
+    return {
+      autorange: false,
+      range: [Math.log10(lowerBound), Math.log10(upperBound)],
+    };
+  }
+
+  return {
+    autorange: false,
+    range: [lowerBound, upperBound],
+  };
+}
+
 export async function renderCurves(plotElement, response, displayOptions) {
+  const viewMode = displayOptions.viewMode ?? "both";
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
   );
   const xAxisType = axisType(response, displayOptions);
   const xAxisTicks = xAxisType === "log" ? logAxisTickConfig(response.grid.effect_display) : {};
+  const xAxisRange = explicitAxisRange(response, xAxisType);
   const previousAxisType = plotElement._fullLayout?.xaxis?.type || "linear";
+  const previousViewMode = plotElement.dataset.viewMode || "both";
 
-  if (previousAxisType !== xAxisType) {
+  if (previousAxisType !== xAxisType || previousViewMode !== viewMode) {
     Plotly.purge(plotElement);
     plotElement.innerHTML = "";
   }
 
-  const topTrace = {
+  const makeCompatibilityTrace = (xaxis, yaxis) => ({
     type: "scatter",
     mode: "lines",
     x: response.grid.effect_display,
     y: response.grid.compatibility,
-    xaxis: "x",
-    yaxis: "y",
+    xaxis,
+    yaxis,
     line: {
       color: "#b04a2f",
       width: 3,
@@ -223,17 +252,17 @@ export async function renderCurves(plotElement, response, displayOptions) {
       formatHoverNumber(response.grid.compatibility[index]),
       response.grid.compatibility[index] >= 0.05 ? "Inside 95% CI" : "Outside 95% CI",
     ]),
-    name: "Compatibility curve",
+    name: "Compatibility / confidence curve",
     showlegend: false,
-  };
+  });
 
-  const bottomTrace = {
+  const makeLikelihoodTrace = (xaxis, yaxis) => ({
     type: "scatter",
     mode: "lines",
     x: response.grid.effect_display,
     y: response.grid.relative_likelihood,
-    xaxis: "x2",
-    yaxis: "y2",
+    xaxis,
+    yaxis,
     line: {
       color: "#132a3a",
       width: 3,
@@ -252,55 +281,58 @@ export async function renderCurves(plotElement, response, displayOptions) {
     ]),
     name: "Relative likelihood curve",
     showlegend: false,
-  };
+  });
 
+  const xAxisLayout = {
+    title: {
+      text: axisTitle(response),
+      standoff: 12,
+    },
+    type: xAxisType,
+    ...xAxisRange,
+    automargin: true,
+    showgrid: true,
+    gridcolor: "rgba(19, 42, 58, 0.08)",
+    zeroline: false,
+    ...xAxisTicks,
+  };
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(255, 252, 247, 0.65)",
     margin: { l: 92, r: 30, t: 18, b: 60 },
     hovermode: "closest",
     xaxis: {
-      title: {
-        text: axisTitle(response),
-        standoff: 12,
-      },
+      ...xAxisLayout,
       anchor: "y",
-      type: xAxisType,
-      autorange: true,
-      automargin: true,
-      showgrid: true,
-      gridcolor: "rgba(19, 42, 58, 0.08)",
-      zeroline: false,
-      ...xAxisTicks,
     },
     yaxis: {
       title: {
-        text: "Compatibility",
+        text:
+          viewMode === "likelihood" ? "Relative likelihood" : "Compatibility / confidence curve",
         standoff: 12,
       },
-      domain: [0.56, 1],
+      domain: viewMode === "both" ? [0.56, 1] : [0, 1],
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
     },
-    xaxis2: {
-      title: {
-        text: axisTitle(response),
-        standoff: 12,
-      },
+    shapes: [...makeVerticalShapes(response), ...makeGuideShapes(response, viewMode)],
+  };
+  let traces;
+  if (viewMode === "likelihood") {
+    traces = [makeLikelihoodTrace("x", "y")];
+  } else if (viewMode === "compatibility") {
+    traces = [makeCompatibilityTrace("x", "y")];
+  } else {
+    traces = [makeCompatibilityTrace("x", "y"), makeLikelihoodTrace("x2", "y2")];
+    layout.xaxis2 = {
+      ...xAxisLayout,
       anchor: "y2",
       matches: "x",
-      type: xAxisType,
-      autorange: true,
-      automargin: true,
-      showgrid: true,
-      gridcolor: "rgba(19, 42, 58, 0.08)",
-      zeroline: false,
-      ...xAxisTicks,
-    },
-    yaxis2: {
+    };
+    layout.yaxis2 = {
       title: {
         text: "Relative likelihood",
         standoff: 12,
@@ -311,9 +343,8 @@ export async function renderCurves(plotElement, response, displayOptions) {
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
-    },
-    shapes: [...makeVerticalShapes(response), ...makeGuideShapes(response)],
-  };
+    };
+  }
 
   const config = {
     responsive: true,
@@ -327,7 +358,8 @@ export async function renderCurves(plotElement, response, displayOptions) {
     ],
   };
 
-  await Plotly.react(plotElement, [topTrace, bottomTrace], layout, config);
+  await Plotly.react(plotElement, traces, layout, config);
+  plotElement.dataset.viewMode = viewMode;
 }
 
 export async function exportPlotPng(plotElement, filename) {

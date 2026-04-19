@@ -14,7 +14,7 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 
 ## What the app does
 
-- accepts a 95% CI, effect type, optional point estimate, optional null, optional clinical thresholds, and ratio-axis spacing
+- accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional clinical thresholds, and ratio-axis spacing
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding confidence curve and normalized relative likelihood curve
 - reports summary quantities such as the CI-implied estimate, reconstructed SE, critical effect markers, null relative likelihood, and two-sided Wald p-value
@@ -42,6 +42,8 @@ Use the wording “approximate profile likelihood under Wald assumptions” cons
   - ratio of means
 
 For ratio measures, the app computes on the log scale, labels the x-axis on the natural ratio scale, and can display that natural-scale axis with logarithmic or linear spacing.
+
+The optional plausible display range constrains only the plotted and exported x-grid. It does not change the CI-derived estimate, reconstructed standard error, null summaries, critical effect markers, or reconstruction warnings.
 
 ## Quickstart
 
@@ -90,7 +92,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 ## Worked examples
 
 - Additive example: 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
-- Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default
+- Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default, and optional plausible display range such as `0.9` to `1.1`
 
 ## Documentation and citation
 

@@ -103,6 +103,8 @@ class CurveRequest(TypedDict, total=False):
     upper: float
     null_value: float
     thresholds: list[float]
+    display_range_lower: float | None
+    display_range_upper: float | None
     display_natural_axis: bool
     grid_points: int
     show_cutoffs: bool
@@ -119,6 +121,9 @@ class MetaPayload(TypedDict):
     relative_asymmetry: float
     thresholds_display: list[float]
     thresholds_working: list[float]
+    display_range_active: bool
+    display_range_display: list[float] | None
+    display_range_working: list[float] | None
 
 
 class SummaryPayload(TypedDict):

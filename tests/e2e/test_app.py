@@ -39,12 +39,43 @@ def xaxis_tick_labels(page: Page) -> list[str]:
     )
 
 
+def plot_trace_names(page: Page) -> list[str]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element.data.map((trace) => trace.name)
+        """
+    )
+
+
+def y_axis_titles(page: Page) -> list[str]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => Array.from(element.querySelectorAll(".g-ytitle text, .g-y2title text"))
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean)
+        """
+    )
+
+
 def xaxis_upper_bound(page: Page) -> float:
     return page.locator("#curve-plot").evaluate(
         """
         (element) => {
           const axis = element._fullLayout.xaxis;
           return axis.type === "log" ? 10 ** axis.range[1] : axis.range[1];
+        }
+        """
+    )
+
+
+def xaxis_bounds(page: Page) -> list[float]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => {
+          const axis = element._fullLayout.xaxis;
+          return axis.type === "log"
+            ? [10 ** axis.range[0], 10 ** axis.range[1]]
+            : [axis.range[0], axis.range[1]];
         }
         """
     )
@@ -75,7 +106,19 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     wait_for_ready(page)
 
     expect(page.locator("label[for='estimate']")).to_have_text("Point Estimate (optional)")
+    expect(page.locator("h2")).to_contain_text("Evidentiary support across effect sizes")
+    expect(page.locator("#read-guide")).to_contain_text("two-sided Wald p-value function")
+    expect(page.locator("#read-guide")).to_contain_text(
+        "does not reconstruct the exact fitted-model profile likelihood"
+    )
     expect(page.locator("#summary-grid")).to_contain_text("Estimate source")
+    expect(page.locator("#summary-grid")).to_contain_text("Core reconstruction")
+    expect(page.locator("#summary-grid")).to_contain_text("Null comparison")
+    expect(page.locator("#plot-key")).to_contain_text("Point estimate")
+    expect(page.locator("#plot-key")).to_contain_text("Null value")
+    expect(page.locator("#plot-key")).to_contain_text("Critical-effect markers")
+    expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
+    expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
     expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 
@@ -273,6 +316,32 @@ def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> 
     assert horizontal_cutoff_count(page) == 3
 
 
+def test_plot_key_tracks_thresholds_and_cutoffs(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
+    expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
+
+    page.locator("#thresholds").fill("0.8, 1.25")
+    page.wait_for_function(
+        """
+        () => document.getElementById("plot-key")?.textContent?.includes("Clinical thresholds")
+        """,
+        timeout=120000,
+    )
+    expect(page.locator("#plot-key")).to_contain_text("Clinical thresholds")
+
+    page.locator("#show-cutoffs").uncheck()
+    page.wait_for_function(
+        """
+        () => !document.getElementById("plot-key")?.textContent?.includes("Compatibility cutoffs")
+        """,
+        timeout=120000,
+    )
+    expect(page.locator("#plot-key")).not_to_contain_text("Compatibility cutoffs")
+
+
 def test_critical_effect_markers_are_visible_on_plot(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
@@ -307,6 +376,185 @@ def test_distant_markers_expand_the_x_axis_extent(app_url: str, page: Page) -> N
     assert xaxis_upper_bound(page) > 12
 
 
+def test_ratio_plausible_display_range_constrains_plot_and_warns(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#display-range-lower").fill("0.9")
+    page.locator("#display-range-upper").fill("1.1")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          if (!plot?._fullLayout?.xaxis?.range) {
+            return false;
+          }
+          const axis = plot._fullLayout.xaxis;
+          const bounds = axis.type === "log"
+            ? [10 ** axis.range[0], 10 ** axis.range[1]]
+            : [axis.range[0], axis.range[1]];
+          return Math.abs(bounds[0] - 0.9) < 1e-6 && Math.abs(bounds[1] - 1.1) < 1e-6;
+        }
+        """,
+        timeout=120000,
+    )
+
+    lower_bound, upper_bound = xaxis_bounds(page)
+    assert lower_bound == pytest.approx(0.9)
+    assert upper_bound == pytest.approx(1.1)
+    expect(page.locator("#warnings-list")).to_contain_text(
+        "The chosen display range excludes the point estimate."
+    )
+    expect(page.locator("#warnings-list")).to_contain_text(
+        "The chosen display range excludes the lower 95% CI bound."
+    )
+    expect(page.locator("#warnings-list")).to_contain_text(
+        "The chosen display range excludes one or more critical-effect markers."
+    )
+
+
+def test_plausible_display_range_csv_exports_current_grid(
+    app_url: str, page: Page, tmp_path: Path
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#display-range-lower").fill("0.9")
+    page.locator("#display-range-upper").fill("1.1")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          if (!plot?._fullLayout?.xaxis?.range) {
+            return false;
+          }
+          const axis = plot._fullLayout.xaxis;
+          const upperBound = axis.type === "log" ? 10 ** axis.range[1] : axis.range[1];
+          return Math.abs(upperBound - 1.1) < 1e-6;
+        }
+        """,
+        timeout=120000,
+    )
+
+    with page.expect_download() as download_info:
+        page.locator("#export-csv").click()
+    download = download_info.value
+
+    csv_path = tmp_path / download.suggested_filename
+    download.save_as(csv_path)
+    rows = csv_path.read_text(encoding="utf-8").strip().splitlines()
+    first_effect = float(rows[1].split(",")[0])
+    last_effect = float(rows[-1].split(",")[0])
+    assert first_effect == pytest.approx(0.9)
+    assert last_effect == pytest.approx(1.1)
+
+
+def test_invalid_plausible_display_range_clears_rendered_state(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#display-range-lower").fill("1.2")
+    page.locator("#display-range-upper").fill("1.1")
+    page.locator("#display-range-upper").blur()
+
+    expect(page.locator("#status-card")).to_contain_text(
+        "Plausible display range lower must be less", timeout=120000
+    )
+    expect(page.locator("#export-csv")).to_be_disabled()
+    expect(page.locator("#export-png")).to_be_disabled()
+    expect(page.locator("#summary-grid")).to_be_empty()
+    expect(page.locator("#curve-plot .main-svg")).to_have_count(0)
+
+
+def test_clearing_plausible_display_range_restores_auto_behavior(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#display-range-lower").fill("0.9")
+    page.locator("#display-range-upper").fill("1.1")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          if (!plot?._fullLayout?.xaxis?.range) {
+            return false;
+          }
+          const axis = plot._fullLayout.xaxis;
+          const upperBound = axis.type === "log" ? 10 ** axis.range[1] : axis.range[1];
+          return Math.abs(upperBound - 1.1) < 1e-6;
+        }
+        """,
+        timeout=120000,
+    )
+
+    page.locator("#display-range-lower").fill("")
+    page.locator("#display-range-upper").fill("")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          if (!plot?._fullLayout?.xaxis?.range) {
+            return false;
+          }
+          const axis = plot._fullLayout.xaxis;
+          const bounds = axis.type === "log"
+            ? [10 ** axis.range[0], 10 ** axis.range[1]]
+            : [axis.range[0], axis.range[1]];
+          return bounds[0] < 0.9 && bounds[1] > 2.7;
+        }
+        """,
+        timeout=120000,
+    )
+
+    lower_bound, upper_bound = xaxis_bounds(page)
+    assert lower_bound < 0.9
+    assert upper_bound > 2.7
+
+
+def test_likelihood_only_view_hides_compatibility_panel(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#view-mode-likelihood").check()
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?.dataset?.viewMode === "likelihood" && plot.data?.length === 1;
+        }
+        """,
+        timeout=120000,
+    )
+
+    assert plot_trace_names(page) == ["Relative likelihood curve"]
+    assert y_axis_titles(page) == ["Relative likelihood"]
+    assert horizontal_cutoff_count(page) == 0
+    expect(page.locator("#plot-key")).not_to_contain_text("Compatibility cutoffs")
+    expect(page.locator("#commentary-text")).to_contain_text("relative evidentiary support")
+
+
+def test_compatibility_only_view_hides_likelihood_panel(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.locator("#view-mode-compatibility").check()
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          return plot?.dataset?.viewMode === "compatibility" && plot.data?.length === 1;
+        }
+        """,
+        timeout=120000,
+    )
+
+    assert plot_trace_names(page) == ["Compatibility / confidence curve"]
+    assert y_axis_titles(page) == ["Compatibility / confidence curve"]
+    assert horizontal_cutoff_count(page) == 3
+    expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
+    expect(page.locator("#commentary-text")).to_contain_text("two-sided Wald p-value function")
+
+
 def test_y_axis_titles_are_visible(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
@@ -320,22 +568,16 @@ def test_y_axis_titles_are_visible(app_url: str, page: Page) -> None:
           )
             .map((node) => node.textContent?.trim())
             .filter(Boolean);
-          return titles.includes("Compatibility") && titles.includes("Relative likelihood");
+          return titles.includes("Compatibility / confidence curve")
+            && titles.includes("Relative likelihood");
         }
         """,
         timeout=120000,
     )
 
-    y_axis_titles = page.locator("#curve-plot").evaluate(
-        """
-        (element) => Array.from(element.querySelectorAll(".g-ytitle text, .g-y2title text"))
-          .map((node) => node.textContent?.trim())
-          .filter(Boolean)
-        """
-    )
-
-    assert "Compatibility" in y_axis_titles
-    assert "Relative likelihood" in y_axis_titles
+    titles = y_axis_titles(page)
+    assert "Compatibility / confidence curve" in titles
+    assert "Relative likelihood" in titles
 
 
 def test_csv_export_downloads_current_grid(app_url: str, page: Page, tmp_path: Path) -> None:
@@ -364,6 +606,34 @@ def test_png_export_downloads_combined_figure(app_url: str, page: Page, tmp_path
     png_path = tmp_path / download.suggested_filename
     download.save_as(png_path)
     assert png_path.stat().st_size > 0
+
+
+def test_png_export_works_in_single_panel_view_modes(
+    app_url: str, page: Page, tmp_path: Path
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    for mode in ("likelihood", "compatibility"):
+        page.locator(f"#view-mode-{mode}").check()
+        page.wait_for_function(
+            """
+            (expectedMode) => {
+              const plot = document.getElementById("curve-plot");
+              return plot?.dataset?.viewMode === expectedMode && plot.data?.length === 1;
+            }
+            """,
+            arg=mode,
+            timeout=120000,
+        )
+
+        with page.expect_download() as download_info:
+            page.locator("#export-png").click()
+        download = download_info.value
+
+        png_path = tmp_path / f"{mode}-{download.suggested_filename}"
+        download.save_as(png_path)
+        assert png_path.stat().st_size > 0
 
 
 def test_mobile_controls_toggle_remains_usable(app_url: str, page: Page) -> None:

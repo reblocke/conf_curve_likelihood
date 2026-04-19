@@ -81,6 +81,7 @@ textarea {
 .intro,
 .field-note,
 .plot-note,
+.read-guide,
 #commentary-text,
 #warnings-list,
 #status-card {
@@ -133,6 +134,21 @@ textarea {
   gap: 12px;
 }
 
+.range-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.range-input-grid > div {
+  display: grid;
+  gap: 8px;
+}
+
+.range-input-grid label {
+  font-size: 0.78rem;
+}
+
 .label-row output {
   color: var(--accent);
   font-size: 0.88rem;
@@ -147,6 +163,22 @@ label {
 .field-note {
   margin: -2px 0 0;
   font-size: 0.84rem;
+}
+
+.field-details {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.field-details summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.field-details p {
+  margin: 8px 0 0;
 }
 
 input,
@@ -230,6 +262,133 @@ button:hover {
   margin-bottom: 18px;
 }
 
+.view-mode-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 520px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.view-mode-control legend {
+  width: 100%;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.view-mode-control label {
+  position: relative;
+  cursor: pointer;
+}
+
+.view-mode-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.view-mode-control span {
+  display: block;
+  padding: 9px 12px;
+  border: 1px solid rgba(19, 42, 58, 0.16);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.view-mode-control input:checked + span {
+  border-color: rgba(176, 74, 47, 0.45);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.view-mode-control input:focus-visible + span {
+  outline: 2px solid rgba(176, 74, 47, 0.38);
+  outline-offset: 2px;
+}
+
+.read-guide {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(19, 42, 58, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 250, 244, 0.7);
+  font-size: 0.92rem;
+}
+
+.read-guide p {
+  margin: 0;
+}
+
+.read-guide .field-details {
+  margin-top: 10px;
+}
+
+.plot-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.key-line {
+  width: 34px;
+  border-top: 3px solid currentColor;
+}
+
+.key-line-estimate {
+  color: #b04a2f;
+}
+
+.key-line-null {
+  color: #132a3a;
+  border-top-style: dotted;
+}
+
+.key-line-critical {
+  color: #8f6b1f;
+  border-top-style: solid;
+  border-image: repeating-linear-gradient(
+      90deg,
+      currentColor 0 10px,
+      transparent 10px 14px,
+      currentColor 14px 17px,
+      transparent 17px 21px
+    )
+    1;
+}
+
+.key-line-threshold {
+  color: #4c8a5b;
+  border-top-style: dashed;
+}
+
+.key-line-cutoff {
+  color: rgba(19, 42, 58, 0.45);
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
+
 .plot-surface {
   min-height: 640px;
 }
@@ -241,6 +400,25 @@ button:hover {
 }
 
 .summary-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.summary-group {
+  display: grid;
+  gap: 10px;
+}
+
+.summary-group-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.summary-items {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 18px;
@@ -311,6 +489,10 @@ button:hover {
     align-items: start;
   }
 
+  .view-mode-control {
+    max-width: none;
+  }
+
   .plot-surface {
     min-height: 560px;
   }
@@ -322,11 +504,15 @@ button:hover {
     padding: 18px;
   }
 
-  .summary-grid {
+  .summary-items {
     grid-template-columns: 1fr;
   }
 
   .button-row {
     flex-direction: column;
+  }
+
+  .range-input-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -4,13 +4,14 @@ Use this file to maintain continuity across coding sessions (human or agent).
 
 ## Current status
 
-- Goal: Fix the ratio/log x-axis tick labels so natural-scale displays use readable decimal labels instead of Plotly's compact log digits.
+- Goal: Implement Tickets 01 and 02: optional plausible display range, clearer evidentiary interpretation, frontend view modes, plot key, and grouped summary.
 - Last known good commit: 276bbc9 on `main`
-- Next step: Commit the verified frontend tick-label fix if the user wants it persisted to git; otherwise the working tree is ready for review.
+- Next step: Review the combined Ticket 01 + Ticket 02 working tree and commit if acceptable.
 
 ## Open checkpoints
 
 - Branch: `main`
+- Current working tree at session start: clean
 - PR: #8 merged (`feat: make the Wald reconstruction CI-driven`)
 - Expected gates:
   - local `make verify`: passed before merge on the feature branch
@@ -19,6 +20,84 @@ Use this file to maintain continuity across coding sessions (human or agent).
   - live Pages smoke: confirmed the deployed HTML serves the new optional-estimate wording
 
 ## Session log
+
+### 2026-04-19
+
+**Objective:**
+
+Implement Ticket 02: clarify interpretation, add plot view modes, add a plot key, and split the summary.
+
+**Plan:**
+
+- keep the default view as `both`
+- add frontend-only view mode controls, interpretive copy, key/legend, grouped summary, and view-aware commentary
+- update Plotly rendering for dual-panel and single-panel layouts
+- add E2E coverage for modes, legend/key visibility, grouped summaries, explainer copy, and PNG export
+
+**Work completed:**
+
+- added a frontend-only `DEFAULT_VIEW_MODE = "both"` and segmented plot view selector
+- added concise and expandable interpretation copy explaining compatibility/p-value and relative-likelihood views
+- split the summary into `Core reconstruction` and `Null comparison`
+- added a dynamic HTML plot key for estimate, null, critical-effect markers, thresholds, and compatibility cutoffs
+- made commentary view-aware for both-panel, likelihood-only, and compatibility-only modes
+- refactored Plotly rendering to support current dual-panel layout plus full-height single-panel likelihood and compatibility views
+- preserved CSV schema and all Python reconstruction/payload code for Ticket 02
+- added E2E coverage for interpretation copy, grouped summary, plot key visibility, view switching, and PNG export in single-panel modes
+
+**Verification:**
+
+- `node --check web/assets/app.js` passed
+- `node --check web/assets/plot.js` passed
+- `uv run pytest -q tests/e2e/test_app.py -k 'initial_render or plot_key or likelihood_only or compatibility_only or y_axis_titles or single_panel_view_modes' --browser chromium --tracing retain-on-failure --video retain-on-failure --screenshot only-on-failure --output test-results` passed
+- `uv run ruff format --check .` passed
+- `uv run ruff check .` passed
+- `make test` passed
+- `make e2e` passed
+- final `make verify` passed
+
+**Open questions / risks:**
+
+- no open implementation questions; remaining risk is ordinary visual review beyond automated Chromium coverage
+
+### 2026-04-19
+
+**Objective:**
+
+Implement Ticket 01: optional plausible display range for the app x-axis only.
+
+**Plan:**
+
+- extend the Python request/response contract and validation
+- generate constrained display grids only when both range bounds are supplied
+- add browser controls and Plotly range handling
+- add truncation warnings, README wording, staged Pyodide files, and tests
+
+**Work completed:**
+
+- extended the Python request/response contract with optional plausible display range bounds and active-range metadata
+- added display-range validation for both-or-none bounds, finite values, order, ratio positivity, and finite plot payloads
+- changed grid generation so active ranges use the requested interval exactly while summary quantities remain unchanged
+- added specific off-screen reference warnings for excluded estimate, CI bounds, null, thresholds, and critical-effect markers
+- added sidebar controls, compact explanatory copy, expandable guidance, and Plotly explicit range handling for linear/log axes
+- kept PNG/CSV exports tied to the displayed grid; CSV now exports the constrained grid when active
+- refreshed staged Pyodide files under `web/assets/py/confcurve/`
+- updated README wording and added focused unit, integration, and E2E coverage
+
+**Verification:**
+
+- `uv run pytest -q tests/test_core.py -k 'display_range'` passed
+- `uv run pytest -q tests/integration/test_contract_response.py -k 'display_range or json_serializable'` passed
+- `uv run pytest -q tests/e2e/test_app.py -k 'plausible_display_range' --browser chromium --tracing retain-on-failure --video retain-on-failure --screenshot only-on-failure --output test-results` passed
+- `uv run ruff format --check .` passed
+- `uv run ruff check .` passed
+- `make test` passed
+- `make e2e` passed
+- final `make verify` passed
+
+**Open questions / risks:**
+
+- no open implementation questions; remaining risk is ordinary browser visual/layout review beyond the automated Chromium checks
 
 ### 2026-03-24
 

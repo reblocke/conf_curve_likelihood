@@ -7,6 +7,7 @@ import numpy as np
 from .core import (
     LOG_MAX_FLOAT,
     MAX_FLOAT,
+    ValidationError,
     asymmetry_warning,
     build_grid,
     confidence_curve,
@@ -46,6 +47,40 @@ def _safe_display_values(
     return display_values, bool(np.any(clipped_mask))
 
 
+def _display_range_exclusion_warnings(
+    display_range_working: tuple[float, float] | None,
+    *,
+    theta_hat: float,
+    lower_working: float,
+    upper_working: float,
+    null_working: float,
+    thresholds_working: list[float],
+    critical_markers_working: tuple[float, float],
+) -> list[str]:
+    if display_range_working is None:
+        return []
+
+    range_lower, range_upper = display_range_working
+
+    def outside_range(value: float) -> bool:
+        return value < range_lower or value > range_upper
+
+    warnings: list[str] = []
+    if outside_range(theta_hat):
+        warnings.append("The chosen display range excludes the point estimate.")
+    if outside_range(lower_working):
+        warnings.append("The chosen display range excludes the lower 95% CI bound.")
+    if outside_range(upper_working):
+        warnings.append("The chosen display range excludes the upper 95% CI bound.")
+    if outside_range(null_working):
+        warnings.append("The chosen display range excludes the null value.")
+    if any(outside_range(value) for value in thresholds_working):
+        warnings.append("The chosen display range excludes one or more clinical thresholds.")
+    if any(outside_range(value) for value in critical_markers_working):
+        warnings.append("The chosen display range excludes one or more critical-effect markers.")
+    return warnings
+
+
 def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     """Compute a JSON-serializable response for the browser app."""
 
@@ -56,6 +91,8 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         upper=payload.get("upper"),
         null_value=payload.get("null_value"),
         thresholds=payload.get("thresholds"),
+        display_range_lower=payload.get("display_range_lower"),
+        display_range_upper=payload.get("display_range_upper"),
         display_natural_axis=bool(payload.get("display_natural_axis", True)),
         grid_points=int(payload.get("grid_points", 801)),
         show_cutoffs=bool(payload.get("show_cutoffs", True)),
@@ -71,23 +108,42 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
     se_info = estimate_se_details(theta_hat=theta_hat, lower=lower_working, upper=upper_working)
     critical_distance_working = critical_effect_distance(se_info.se)
     critical_markers_working = critical_effect_markers(null_working, se=se_info.se)
-    natural_axis_upper_bound = LOG_MAX_FLOAT if validated.display_natural_axis else None
-    safe_span = max_safe_grid_span(
-        theta_hat=theta_hat,
-        se=se_info.se,
-        natural_axis_upper_bound=natural_axis_upper_bound,
-    )
-    grid_working = build_grid(
-        theta_hat=theta_hat,
-        se=se_info.se,
-        n=validated.grid_points,
-        include_values=(null_working, *thresholds_working, *critical_markers_working),
-        max_span=safe_span,
-    )
+    safe_span = None
+    if validated.display_range_working is None:
+        natural_axis_upper_bound = LOG_MAX_FLOAT if validated.display_natural_axis else None
+        safe_span = max_safe_grid_span(
+            theta_hat=theta_hat,
+            se=se_info.se,
+            natural_axis_upper_bound=natural_axis_upper_bound,
+        )
+        grid_working = build_grid(
+            theta_hat=theta_hat,
+            se=se_info.se,
+            n=validated.grid_points,
+            include_values=(null_working, *thresholds_working, *critical_markers_working),
+            max_span=safe_span,
+        )
+    else:
+        range_lower_working, range_upper_working = validated.display_range_working
+        grid_working = np.linspace(
+            range_lower_working,
+            range_upper_working,
+            num=validated.grid_points,
+            dtype=float,
+        )
+        if not np.isfinite(grid_working).all():
+            raise ValidationError("Plausible display range must produce a finite x-grid.")
     z_values = (grid_working - theta_hat) / se_info.se
     compatibility = confidence_curve(grid_working, theta_hat=theta_hat, se=se_info.se)
     rel_likelihood = relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
     log_rel_likelihood = log_relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
+    if validated.display_range_working is not None and (
+        not np.isfinite(z_values).all() or not np.isfinite(log_rel_likelihood).all()
+    ):
+        raise ValidationError(
+            "Plausible display range is too far from the CI-derived estimate to plot "
+            "with finite floating-point precision."
+        )
 
     display_axis_scale = "natural" if validated.display_natural_axis else "working"
     natural_axis_clipped = False
@@ -114,7 +170,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         critical_markers_display = np.asarray(critical_markers_working, dtype=float)
 
     warning_messages = list(validated.warnings)
-    if any(
+    if safe_span is not None and any(
         value is not None and abs(value - theta_hat) > safe_span
         for value in (null_working, *thresholds_working, *critical_markers_working)
     ):
@@ -128,6 +184,17 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
             "The estimate sits at the finite floating-point boundary on the working scale, "
             "so the plotted x-grid collapses to the estimate."
         )
+    warning_messages.extend(
+        _display_range_exclusion_warnings(
+            validated.display_range_working,
+            theta_hat=theta_hat,
+            lower_working=lower_working,
+            upper_working=upper_working,
+            null_working=null_working,
+            thresholds_working=thresholds_working,
+            critical_markers_working=critical_markers_working,
+        )
+    )
     if natural_axis_clipped:
         warning_messages.append(
             "Natural-axis x-values were clipped at the largest finite floating-point value. "
@@ -179,6 +246,17 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
             "relative_asymmetry": observed_estimate_info.relative_asymmetry,
             "thresholds_display": threshold_display,
             "thresholds_working": thresholds_working,
+            "display_range_active": validated.display_range_working is not None,
+            "display_range_display": (
+                None
+                if validated.display_range_working is None
+                else [float(grid_display[0]), float(grid_display[-1])]
+            ),
+            "display_range_working": (
+                None
+                if validated.display_range_working is None
+                else [float(grid_working[0]), float(grid_working[-1])]
+            ),
         },
         "summary": {
             "estimate_display": float(estimate_display),

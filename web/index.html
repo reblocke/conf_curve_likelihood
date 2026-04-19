@@ -80,6 +80,41 @@
             </p>
           </section>
 
+          <section class="control-group" id="display-range-group">
+            <label>Plausible display range</label>
+            <div class="range-input-grid">
+              <div>
+                <label for="display-range-lower">Plausible display range lower</label>
+                <input
+                  id="display-range-lower"
+                  name="display_range_lower"
+                  type="number"
+                  step="any"
+                />
+              </div>
+              <div>
+                <label for="display-range-upper">Plausible display range upper</label>
+                <input
+                  id="display-range-upper"
+                  name="display_range_upper"
+                  type="number"
+                  step="any"
+                />
+              </div>
+            </div>
+            <p class="field-note">
+              Optional. Limits the x-axis only; it does not change the CI-derived reconstruction.
+            </p>
+            <details class="field-details">
+              <summary>Choosing a plausible range</summary>
+              <p>
+                Choose this range by reasoning backward from the maximum attributable burden of the targeted physiology,
+                how strongly assignment could plausibly mediate that pathway, and what immediate and downstream differences
+                in the outcome group assignment could realistically produce.
+              </p>
+            </details>
+          </section>
+
           <section class="control-group">
             <label for="thresholds">Clinical thresholds</label>
             <input
@@ -126,13 +161,42 @@
         <section class="plot-card">
           <div class="plot-header">
             <div>
-              <p class="eyebrow">Linked Views</p>
-              <h2>Confidence curve and relative likelihood</h2>
+              <p class="eyebrow">Evidentiary Display</p>
+              <h2>Evidentiary support across effect sizes</h2>
             </div>
-            <p class="plot-note">
-              Both panels are deterministic transformations of the same standardized distance from the CI-driven estimate.
-            </p>
+            <fieldset class="view-mode-control" aria-label="View mode">
+              <legend>View</legend>
+              <label>
+                <input id="view-mode-both" name="view_mode" type="radio" value="both" />
+                <span>Both panels</span>
+              </label>
+              <label>
+                <input id="view-mode-likelihood" name="view_mode" type="radio" value="likelihood" />
+                <span>Relative likelihood only</span>
+              </label>
+              <label>
+                <input id="view-mode-compatibility" name="view_mode" type="radio" value="compatibility" />
+                <span>Compatibility only</span>
+              </label>
+            </fieldset>
           </div>
+          <div class="read-guide" id="read-guide">
+            <p>
+              <strong>How to read this.</strong>
+              Compatibility / confidence curve = the two-sided Wald p-value function across candidate effect sizes.
+              Relative likelihood = a monotone transform of the same Wald distance, normalized to 1 at the CI-implied estimate.
+            </p>
+            <details class="field-details">
+              <summary>More interpretation context</summary>
+              <p>
+                Both views come from the same CI-based Wald reconstruction. The likelihood view is often easier to read as
+                relative evidentiary support across effect sizes under that Wald approximation. This app does not reconstruct
+                the exact fitted-model profile likelihood; likelihood-principle-style interpretation applies within the Wald
+                reconstruction shown here, not as a claim that the original model likelihood has been recovered.
+              </p>
+            </details>
+          </div>
+          <div id="plot-key" class="plot-key" aria-label="Plot key"></div>
           <div id="curve-plot" class="plot-surface" aria-label="Confidence curve and likelihood plots"></div>
         </section>
 

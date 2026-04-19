@@ -174,6 +174,188 @@ def test_invalid_ratio_inputs_raise_errors() -> None:
         )
 
 
+def test_display_range_requires_both_bounds() -> None:
+    with pytest.raises(ValidationError, match="supplied together"):
+        compute_curves(
+            {
+                "effect_type": "odds_ratio",
+                "lower": 1.2,
+                "upper": 2.7,
+                "display_range_lower": 0.9,
+            }
+        )
+
+
+def test_display_range_requires_ordered_finite_bounds() -> None:
+    with pytest.raises(ValidationError, match="less than"):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": 0.11,
+                "upper": 0.73,
+                "display_range_lower": 0.5,
+                "display_range_upper": 0.2,
+            }
+        )
+
+    with pytest.raises(ValidationError, match="must be finite"):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": 0.11,
+                "upper": 0.73,
+                "display_range_lower": 0.2,
+                "display_range_upper": math.inf,
+            }
+        )
+
+
+def test_ratio_display_range_requires_positive_bounds() -> None:
+    with pytest.raises(ValidationError, match="strictly positive"):
+        compute_curves(
+            {
+                "effect_type": "odds_ratio",
+                "lower": 1.2,
+                "upper": 2.7,
+                "display_range_lower": 0.0,
+                "display_range_upper": 1.1,
+            }
+        )
+
+
+def test_active_display_range_metadata_and_grid_match_requested_range() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "display_range_lower": 0.9,
+            "display_range_upper": 1.1,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["display_range_active"] is True
+    assert response["meta"]["display_range_display"] == pytest.approx([0.9, 1.1])
+    assert response["meta"]["display_range_working"] == pytest.approx(
+        [math.log(0.9), math.log(1.1)]
+    )
+    assert response["grid"]["effect_display"][0] == pytest.approx(0.9)
+    assert response["grid"]["effect_display"][-1] == pytest.approx(1.1)
+    assert response["grid"]["effect_working"][0] == pytest.approx(math.log(0.9))
+    assert response["grid"]["effect_working"][-1] == pytest.approx(math.log(1.1))
+
+
+def test_default_display_range_metadata_is_inactive() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["meta"]["display_range_active"] is False
+    assert response["meta"]["display_range_display"] is None
+    assert response["meta"]["display_range_working"] is None
+
+
+def test_display_range_preserves_reconstruction_summaries() -> None:
+    baseline = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.0,
+            "thresholds": [1.25],
+            "grid_points": 401,
+        }
+    )
+    constrained = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 1.0,
+            "thresholds": [1.25],
+            "display_range_lower": 0.9,
+            "display_range_upper": 1.1,
+            "grid_points": 401,
+        }
+    )
+
+    for key, expected in baseline["summary"].items():
+        observed = constrained["summary"][key]
+        if expected is None:
+            assert observed is None
+        else:
+            assert observed == pytest.approx(expected)
+    assert constrained["meta"]["estimate_source"] == baseline["meta"]["estimate_source"]
+    assert constrained["meta"]["se_method"] == baseline["meta"]["se_method"]
+    assert constrained["meta"]["relative_asymmetry"] == pytest.approx(
+        baseline["meta"]["relative_asymmetry"]
+    )
+
+
+def test_display_range_does_not_auto_expand_to_reference_markers() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 12.0,
+            "thresholds": [8.0],
+            "display_range_lower": 0.9,
+            "display_range_upper": 1.1,
+            "grid_points": 401,
+        }
+    )
+
+    x_values = response["grid"]["effect_display"]
+    assert x_values[0] == pytest.approx(0.9)
+    assert x_values[-1] == pytest.approx(1.1)
+    assert x_values[-1] < 8.0
+    assert x_values[-1] < 12.0
+
+
+def test_display_range_warns_when_key_references_are_excluded() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "null_value": 12.0,
+            "thresholds": [8.0],
+            "display_range_lower": 0.9,
+            "display_range_upper": 1.1,
+            "grid_points": 401,
+        }
+    )
+
+    messages = "\n".join(response["warnings"])
+    assert "excludes the point estimate" in messages
+    assert "excludes the lower 95% CI bound" in messages
+    assert "excludes the upper 95% CI bound" in messages
+    assert "excludes the null value" in messages
+    assert "excludes one or more clinical thresholds" in messages
+    assert "excludes one or more critical-effect markers" in messages
+
+
+def test_display_range_rejects_non_finite_grid_payloads() -> None:
+    with pytest.raises(ValidationError, match="finite floating-point precision"):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": -1e-320,
+                "upper": 1e-320,
+                "display_range_lower": -1e308,
+                "display_range_upper": 1e308,
+                "grid_points": 401,
+            }
+        )
+
+
 def test_estimate_within_tolerance_can_still_trigger_asymmetry_warning() -> None:
     response = compute_curves(
         {

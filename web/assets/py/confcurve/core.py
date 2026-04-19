@@ -37,6 +37,7 @@ class ValidatedInputs:
     upper: float
     null_value: float
     thresholds: tuple[float, ...]
+    display_range_working: tuple[float, float] | None
     display_natural_axis: bool
     grid_points: int
     show_cutoffs: bool
@@ -129,6 +130,59 @@ def _coerce_thresholds(thresholds: Sequence[float] | None) -> tuple[float, ...]:
     return values
 
 
+def _coerce_display_range(
+    effect_type: str,
+    spec: EffectSpec,
+    lower: float | int | None,
+    upper: float | int | None,
+) -> tuple[float, float] | None:
+    lower_present = lower is not None
+    upper_present = upper is not None
+    if not lower_present and not upper_present:
+        return None
+    if lower_present != upper_present:
+        raise ValidationError("Plausible display range lower and upper must be supplied together.")
+
+    lower_value = float(lower)
+    upper_value = float(upper)
+    for label, value in (
+        ("Plausible display range lower", lower_value),
+        ("Plausible display range upper", upper_value),
+    ):
+        if not isfinite(value):
+            raise ValidationError(f"{label} must be finite.")
+
+    if spec.positive_only and (lower_value <= 0 or upper_value <= 0):
+        raise ValidationError(
+            f"{spec.label} plausible display range bounds must be strictly positive "
+            "on the natural scale."
+        )
+    if lower_value >= upper_value:
+        raise ValidationError(
+            "Plausible display range lower must be less than plausible display range upper."
+        )
+
+    lower_working = float(to_working_scale(effect_type, lower_value))
+    upper_working = float(to_working_scale(effect_type, upper_value))
+    if lower_working >= upper_working:
+        raise ValidationError(
+            "Plausible display range lower must be less than plausible display range upper "
+            "on the working scale."
+        )
+    try:
+        _working_scale_difference(
+            upper_working,
+            lower_working,
+            label="Plausible display range width",
+        )
+    except ValidationError as exc:
+        raise ValidationError(
+            "Plausible display range is too wide to plot with finite floating-point precision."
+        ) from exc
+
+    return lower_working, upper_working
+
+
 def _working_scale_midpoint_and_half_width(lower: float, upper: float) -> tuple[float, float]:
     """Return finite midpoint and half-width for a working-scale interval."""
 
@@ -159,6 +213,8 @@ def validate_inputs(
     upper: float | int | None = None,
     null_value: float | int | None = None,
     thresholds: Sequence[float] | None = None,
+    display_range_lower: float | int | None = None,
+    display_range_upper: float | int | None = None,
     display_natural_axis: bool = True,
     grid_points: int = DEFAULT_GRID_POINTS,
     show_cutoffs: bool = True,
@@ -193,6 +249,12 @@ def validate_inputs(
         raise ValidationError("Null value must be finite.")
 
     normalized_thresholds = _coerce_thresholds(thresholds)
+    display_range = _coerce_display_range(
+        effect_type,
+        spec,
+        display_range_lower,
+        display_range_upper,
+    )
     warnings: list[str] = []
 
     if spec.positive_only:
@@ -248,6 +310,7 @@ def validate_inputs(
         upper=upper_value,
         null_value=normalized_null,
         thresholds=normalized_thresholds,
+        display_range_working=display_range,
         display_natural_axis=bool(display_natural_axis and spec.family == "ratio"),
         grid_points=points,
         show_cutoffs=bool(show_cutoffs),

@@ -3,6 +3,7 @@ import { exportPlotPng, renderCurves } from "./plot.js";
 const PYODIDE_VERSION = "0.29.3";
 const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 const PYTHON_PACKAGE_FILES = ["__init__.py", "core.py", "models.py", "stage.py", "web_contract.py"];
+const DEFAULT_VIEW_MODE = "both";
 const EFFECT_OPTIONS = [
   { key: "odds_ratio", label: "Odds ratio", family: "ratio", defaultNull: 1 },
   { key: "risk_ratio", label: "Risk ratio", family: "ratio", defaultNull: 1 },
@@ -26,6 +27,8 @@ const DEFAULT_VALUES = {
   upper: "2.7",
   null_value: "1",
   thresholds: "",
+  display_range_lower: "",
+  display_range_upper: "",
   axis_spacing: "log",
   grid_points: "801",
   show_cutoffs: true,
@@ -47,11 +50,15 @@ const nullInput = document.getElementById("null-value");
 const thresholdsInput = document.getElementById("thresholds");
 const axisSpacingGroup = document.getElementById("axis-spacing-group");
 const axisSpacingSelect = document.getElementById("axis-spacing");
+const displayRangeLowerInput = document.getElementById("display-range-lower");
+const displayRangeUpperInput = document.getElementById("display-range-upper");
 const gridPointsInput = document.getElementById("grid-points");
 const gridPointsOutput = document.getElementById("grid-points-output");
 const showCutoffsInput = document.getElementById("show-cutoffs");
 const exportPngButton = document.getElementById("export-png");
 const exportCsvButton = document.getElementById("export-csv");
+const plotKey = document.getElementById("plot-key");
+const viewModeInputs = Array.from(document.querySelectorAll("input[name='view_mode']"));
 
 const runtimeState = {
   readyPromise: null,
@@ -79,6 +86,7 @@ function clearRenderedState() {
   summaryGrid.innerHTML = "";
   commentaryText.textContent = "";
   warningsList.innerHTML = "";
+  plotKey.innerHTML = "";
   if (typeof Plotly !== "undefined") {
     Plotly.purge(plotElement);
   }
@@ -159,6 +167,22 @@ function currentAxisSpacing() {
   return getSelectedEffect().family === "ratio" ? axisSpacingSelect.value : "linear";
 }
 
+function currentViewMode() {
+  const selected = viewModeInputs.find((input) => input.checked);
+  return selected?.value ?? DEFAULT_VIEW_MODE;
+}
+
+function currentDisplayOptions() {
+  return {
+    axisSpacing: currentAxisSpacing(),
+    viewMode: currentViewMode(),
+  };
+}
+
+function hasCompatibilityPanel(viewMode) {
+  return viewMode !== "likelihood";
+}
+
 function shouldReplaceWithDefaultNull(rawValue, previousDefaultNull) {
   const trimmed = rawValue.trim();
   if (trimmed === "") {
@@ -191,6 +215,8 @@ function buildPayload() {
     upper: parseOptionalNumber(upperInput.value),
     null_value: parseOptionalNumber(nullInput.value),
     thresholds: parseThresholds(thresholdsInput.value),
+    display_range_lower: parseOptionalNumber(displayRangeLowerInput.value),
+    display_range_upper: parseOptionalNumber(displayRangeUpperInput.value),
     display_natural_axis: effect.family === "ratio",
     grid_points: Number(gridPointsInput.value),
     show_cutoffs: showCutoffsInput.checked,
@@ -243,24 +269,73 @@ def compute_curves_json(payload_json):
 }
 
 function renderSummary(response) {
-  const items = [
-    ["Point Estimate", response.summary.estimate_display],
-    ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
-    ["95% CI", `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`],
-    ["Working-scale SE", response.summary.working_scale_se],
-    ["Critical effect markers", formatRange(response.summary.critical_effect_markers_display)],
-    ["Null relative likelihood", response.summary.null_relative_likelihood],
-    ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
-    ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
+  const groups = [
+    {
+      title: "Core reconstruction",
+      items: [
+        ["Point Estimate", response.summary.estimate_display],
+        ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
+        [
+          "95% CI",
+          `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`,
+        ],
+        ["Working-scale SE", response.summary.working_scale_se],
+        ["Critical effect markers", formatRange(response.summary.critical_effect_markers_display)],
+      ],
+    },
+    {
+      title: "Null comparison",
+      items: [
+        ["Null relative likelihood", response.summary.null_relative_likelihood],
+        ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
+        ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
+      ],
+    },
   ];
 
-  summaryGrid.innerHTML = items
+  summaryGrid.innerHTML = groups
     .map(
-      ([label, value]) => `
+      (group) => `
+      <section class="summary-group">
+        <h3 class="summary-group-title">${group.title}</h3>
+        <div class="summary-items">
+          ${group.items
+            .map(
+              ([label, value]) => `
         <div class="summary-item">
           <span class="summary-label">${label}</span>
           <span class="summary-value">${typeof value === "number" ? formatNumber(value) : value}</span>
         </div>
+      `,
+            )
+            .join("")}
+        </div>
+      </section>
+      `,
+    )
+    .join("");
+}
+
+function renderPlotKey(response, displayOptions) {
+  const keyRows = [
+    ["estimate", "Point estimate"],
+    ["null", "Null value"],
+    ["critical", "Critical-effect markers"],
+  ];
+  if (response.meta.thresholds_display.length > 0) {
+    keyRows.push(["threshold", "Clinical thresholds"]);
+  }
+  if (response.meta.show_cutoffs && hasCompatibilityPanel(displayOptions.viewMode)) {
+    keyRows.push(["cutoff", "Compatibility cutoffs"]);
+  }
+
+  plotKey.innerHTML = keyRows
+    .map(
+      ([key, label]) => `
+        <span class="key-item">
+          <span class="key-line key-line-${key}" aria-hidden="true"></span>
+          <span>${label}</span>
+        </span>
       `,
     )
     .join("");
@@ -280,15 +355,19 @@ function renderCommentary(response, displayOptions) {
     response.summary.likelihood_ratio_mle_to_null === null
       ? `Because the null value is ${nullValue}, the implied MLE:null likelihood ratio exceeds browser floating-point range.`
       : `Because the null value is ${nullValue}, the observed data are ${formatLikelihoodRatio(response.summary)} times as compatible with the CI-implied estimate as with the null.`;
+  const viewClause =
+    displayOptions.viewMode === "likelihood"
+      ? "The visible panel foregrounds relative evidentiary support: values nearer 1 are better supported under the Wald approximation, and lower values have less support relative to the CI-implied estimate."
+      : displayOptions.viewMode === "compatibility"
+        ? "The visible panel is the compatibility / confidence curve: a two-sided Wald p-value function evaluated across candidate effect sizes."
+        : "The two panels summarize the same Wald approximation in different units: the compatibility / confidence curve is a two-sided p-value function, and the relative likelihood curve is a monotone transform of the same Wald distance.";
   commentaryText.textContent =
-    `These two panels summarize the same Wald approximation in two different ways. ` +
-    `The top panel shows how compatible each effect size is with the CI-driven estimate using the two-sided Wald p-value scale. ` +
-    `The bottom panel shows the same information as a normalized relative likelihood curve, which peaks at the CI-implied estimate. ` +
+    `${viewClause} ` +
     `${estimateClause} ` +
     `${spacingClause} ` +
     `The paired critical-effect markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
-    `This display is reconstructed from the confidence interval, so it is an approximation rather than the exact profile likelihood from the fitted model.`;
+    `This display is reconstructed from the confidence interval; it is not the exact fitted-model profile likelihood from the original study.`;
 }
 
 function renderWarnings(response, displayOptions) {
@@ -301,12 +380,52 @@ function renderWarnings(response, displayOptions) {
   if (response.meta.thresholds_display.length > 0) {
     notes.push("Clinical thresholds are shown as dashed green vertical reference lines.");
   }
-  if (response.meta.show_cutoffs) {
-    notes.push("Horizontal guide lines on the upper panel mark 90%, 95%, and 99% compatibility cutoffs.");
+  if (response.meta.display_range_active && response.meta.display_range_display) {
+    notes.push(
+      `Plausible display range is active from ${formatRange(response.meta.display_range_display)}; summaries still use the original CI-derived reconstruction.`,
+    );
+  }
+  if (response.meta.show_cutoffs && hasCompatibilityPanel(displayOptions.viewMode)) {
+    const cutoffPanel =
+      displayOptions.viewMode === "both" ? "upper compatibility panel" : "compatibility panel";
+    notes.push(
+      `Horizontal guide lines on the ${cutoffPanel} mark 90%, 95%, and 99% compatibility cutoffs.`,
+    );
   }
   const messages = [...notes, ...response.warnings];
 
   warningsList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
+}
+
+async function renderResponse(response, displayOptions) {
+  renderSummary(response);
+  renderCommentary(response, displayOptions);
+  renderWarnings(response, displayOptions);
+  renderPlotKey(response, displayOptions);
+  await renderCurves(plotElement, response, displayOptions);
+  if (!plotElement.querySelector(".main-svg") || !plotElement._fullLayout) {
+    throw new Error("Plot could not be rendered for the current inputs.");
+  }
+  runtimeState.currentResponse = response;
+  runtimeState.currentDisplayOptions = displayOptions;
+  setExportEnabled(true);
+  setStatus("ready", "Curves updated.");
+}
+
+async function rerenderCurrentResponse() {
+  if (!runtimeState.currentResponse) {
+    scheduleCompute();
+    return;
+  }
+
+  try {
+    const displayOptions = currentDisplayOptions();
+    await renderResponse(runtimeState.currentResponse, displayOptions);
+  } catch (error) {
+    clearRenderedState();
+    const message = error instanceof Error ? error.message : String(error);
+    setStatus("error", message);
+  }
 }
 
 function csvValue(value) {
@@ -365,23 +484,13 @@ async function computeAndRender() {
   }
 
   try {
-    const displayOptions = { axisSpacing: currentAxisSpacing() };
+    const displayOptions = currentDisplayOptions();
     await ensureRuntime();
     setStatus("loading", "Computing Wald confidence and likelihood curves.");
     const resultJson = runtimeState.computeCurvesJson(JSON.stringify(payload));
     const response = JSON.parse(resultJson);
 
-    renderSummary(response);
-    renderCommentary(response, displayOptions);
-    renderWarnings(response, displayOptions);
-    await renderCurves(plotElement, response, displayOptions);
-    if (!plotElement.querySelector(".main-svg") || !plotElement._fullLayout) {
-      throw new Error("Plot could not be rendered for the current inputs.");
-    }
-    runtimeState.currentResponse = response;
-    runtimeState.currentDisplayOptions = displayOptions;
-    setExportEnabled(true);
-    setStatus("ready", "Curves updated.");
+    await renderResponse(response, displayOptions);
   } catch (error) {
     clearRenderedState();
     const message = error instanceof Error ? error.message : String(error);
@@ -407,7 +516,12 @@ function initializeForm() {
   upperInput.value = DEFAULT_VALUES.upper;
   nullInput.value = DEFAULT_VALUES.null_value;
   thresholdsInput.value = DEFAULT_VALUES.thresholds;
+  displayRangeLowerInput.value = DEFAULT_VALUES.display_range_lower;
+  displayRangeUpperInput.value = DEFAULT_VALUES.display_range_upper;
   axisSpacingSelect.value = DEFAULT_VALUES.axis_spacing;
+  for (const input of viewModeInputs) {
+    input.checked = input.value === DEFAULT_VIEW_MODE;
+  }
   gridPointsInput.value = DEFAULT_VALUES.grid_points;
   gridPointsOutput.value = DEFAULT_VALUES.grid_points;
   gridPointsOutput.textContent = DEFAULT_VALUES.grid_points;
@@ -437,6 +551,12 @@ function initializeUi() {
     updateEffectControls();
     scheduleCompute();
   });
+
+  for (const input of viewModeInputs) {
+    input.addEventListener("change", () => {
+      void rerenderCurrentResponse();
+    });
+  }
 
   form.addEventListener("input", (event) => {
     if (event.target !== gridPointsInput) {
