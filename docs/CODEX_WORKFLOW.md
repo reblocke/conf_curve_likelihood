@@ -25,7 +25,7 @@ This repo is intended to be usable with a coding agent (Codex) without turning t
 ## Repo-specific rules
 
 - Read and follow `AGENTS.md`.
-- Update `CONTINUITY.md` for any non-trivial session.
+- Use focused workflows under `.agents/skills/` when the task matches a skill trigger.
 - Record non-obvious choices in `docs/DECISIONS.md`.
 - If `src/confcurve/` changes, run the staging step before browser verification.
 

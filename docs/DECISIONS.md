@@ -53,3 +53,22 @@ Browser bundles are pinned by exact version and integrity hash. Python dependenc
 - Core computations rely on battle-tested libraries.
 - CI and local verification become heavier, especially for browser tests.
 - Local dependency versions should track the selected Pyodide stack closely.
+
+## 2026-04-19: Compact agent instructions with focused skills
+
+**Context:**
+
+The previous root instructions included broad working guidance and a continuity-ledger workflow.
+That made recurring agent context large and easy to let drift from the actual repository commands.
+
+**Decision:**
+
+Use a short root `AGENTS.md` for project-specific rules and move recurring workflows into focused
+repo-local skills under `.agents/skills/`. Durable decisions remain in `docs/DECISIONS.md` or ADRs
+under `docs/adr/`.
+
+**Consequences:**
+
+- Agents get the same mandatory project constraints with less prompt overhead.
+- Workflow guidance is more modular and easier to reuse across related repositories.
+- The old `CONTINUITY.md` ledger is retired; it should not be treated as current repository state.
