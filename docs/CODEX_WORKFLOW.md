@@ -26,6 +26,7 @@ This repo is intended to be usable with a coding agent (Codex) without turning t
 
 - Read and follow `AGENTS.md`.
 - Use focused workflows under `.agents/skills/` when the task matches a skill trigger.
+- Treat skill triggers as gates: plan with `implementation-strategy`, verify static browser/Pyodide changes with `static-browser-pyodide-verification`, check numerical implications with `scientific-validation`, sync docs with `docs-sync`, and close with `code-change-verification` when applicable.
 - Record non-obvious choices in `docs/DECISIONS.md`.
 - If `src/confcurve/` changes, run the staging step before browser verification.
 

@@ -8,15 +8,17 @@
 - If you make a design/assumption change, write it down in `docs/DECISIONS.md`.
 - If you change dependencies, update `pyproject.toml` and `uv.lock` together.
 - If you change the Python package consumed by the browser app, run the staging step before tests or review.
+- For agent-assisted changes, check `AGENTS.md` and the matching `.agents/skills/` workflow before non-trivial edits.
 
 ## Definition of done
 
 A PR is typically ready to merge when:
 
-- `uv run ruff format --check .` is clean
+- `make fmt-check` is clean
 - `make lint` is clean
 - `make test` passes
 - `make e2e` passes
+- `make verify` passes for final integration checks
 - staged web Python assets reflect `src/confcurve/`
 - any behavior or architecture changes are documented in `docs/DECISIONS.md`
 

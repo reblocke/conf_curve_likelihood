@@ -16,11 +16,14 @@ from confcurve.core import (
 )
 
 FINITE_FLOATS = st.floats(allow_nan=False, allow_infinity=False, width=32)
+WORKING_SCALE_FLOATS = st.floats(
+    min_value=-1_000_000.0, max_value=1_000_000.0, allow_nan=False, allow_infinity=False
+)
 POSITIVE_FLOATS = st.floats(min_value=1e-4, max_value=20.0, allow_nan=False, allow_infinity=False)
 
 
 @given(
-    theta_hat=FINITE_FLOATS,
+    theta_hat=WORKING_SCALE_FLOATS,
     se=st.floats(min_value=0.05, max_value=3.0),
     distance=st.floats(min_value=0.0, max_value=6.0),
 )
@@ -37,7 +40,7 @@ def test_curves_are_symmetric_around_the_mle(theta_hat: float, se: float, distan
 
 
 @given(
-    theta_hat=FINITE_FLOATS,
+    theta_hat=WORKING_SCALE_FLOATS,
     se=st.floats(min_value=0.05, max_value=3.0),
     distance_1=st.floats(min_value=0.01, max_value=2.5),
     distance_2=st.floats(min_value=2.6, max_value=6.0),

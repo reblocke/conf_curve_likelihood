@@ -1,96 +1,15 @@
+import { DEFAULT_VALUES, DEFAULT_VIEW_MODE, EFFECT_OPTIONS } from "./config.js";
 import { exportManuscriptPng, exportPlotPng, renderCurves } from "./plot.js";
-
-const PYODIDE_VERSION = "0.29.3";
-const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
-const PYTHON_PACKAGE_FILES = ["__init__.py", "core.py", "models.py", "stage.py", "web_contract.py"];
-const DEFAULT_VIEW_MODE = "both";
-const EFFECT_OPTIONS = [
-  {
-    key: "odds_ratio",
-    label: "Odds ratio",
-    shortLabel: "OR",
-    candidateLabel: "odds ratios",
-    family: "ratio",
-    defaultNull: 1,
-  },
-  {
-    key: "risk_ratio",
-    label: "Risk ratio",
-    shortLabel: "RR",
-    candidateLabel: "risk ratios",
-    family: "ratio",
-    defaultNull: 1,
-  },
-  {
-    key: "hazard_ratio",
-    label: "Hazard ratio",
-    shortLabel: "HR",
-    candidateLabel: "hazard ratios",
-    family: "ratio",
-    defaultNull: 1,
-  },
-  {
-    key: "incidence_rate_ratio",
-    label: "Incidence rate ratio",
-    shortLabel: "IRR",
-    candidateLabel: "incidence rate ratios",
-    family: "ratio",
-    defaultNull: 1,
-  },
-  {
-    key: "ratio_of_means",
-    label: "Ratio of means",
-    shortLabel: "ratio",
-    candidateLabel: "ratios of means",
-    family: "ratio",
-    defaultNull: 1,
-  },
-  {
-    key: "mean_difference",
-    label: "Mean difference",
-    shortLabel: "mean difference",
-    candidateLabel: "mean differences",
-    family: "additive",
-    defaultNull: 0,
-  },
-  {
-    key: "risk_difference",
-    label: "Risk difference",
-    shortLabel: "risk difference",
-    candidateLabel: "risk differences",
-    family: "additive",
-    defaultNull: 0,
-  },
-  {
-    key: "rate_difference",
-    label: "Rate difference",
-    shortLabel: "rate difference",
-    candidateLabel: "rate differences",
-    family: "additive",
-    defaultNull: 0,
-  },
-  {
-    key: "regression_coefficient",
-    label: "Regression coefficient",
-    shortLabel: "coefficient",
-    candidateLabel: "regression coefficients",
-    family: "additive",
-    defaultNull: 0,
-  },
-];
-const DEFAULT_VALUES = {
-  effect_type: "odds_ratio",
-  estimate: "",
-  lower: "1.2",
-  upper: "2.7",
-  null_value: "1",
-  thresholds: "",
-  display_range_lower: "",
-  display_range_upper: "",
-  axis_spacing: "log",
-  grid_points: "801",
-  show_cutoffs: true,
-};
+import {
+  buildCsv,
+  buildFigureCaption,
+  renderCommentary,
+  renderComparisonHeader,
+  renderPlotKey,
+  renderSummary,
+  renderWarnings,
+} from "./renderers.js";
+import { ensureRuntime } from "./runtime.js";
 
 const pageShell = document.querySelector(".page-shell");
 const sidebar = document.getElementById("controls-panel");
@@ -125,6 +44,12 @@ const exportManuscriptPngButton = document.getElementById("export-manuscript-png
 const exportCsvButton = document.getElementById("export-csv");
 const plotKey = document.getElementById("plot-key");
 const viewModeInputs = Array.from(document.querySelectorAll("input[name='view_mode']"));
+
+const comparisonHeaderElements = {
+  plotTitle,
+  plotSubtitle,
+  comparisonTakeaway,
+};
 
 const runtimeState = {
   readyPromise: null,
@@ -162,145 +87,6 @@ function clearRenderedState() {
   }
   plotElement.innerHTML = "";
   setExportEnabled(false);
-}
-
-function formatNumber(value) {
-  if (!Number.isFinite(value)) {
-    return String(value);
-  }
-  const magnitude = Math.abs(value);
-  if (magnitude >= 1_000 || (magnitude > 0 && magnitude < 0.001)) {
-    return value.toExponential(3);
-  }
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 4,
-  }).format(value);
-}
-
-function formatLikelihoodRatio(summary) {
-  if (summary.likelihood_ratio_mle_to_null !== null) {
-    return formatNumber(summary.likelihood_ratio_mle_to_null);
-  }
-  if (summary.log_likelihood_ratio_mle_to_null === null) {
-    return "Overflow";
-  }
-  const log10LikelihoodRatio = summary.log_likelihood_ratio_mle_to_null / Math.LN10;
-  return `Overflow (log10 LR ${formatNumber(log10LikelihoodRatio)})`;
-}
-
-function formatOptionalLikelihoodRatio(value, logValue) {
-  if (value !== null) {
-    return `${formatNumber(value)}x`;
-  }
-  if (logValue === null) {
-    return "not finite";
-  }
-  const log10LikelihoodRatio = logValue / Math.LN10;
-  return `log10 ratio ${formatNumber(log10LikelihoodRatio)}`;
-}
-
-function formatRange(values) {
-  if (!Array.isArray(values) || values.length !== 2) {
-    return "";
-  }
-  return `${formatNumber(values[0])} to ${formatNumber(values[1])}`;
-}
-
-function effectOptionForResponse(response) {
-  return (
-    EFFECT_OPTIONS.find((option) => option.key === response.meta.effect_spec.key) ??
-    getSelectedEffect()
-  );
-}
-
-function estimateSourceLabel(estimateSource) {
-  return estimateSource === "provided_validated"
-    ? "Provided and validated"
-    : "CI-implied from 95% CI";
-}
-
-function effectValueLabel(effect, value) {
-  return `${effect.shortLabel} = ${formatNumber(value)}`;
-}
-
-function supportPhrase(relativeLikelihood) {
-  if (relativeLikelihood >= 0.5) {
-    return "substantial support";
-  }
-  if (relativeLikelihood >= 0.1) {
-    return "moderate support";
-  }
-  if (relativeLikelihood >= 0.01) {
-    return "limited support";
-  }
-  return "very weak support";
-}
-
-function thresholdVsNullPhrase(thresholdSummary) {
-  const value = thresholdSummary.likelihood_ratio_threshold_to_null;
-  const logValue = thresholdSummary.log_likelihood_ratio_threshold_to_null;
-  if (value === null && logValue === null) {
-    return "cannot be compared with the null using finite likelihood values";
-  }
-  if (value === null) {
-    return `has more support than the null (${formatOptionalLikelihoodRatio(value, logValue)})`;
-  }
-  if (value >= 1) {
-    return `is ${formatNumber(value)}x as supported as the null`;
-  }
-  return `has ${formatNumber(value)}x the null support`;
-}
-
-function buildComparisonTakeaway(response) {
-  const effect = effectOptionForResponse(response);
-  const estimateLabel = effectValueLabel(effect, response.summary.estimate_display);
-  const nullLabel = effectValueLabel(effect, response.summary.null_display);
-  const nullSupport = supportPhrase(response.summary.null_relative_likelihood);
-  const thresholdSummaries = response.meta.threshold_support_summaries ?? [];
-
-  let takeaway = `Peak support is at ${estimateLabel}; the null ${nullLabel} has ${nullSupport} (relative likelihood ${formatNumber(response.summary.null_relative_likelihood)}).`;
-
-  if (thresholdSummaries.length > 0) {
-    const thresholdSummary = thresholdSummaries[0];
-    takeaway += ` The clinical threshold ${effectValueLabel(effect, thresholdSummary.threshold_display)} ${thresholdVsNullPhrase(thresholdSummary)}.`;
-  } else {
-    takeaway += ` The CI-implied estimate is ${formatLikelihoodRatio(response.summary)}x as supported as the null under this reconstruction.`;
-  }
-
-  return takeaway;
-}
-
-function renderComparisonHeader(response) {
-  const effect = effectOptionForResponse(response);
-  const hasThresholds = (response.meta.threshold_support_summaries ?? []).length > 0;
-
-  plotTitle.textContent = `How the data compare candidate ${effect.candidateLabel}`;
-  plotSubtitle.textContent = hasThresholds
-    ? `Relative to the null ${effect.shortLabel} = ${formatNumber(response.summary.null_display)} and clinical thresholds`
-    : "Relative to the null and the CI-implied estimate";
-  comparisonTakeaway.textContent = buildComparisonTakeaway(response);
-}
-
-function buildFigureCaption(response, displayOptions) {
-  const effect = effectOptionForResponse(response);
-  const panelText =
-    displayOptions.viewMode === "likelihood"
-      ? "The figure shows relative likelihood only."
-      : displayOptions.viewMode === "compatibility"
-        ? "The figure shows the compatibility curve only."
-        : "Panel A shows the compatibility curve and Panel B shows relative likelihood.";
-  const thresholdValues = response.meta.thresholds_display ?? [];
-  const thresholdText =
-    thresholdValues.length > 0
-      ? ` Clinical thresholds are marked at ${thresholdValues.map(formatNumber).join(", ")}.`
-      : "";
-
-  return (
-    `Figure. Wald reconstruction from the reported 95% CI (${formatRange(response.summary.ci_display)}) for ${effect.label.toLowerCase()}. ` +
-    `The CI-implied point estimate is ${effectValueLabel(effect, response.summary.estimate_display)} and the null is ${effectValueLabel(effect, response.summary.null_display)}. ` +
-    `${panelText} Relative likelihood is normalized to 1 at the CI-implied estimate; compatibility is the two-sided Wald p-value function across candidate effect sizes.` +
-    `${thresholdText} This is not exact fitted-model profile likelihood.`
-  );
 }
 
 function parseOptionalNumber(rawValue) {
@@ -365,10 +151,6 @@ function schedulePlotResize() {
   });
 }
 
-function hasCompatibilityPanel(viewMode) {
-  return viewMode !== "likelihood";
-}
-
 function shouldReplaceWithDefaultNull(rawValue, previousDefaultNull) {
   const trimmed = rawValue.trim();
   if (trimmed === "") {
@@ -410,200 +192,12 @@ function buildPayload() {
   };
 }
 
-async function installLocalPythonPackage(pyodide) {
-  pyodide.FS.mkdirTree("/home/pyodide/confcurve");
-
-  for (const fileName of PYTHON_PACKAGE_FILES) {
-    const response = await fetch(`./assets/py/confcurve/${fileName}`);
-    if (!response.ok) {
-      throw new Error(`Failed to load staged Python file: ${fileName}`);
-    }
-    const source = await response.text();
-    pyodide.FS.writeFile(`/home/pyodide/confcurve/${fileName}`, source);
-  }
-
-  await pyodide.runPythonAsync(`
-import sys
-if "/home/pyodide" not in sys.path:
-    sys.path.insert(0, "/home/pyodide")
-`);
-}
-
-async function ensureRuntime() {
-  if (runtimeState.readyPromise) {
-    return runtimeState.readyPromise;
-  }
-
-  runtimeState.readyPromise = (async () => {
-    setStatus("loading", "Loading Pyodide, NumPy, and SciPy in the browser.");
-    const pyodide = await loadPyodide({ indexURL: PYODIDE_INDEX_URL });
-    await pyodide.loadPackage(["numpy", "scipy"]);
-    await installLocalPythonPackage(pyodide);
-    await pyodide.runPythonAsync(`
-import json
-from confcurve import compute_curves
-
-def compute_curves_json(payload_json):
-    return json.dumps(compute_curves(json.loads(payload_json)))
-`);
-    runtimeState.pyodide = pyodide;
-    runtimeState.computeCurvesJson = pyodide.globals.get("compute_curves_json");
-    setStatus("ready", "Scientific runtime ready.");
-    return runtimeState;
-  })();
-
-  return runtimeState.readyPromise;
-}
-
-function renderSummary(response) {
-  const thresholdRows = (response.meta.threshold_support_summaries ?? []).map((thresholdSummary) => [
-    `Threshold ${formatNumber(thresholdSummary.threshold_display)} support`,
-    `${formatNumber(thresholdSummary.relative_likelihood)} relative; ${thresholdVsNullPhrase(thresholdSummary)}`,
-  ]);
-  const technicalItems = [
-    ["Estimate source", estimateSourceLabel(response.meta.estimate_source)],
-    ["Working-scale SE", response.summary.working_scale_se],
-    [
-      "Computation scale",
-      response.meta.effect_spec.working_scale === "log" ? "Log working scale" : "Natural working scale",
-    ],
-    ["Design threshold markers", formatRange(response.summary.critical_effect_markers_display)],
-  ];
-  if (response.meta.display_range_active && response.meta.display_range_display) {
-    technicalItems.push(["Display range", formatRange(response.meta.display_range_display)]);
-  }
-
-  const groups = [
-    {
-      title: "Main comparison",
-      items: [
-        ["Point Estimate", response.summary.estimate_display],
-        [
-          "95% CI",
-          `${formatNumber(response.summary.ci_display[0])} to ${formatNumber(response.summary.ci_display[1])}`,
-        ],
-        ["Null relative likelihood", response.summary.null_relative_likelihood],
-        ["MLE:null likelihood ratio", formatLikelihoodRatio(response.summary)],
-        ["Two-sided Wald p-value", response.summary.two_sided_wald_p_value],
-        ...thresholdRows,
-      ],
-    },
-    {
-      title: "Technical reconstruction",
-      items: technicalItems,
-    },
-  ];
-
-  summaryGrid.innerHTML = groups
-    .map(
-      (group) => `
-      <section class="summary-group">
-        <h3 class="summary-group-title">${group.title}</h3>
-        <div class="summary-items">
-          ${group.items
-            .map(
-              ([label, value]) => `
-        <div class="summary-item">
-          <span class="summary-label">${label}</span>
-          <span class="summary-value">${typeof value === "number" ? formatNumber(value) : value}</span>
-        </div>
-      `,
-            )
-            .join("")}
-        </div>
-      </section>
-      `,
-    )
-    .join("");
-}
-
-function renderPlotKey(response, displayOptions) {
-  const keyRows = [
-    ["estimate", "Point estimate"],
-    ["null", "Null value"],
-    ["critical", "Design threshold markers"],
-  ];
-  if (response.meta.thresholds_display.length > 0) {
-    keyRows.push(["threshold", "Clinical thresholds"]);
-  }
-  if (response.meta.show_cutoffs && hasCompatibilityPanel(displayOptions.viewMode)) {
-    keyRows.push(["cutoff", "Compatibility cutoffs"]);
-  }
-
-  plotKey.innerHTML = keyRows
-    .map(
-      ([key, label]) => `
-        <span class="key-item">
-          <span class="key-line key-line-${key}" aria-hidden="true"></span>
-          <span>${label}</span>
-        </span>
-      `,
-    )
-    .join("");
-}
-
-function renderCommentary(response, displayOptions) {
-  const nullValue = formatNumber(response.summary.null_display);
-  const estimateClause =
-    response.meta.estimate_source === "provided_validated"
-      ? "The supplied point estimate matched the 95% CI within rounding tolerance, and the plotted estimate uses the CI-implied midpoint on the working scale."
-      : "No point estimate was supplied, so the plotted estimate is the CI-implied midpoint of the 95% CI on the working scale.";
-  const spacingClause =
-    response.meta.effect_spec.family === "ratio"
-      ? `The ratio axis is labeled on the natural scale and uses ${displayOptions.axisSpacing} spacing.`
-      : "The additive axis is displayed on its natural linear scale.";
-  const likelihoodRatioClause =
-    response.summary.likelihood_ratio_mle_to_null === null
-      ? `Because the null value is ${nullValue}, the implied MLE:null likelihood ratio exceeds browser floating-point range.`
-      : `Because the null value is ${nullValue}, the observed data are ${formatLikelihoodRatio(response.summary)} times as compatible with the CI-implied estimate as with the null.`;
-  const viewClause =
-    displayOptions.viewMode === "likelihood"
-      ? "The visible panel foregrounds relative evidentiary support: values nearer 1 are better supported under the Wald approximation, and lower values have less support relative to the CI-implied estimate."
-      : displayOptions.viewMode === "compatibility"
-        ? "The visible panel is the compatibility / confidence curve: a two-sided Wald p-value function evaluated across candidate effect sizes."
-        : "The two panels summarize the same Wald approximation in different units: the compatibility / confidence curve is a two-sided p-value function, and the relative likelihood curve is a monotone transform of the same Wald distance.";
-  commentaryText.textContent =
-    `${viewClause} ` +
-    `${estimateClause} ` +
-    `${spacingClause} ` +
-    `The paired design threshold markers show the alpha=0.05, power=0.80 distance around the null. ` +
-    `${likelihoodRatioClause} ` +
-    `This display is reconstructed from the confidence interval; it is not the exact fitted-model profile likelihood from the original study.`;
-}
-
-function renderWarnings(response, displayOptions) {
-  const notes = [
-    response.meta.effect_spec.family === "ratio"
-      ? `Computations are performed on the log scale and displayed with natural-scale labels using ${displayOptions.axisSpacing} spacing.`
-      : "Computations are performed on the natural additive working scale.",
-    `Standard error reconstruction method: ${response.meta.se_method}.`,
-  ];
-  if (response.meta.thresholds_display.length > 0) {
-    notes.push("Clinical thresholds are shown as dashed green vertical reference lines.");
-  }
-  if (response.meta.display_range_active && response.meta.display_range_display) {
-    notes.push(
-      `Plausible display range is active from ${formatRange(response.meta.display_range_display)}; summaries still use the original CI-derived reconstruction.`,
-    );
-  }
-  if (response.meta.show_cutoffs && hasCompatibilityPanel(displayOptions.viewMode)) {
-    const cutoffPanel =
-      displayOptions.viewMode === "both" ? "upper compatibility panel" : "compatibility panel";
-    notes.push(
-      `Horizontal guide lines on the ${cutoffPanel} mark 90%, 95%, and 99% compatibility cutoffs.`,
-    );
-  }
-  const messages = [...notes, ...response.warnings];
-
-  warningsList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
-}
-
 async function renderResponse(response, displayOptions) {
-  renderComparisonHeader(response);
-  renderSummary(response);
-  renderCommentary(response, displayOptions);
-  renderWarnings(response, displayOptions);
-  renderPlotKey(response, displayOptions);
+  renderComparisonHeader(response, comparisonHeaderElements);
+  renderSummary(response, summaryGrid);
+  renderCommentary(response, displayOptions, commentaryText);
+  renderWarnings(response, displayOptions, warningsList);
+  renderPlotKey(response, displayOptions, plotKey);
   figureCaption.textContent = buildFigureCaption(response, displayOptions);
   copyCaptionButton.disabled = false;
   await renderCurves(plotElement, response, displayOptions);
@@ -630,35 +224,6 @@ async function rerenderCurrentResponse() {
     const message = error instanceof Error ? error.message : String(error);
     setStatus("error", message);
   }
-}
-
-function csvValue(value) {
-  if (Number.isFinite(value)) {
-    return String(value);
-  }
-  return `"${String(value)}"`;
-}
-
-function buildCsv(response) {
-  const headers = [
-    "effect_display",
-    "effect_working",
-    "z",
-    "compatibility",
-    "relative_likelihood",
-    "log_relative_likelihood",
-  ];
-  const rows = [headers.join(",")];
-
-  for (let index = 0; index < response.grid.effect_display.length; index += 1) {
-    rows.push(
-      headers
-        .map((header) => csvValue(response.grid[header][index]))
-        .join(","),
-    );
-  }
-
-  return `${rows.join("\n")}\n`;
 }
 
 function downloadText(contents, filename, type) {
@@ -689,7 +254,7 @@ async function computeAndRender() {
 
   try {
     const displayOptions = currentDisplayOptions();
-    await ensureRuntime();
+    await ensureRuntime(runtimeState, setStatus);
     setStatus("loading", "Computing Wald confidence and likelihood curves.");
     const resultJson = runtimeState.computeCurvesJson(JSON.stringify(payload));
     const response = JSON.parse(resultJson);

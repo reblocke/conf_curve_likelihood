@@ -108,7 +108,7 @@ jobs:
 
       - name: WebKit smoke test
         run: |
-          uv run pytest -q tests/e2e/test_app.py::test_initial_render_loads_pyodide_and_plots \
+          uv run pytest -q tests/e2e/test_initial_and_inputs.py::test_initial_render_loads_pyodide_and_plots \
             --browser webkit \
             --tracing retain-on-failure \
             --video retain-on-failure \
