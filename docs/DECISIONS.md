@@ -72,3 +72,30 @@ under `docs/adr/`.
 - Agents get the same mandatory project constraints with less prompt overhead.
 - Workflow guidance is more modular and easier to reuse across related repositories.
 - The old `CONTINUITY.md` ledger is retired; it should not be treated as current repository state.
+
+## 2026-04-19: Keep the browser entrypoint thin and split modules by responsibility
+
+**Context:**
+
+The static app grew to include Pyodide loading, request construction, summary rendering, view modes,
+Plotly rendering, CSV export, dashboard PNG export, and manuscript PNG export. Keeping all browser
+logic in a single file made behavior-preserving changes harder to review.
+
+**Decision:**
+
+Keep `web/index.html` importing only `web/assets/app.js`, and let `app.js` statically import focused
+ES modules:
+
+- `config.js` for browser constants and defaults.
+- `formatters.js` for display text and number formatting.
+- `runtime.js` for Pyodide loading and local package installation.
+- `renderers.js` for summaries, commentary, warnings, captions, plot keys, and CSV generation.
+- `plot.js` for the public Plotly rendering/export API.
+- `plot-helpers.js` for pure Plotly layout, axis, marker, direct-label, and annotation helpers.
+
+**Consequences:**
+
+- The deployed app remains a static GitHub Pages site with `app.js` as the only HTML entrypoint.
+- Browser behavior can be reviewed in smaller files without changing the Python contract or Wald
+  formulas.
+- E2E tests are split by behavior to keep browser coverage discoverable.

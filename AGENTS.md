@@ -1,13 +1,13 @@
 # Codex AGENTS
 
 ## Purpose
-- This repository is a Python-first scientific web app for reconstructing Wald confidence curves and approximate profile likelihoods from published estimates and confidence intervals.
+- This repository is a Python-first scientific web app for reconstructing Wald compatibility/confidence curves and normalized Wald relative-likelihood displays from published estimates and confidence intervals.
 - The Python package is `confcurve`; the static GitHub Pages app lives in `web/` and imports staged Python through Pyodide.
 - Optimize for correctness, readability, reproducibility, and only then measured performance.
 
 ## Repo Map
 - `src/confcurve/` - numerical core, data models, staging helpers, and browser contract.
-- `web/` - static browser app and staged Python package under `web/assets/py/confcurve/`.
+- `web/` - static browser app, browser ES modules, and staged Python package under `web/assets/py/confcurve/`.
 - `scripts/stage_web_python.py` - copies the package source into the browser app.
 - `tests/` - unit, integration, property, and Playwright E2E tests.
 - `docs/` - decisions, workflow notes, and scientific/data-management documentation.

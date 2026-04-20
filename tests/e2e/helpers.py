@@ -52,6 +52,55 @@ def y_axis_titles(page: Page) -> list[str]:
     )
 
 
+def x_axis_titles(page: Page) -> list[str]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => Array.from(element.querySelectorAll(".g-xtitle text, .g-x2title text"))
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean)
+        """
+    )
+
+
+def x_axis_ticklabel_visibility(page: Page) -> dict[str, bool | None]:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => ({
+          xaxis: element._fullLayout.xaxis?.showticklabels,
+          xaxis2: element._fullLayout.xaxis2?.showticklabels,
+        })
+        """
+    )
+
+
+def annotation_overlaps_x_axis_title(page: Page, annotation_text: str) -> bool:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element, expectedText) => {
+          const annotation = Array.from(element.querySelectorAll(".annotation-text"))
+            .find((node) => node.textContent?.trim() === expectedText);
+          const titles = Array.from(element.querySelectorAll(".g-xtitle text, .g-x2title text"))
+            .filter((node) => node.textContent?.trim());
+          if (!annotation || titles.length === 0) {
+            return false;
+          }
+
+          const annotationBox = annotation.getBoundingClientRect();
+          return titles.some((title) => {
+            const titleBox = title.getBoundingClientRect();
+            return !(
+              annotationBox.right <= titleBox.left ||
+              annotationBox.left >= titleBox.right ||
+              annotationBox.bottom <= titleBox.top ||
+              annotationBox.top >= titleBox.bottom
+            );
+          });
+        }
+        """,
+        annotation_text,
+    )
+
+
 def plot_annotation_texts(page: Page) -> list[str]:
     return page.locator("#curve-plot").evaluate(
         """

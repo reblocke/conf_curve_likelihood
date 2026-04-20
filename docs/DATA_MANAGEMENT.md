@@ -1,5 +1,7 @@
 # Data management
 
+This repository currently has no committed study-data directory. If a data workflow is added later, use the directory and provenance policy below.
+
 ## Directory policy
 
 - `data/raw/`:

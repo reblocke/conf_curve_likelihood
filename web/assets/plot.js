@@ -108,6 +108,13 @@ export async function renderCurves(plotElement, response, displayOptions) {
     xaxis: {
       ...xAxisLayout,
       anchor: "y",
+      ...(viewMode === "both"
+        ? {
+            title: { text: "" },
+            showticklabels: false,
+            ticks: "",
+          }
+        : {}),
     },
     yaxis: {
       title: {
@@ -115,7 +122,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
           viewMode === "likelihood" ? "Relative likelihood" : "Compatibility / confidence curve",
         standoff: 12,
       },
-      domain: viewMode === "both" ? [0.56, 1] : [0, 1],
+      domain: viewMode === "both" ? [0.58, 1] : [0, 1],
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
@@ -145,7 +152,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
         text: "Relative likelihood",
         standoff: 12,
       },
-      domain: [0, 0.42],
+      domain: [0, 0.4],
       range: [0, 1.02],
       automargin: true,
       showgrid: true,

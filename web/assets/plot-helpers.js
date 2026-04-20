@@ -260,7 +260,7 @@ export function makePanelAnnotations(viewMode, manuscript) {
     },
     {
       x: 0,
-      y: 0.485,
+      y: 0.435,
       xref: "paper",
       yref: "paper",
       text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",

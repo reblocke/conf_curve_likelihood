@@ -20,6 +20,13 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     wait_for_ready(page)
 
     expect(page.locator("label[for='estimate']")).to_have_text("Point Estimate (optional)")
+    expect(page.locator(".sidebar .intro")).to_contain_text(
+        "Enter a reported 95% confidence interval and optional point estimate"
+    )
+    expect(page.locator(".sidebar .intro")).to_contain_text("relative-likelihood views")
+    expect(page.locator(".sidebar .intro")).not_to_contain_text("static")
+    expect(page.locator(".sidebar .intro")).not_to_contain_text("GitHub Pages")
+    expect(page.locator(".sidebar .intro")).not_to_contain_text("applet")
     expect(page.locator("#plot-title")).to_contain_text(
         "How the data compare candidate odds ratios"
     )

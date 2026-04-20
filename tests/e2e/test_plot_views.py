@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import pytest
 from helpers import (
+    annotation_overlaps_x_axis_title,
     horizontal_cutoff_count,
     open_advanced_options,
     plot_annotation_texts,
     plot_trace_names,
     wait_for_ready,
+    x_axis_ticklabel_visibility,
+    x_axis_titles,
     xaxis_bounds,
     y_axis_titles,
 )
@@ -113,6 +116,7 @@ def test_likelihood_only_view_hides_compatibility_panel(app_url: str, page: Page
     )
 
     assert plot_trace_names(page) == ["Relative likelihood curve"]
+    assert x_axis_titles(page) == ["Odds ratio (natural scale)"]
     assert y_axis_titles(page) == ["Relative likelihood"]
     assert horizontal_cutoff_count(page) == 0
     expect(page.locator("#plot-key")).not_to_contain_text("Compatibility cutoffs")
@@ -135,10 +139,25 @@ def test_compatibility_only_view_hides_likelihood_panel(app_url: str, page: Page
     )
 
     assert plot_trace_names(page) == ["Compatibility / confidence curve"]
+    assert x_axis_titles(page) == ["Odds ratio (natural scale)"]
     assert y_axis_titles(page) == ["Compatibility / confidence curve"]
     assert horizontal_cutoff_count(page) == 3
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
     expect(page.locator("#commentary-text")).to_contain_text("two-sided Wald p-value function")
+
+
+def test_both_mode_uses_lower_shared_x_axis_without_title_overlap(app_url: str, page: Page) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    assert x_axis_titles(page) == ["Odds ratio (natural scale)"]
+    ticklabel_visibility = x_axis_ticklabel_visibility(page)
+    assert ticklabel_visibility["xaxis"] is False
+    assert ticklabel_visibility["xaxis2"] is not False
+    assert not annotation_overlaps_x_axis_title(
+        page,
+        "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+    )
 
 
 def test_y_axis_titles_are_visible(app_url: str, page: Page) -> None:
