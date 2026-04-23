@@ -99,3 +99,37 @@ ES modules:
 - Browser behavior can be reviewed in smaller files without changing the Python contract or Wald
   formulas.
 - E2E tests are split by behavior to keep browser coverage discoverable.
+
+## 2026-04-23: Use the evidential S−2 definition for likelihood interval overlays
+
+**Context:**
+
+The app added a likelihood-panel overlay for an evidential support interval. The phrase "S2
+interval" could be confused with a 2:1 likelihood interval or with S-value terminology.
+The requested source was Zampieri et al., AJRCCM 2025
+([article URL](https://academic.oup.com/ajrccm/article/211/9/1610/8300617), retrieved
+2026-04-23).
+The bottom-of-app source links also cite Perugini et al., AMPS 2025
+([article URL](https://journals.sagepub.com/doi/10.1177/25152459251335298), retrieved
+2026-04-23) for critical-effect-size values and design-interpretation rationale.
+
+**Decision:**
+
+Use the article's evidential S−2 definition: candidate effects remain inside the interval when
+their support versus the MLE is no less than −2. In the app's normalized Wald likelihood, this
+means `relative_likelihood >= exp(-2)`, so the CI-implied estimate is no more than `exp(2)` or
+about `7.4x` as supported as interval values. Because
+`log(relative_likelihood) = -0.5 * z^2`, the exact Wald endpoints are
+`estimate_working +/- 2 * working_scale_se`.
+
+**Consequences:**
+
+- The app does not use `relative_likelihood >= 0.5` for this overlay; that would be a separate
+  2:1 likelihood interval.
+- The S−2 overlay is explanatory plot metadata and does not change summaries, reconstruction
+  formulas, CSV export schema, or default inputs.
+- The paired design-threshold markers remain the app's Wald `alpha = 0.05`, `power = 0.80`
+  benchmarks around the null. The critical-effect-size source is cited as related rationale, not
+  as a claim that the app implements that article's alpha-only critical-effect-size calculations.
+- Source provenance is recorded here and summarized in `README.md`; no external figures, tables,
+  or substantial source text are copied into the repository.

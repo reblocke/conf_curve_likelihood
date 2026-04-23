@@ -35,6 +35,8 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     )
     expect(page.locator("#comparison-takeaway")).to_contain_text("Peak support is at OR")
     expect(page.locator("#read-guide")).to_contain_text("two-sided Wald p-value function")
+    expect(page.locator("#read-guide")).to_contain_text("S−2 interval")
+    expect(page.locator("#read-guide")).to_contain_text("relative likelihood at least exp(−2)")
     expect(page.locator("#read-guide")).to_contain_text(
         "does not reconstruct the exact fitted-model profile likelihood"
     )
@@ -44,13 +46,34 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(page.locator("#plot-key")).to_contain_text("Point estimate")
     expect(page.locator("#plot-key")).to_contain_text("Null value")
     expect(page.locator("#plot-key")).to_contain_text("Design threshold markers")
+    expect(page.locator("#plot-key")).to_contain_text("Reported 95% CI")
+    expect(page.locator("#plot-key")).to_contain_text("S−2 support interval")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
     expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
     expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
     expect(page.locator("#figure-caption")).to_contain_text("Wald reconstruction")
+    expect(page.locator("#figure-caption")).to_contain_text("reported 95% CI")
+    expect(page.locator("#figure-caption")).to_contain_text("S−2 interval")
     expect(page.locator("#figure-caption")).to_contain_text(
         "not exact fitted-model profile likelihood"
     )
+    expect(page.locator("#sources-footer")).to_be_visible()
+    expect(page.locator("#sources-footer")).to_contain_text("More information")
+    expect(page.locator("#sources-footer")).to_contain_text("evidential likelihood")
+    expect(page.locator("#sources-footer")).to_contain_text("S−2 intervals")
+    expect(page.locator("#sources-footer")).to_contain_text("critical-effect-size values")
+    zampieri_link = page.locator(
+        "#sources-footer a[href='https://academic.oup.com/ajrccm/article/211/9/1610/8300617']"
+    )
+    perugini_link = page.locator(
+        "#sources-footer a[href='https://journals.sagepub.com/doi/10.1177/25152459251335298']"
+    )
+    expect(zampieri_link).to_have_text("Zampieri et al., AJRCCM 2025")
+    expect(zampieri_link).to_have_attribute("target", "_blank")
+    expect(zampieri_link).to_have_attribute("rel", "noopener noreferrer")
+    expect(perugini_link).to_have_text("Perugini et al., AMPS 2025")
+    expect(perugini_link).to_have_attribute("target", "_blank")
+    expect(perugini_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 
 

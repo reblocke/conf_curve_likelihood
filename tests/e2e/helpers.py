@@ -153,7 +153,41 @@ def horizontal_cutoff_count(page: Page) -> int:
     return page.locator("#curve-plot").evaluate(
         """
         (element) => element._fullLayout.shapes
-          .filter((shape) => shape.yref === "y")
+          .filter((shape) => shape.yref === "y"
+            && shape.line?.color === "rgba(19, 42, 58, 0.28)")
+          .length
+        """
+    )
+
+
+def ci_band_count(page: Page) -> int:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.shapes
+          .filter((shape) => shape.type === "rect"
+            && shape.fillcolor === "rgba(176, 74, 47, 0.08)")
+          .length
+        """
+    )
+
+
+def s_minus_2_band_count(page: Page) -> int:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.shapes
+          .filter((shape) => shape.type === "rect"
+            && shape.fillcolor === "rgba(19, 42, 58, 0.07)")
+          .length
+        """
+    )
+
+
+def s_minus_2_guide_count(page: Page) -> int:
+    return page.locator("#curve-plot").evaluate(
+        """
+        (element) => element._fullLayout.shapes
+          .filter((shape) => shape.type === "line"
+            && shape.line?.color === "rgba(19, 42, 58, 0.42)")
           .length
         """
     )

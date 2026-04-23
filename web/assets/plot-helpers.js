@@ -21,6 +21,18 @@ const REFERENCE_STYLES = {
     width: 3,
   },
 };
+const INTERVAL_STYLES = {
+  ci: {
+    fillcolor: "rgba(176, 74, 47, 0.08)",
+    lineColor: "rgba(176, 74, 47, 0.22)",
+    labelColor: "#8f3f2b",
+  },
+  sMinus2: {
+    fillcolor: "rgba(19, 42, 58, 0.07)",
+    lineColor: "rgba(19, 42, 58, 0.42)",
+    labelColor: "#132a3a",
+  },
+};
 
 export function formatHoverNumber(value) {
   if (!Number.isFinite(value)) {
@@ -108,6 +120,186 @@ export function makeGuideShapes(response, viewMode) {
     },
     layer: "below",
   }));
+}
+
+function hasCompatibilityPanel(viewMode) {
+  return viewMode !== "likelihood";
+}
+
+function hasLikelihoodPanel(viewMode) {
+  return viewMode !== "compatibility";
+}
+
+function validInterval(values) {
+  if (!Array.isArray(values) || values.length !== 2) {
+    return null;
+  }
+  const lower = Number(values[0]);
+  const upper = Number(values[1]);
+  if (!Number.isFinite(lower) || !Number.isFinite(upper) || lower > upper) {
+    return null;
+  }
+  return [lower, upper];
+}
+
+function clippedVisibleInterval(values, response) {
+  const interval = validInterval(values);
+  if (interval === null) {
+    return null;
+  }
+  const [visibleLower, visibleUpper] = visibleRange(response);
+  const lower = Math.max(interval[0], visibleLower);
+  const upper = Math.min(interval[1], visibleUpper);
+  return lower <= upper ? [lower, upper] : null;
+}
+
+function intervalMidpoint(interval, xAxisType) {
+  const [lower, upper] = interval;
+  if (xAxisType === "log") {
+    if (lower <= 0 || upper <= 0) {
+      return Number.NaN;
+    }
+    return 10 ** ((Math.log10(lower) + Math.log10(upper)) / 2);
+  }
+  return (lower + upper) / 2;
+}
+
+function normalizedXPosition(value, response, xAxisType) {
+  const [lowerBound, upperBound] = visibleRange(response);
+  const lowerPosition = valuePosition(lowerBound, xAxisType);
+  const upperPosition = valuePosition(upperBound, xAxisType);
+  const valueAxisPosition = valuePosition(value, xAxisType);
+  const span = upperPosition - lowerPosition;
+  if (!Number.isFinite(span) || span <= 0 || !Number.isFinite(valueAxisPosition)) {
+    return Number.NaN;
+  }
+  return Math.min(1, Math.max(0, (valueAxisPosition - lowerPosition) / span));
+}
+
+export function makeIntervalShapes(response, viewMode) {
+  const shapes = [];
+  const ciInterval = clippedVisibleInterval(response.summary.ci_display, response);
+  if (hasCompatibilityPanel(viewMode) && ciInterval !== null) {
+    shapes.push({
+      type: "rect",
+      xref: "x",
+      yref: "y domain",
+      x0: ciInterval[0],
+      x1: ciInterval[1],
+      y0: 0,
+      y1: 1,
+      fillcolor: INTERVAL_STYLES.ci.fillcolor,
+      line: {
+        color: INTERVAL_STYLES.ci.lineColor,
+        width: 1,
+      },
+      layer: "below",
+    });
+  }
+
+  const sMinus2 = response.meta.s_minus_2_interval;
+  const sMinus2Interval = clippedVisibleInterval(sMinus2?.range_display, response);
+  if (hasLikelihoodPanel(viewMode) && sMinus2 !== undefined) {
+    const likelihoodAxis = viewMode === "both" ? "2" : "";
+    const xref = likelihoodAxis === "2" ? "x2" : "x";
+    const yref = likelihoodAxis === "2" ? "y2" : "y";
+    const [visibleLower, visibleUpper] = visibleRange(response);
+    if (sMinus2Interval !== null) {
+      shapes.push({
+        type: "rect",
+        xref,
+        yref: `${yref} domain`,
+        x0: sMinus2Interval[0],
+        x1: sMinus2Interval[1],
+        y0: 0,
+        y1: 1,
+        fillcolor: INTERVAL_STYLES.sMinus2.fillcolor,
+        line: {
+          color: INTERVAL_STYLES.sMinus2.lineColor,
+          width: 1,
+        },
+        layer: "below",
+      });
+    }
+    if (Number.isFinite(visibleLower) && Number.isFinite(visibleUpper)) {
+      shapes.push({
+        type: "line",
+        xref,
+        yref,
+        x0: visibleLower,
+        x1: visibleUpper,
+        y0: sMinus2.relative_likelihood_cutoff,
+        y1: sMinus2.relative_likelihood_cutoff,
+        line: {
+          color: INTERVAL_STYLES.sMinus2.lineColor,
+          dash: "dot",
+          width: 1.5,
+        },
+        layer: "below",
+      });
+    }
+  }
+
+  return shapes;
+}
+
+export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscript) {
+  const annotations = [];
+  const fontSize = manuscript ? 14 : 11;
+  const ciInterval = clippedVisibleInterval(response.summary.ci_display, response);
+  if (hasCompatibilityPanel(viewMode) && ciInterval !== null) {
+    const x = normalizedXPosition(intervalMidpoint(ciInterval, xAxisType), response, xAxisType);
+    if (Number.isFinite(x)) {
+      annotations.push({
+        x,
+        y: viewMode === "both" ? 0.965 : 0.93,
+        xref: "paper",
+        yref: "paper",
+        text: "Reported 95% CI",
+        showarrow: false,
+        xanchor: "center",
+        yanchor: "top",
+        font: {
+          size: fontSize,
+          color: INTERVAL_STYLES.ci.labelColor,
+        },
+        bgcolor: "rgba(255, 255, 255, 0.82)",
+        bordercolor: "rgba(176, 74, 47, 0.22)",
+        borderpad: 3,
+      });
+    }
+  }
+
+  const sMinus2 = response.meta.s_minus_2_interval;
+  const sMinus2Interval = clippedVisibleInterval(sMinus2?.range_display, response);
+  if (hasLikelihoodPanel(viewMode) && sMinus2 !== undefined && sMinus2Interval !== null) {
+    const x = normalizedXPosition(
+      intervalMidpoint(sMinus2Interval, xAxisType),
+      response,
+      xAxisType,
+    );
+    if (Number.isFinite(x)) {
+      annotations.push({
+        x,
+        y: viewMode === "both" ? 0.15 : 0.22,
+        xref: "paper",
+        yref: "paper",
+        text: "S−2 interval: within 7.4x of peak support",
+        showarrow: false,
+        xanchor: "center",
+        yanchor: "bottom",
+        font: {
+          size: fontSize,
+          color: INTERVAL_STYLES.sMinus2.labelColor,
+        },
+        bgcolor: "rgba(255, 255, 255, 0.84)",
+        bordercolor: "rgba(19, 42, 58, 0.18)",
+        borderpad: 3,
+      });
+    }
+  }
+
+  return annotations;
 }
 
 export function axisTitle(response) {

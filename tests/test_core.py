@@ -296,6 +296,35 @@ def test_display_range_preserves_reconstruction_summaries() -> None:
     assert constrained["meta"]["relative_asymmetry"] == pytest.approx(
         baseline["meta"]["relative_asymmetry"]
     )
+    for key, expected in baseline["meta"]["s_minus_2_interval"].items():
+        observed = constrained["meta"]["s_minus_2_interval"][key]
+        if isinstance(expected, list):
+            assert observed == pytest.approx(expected)
+        else:
+            assert observed == pytest.approx(expected)
+
+
+def test_s_minus_2_interval_matches_wald_support_definition() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "grid_points": 401,
+        }
+    )
+
+    interval = response["meta"]["s_minus_2_interval"]
+    estimate_working = response["summary"]["estimate_working"]
+    se = response["summary"]["working_scale_se"]
+    expected_working = [estimate_working - 2.0 * se, estimate_working + 2.0 * se]
+    expected_display = [math.exp(value) for value in expected_working]
+
+    assert interval["support_cutoff"] == pytest.approx(-2.0)
+    assert interval["relative_likelihood_cutoff"] == pytest.approx(math.exp(-2.0))
+    assert interval["likelihood_ratio_mle_to_bound"] == pytest.approx(math.exp(2.0))
+    assert interval["range_working"] == pytest.approx(expected_working)
+    assert interval["range_display"] == pytest.approx(expected_display)
 
 
 def test_display_range_does_not_auto_expand_to_reference_markers() -> None:

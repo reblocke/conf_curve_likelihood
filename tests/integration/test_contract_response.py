@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 
 import pytest
 
@@ -25,6 +26,13 @@ def test_compute_curves_response_is_json_serializable() -> None:
     assert payload["meta"]["display_range_display"] is None
     assert payload["meta"]["display_range_working"] is None
     assert payload["meta"]["threshold_support_summaries"] == []
+    assert payload["meta"]["s_minus_2_interval"]["support_cutoff"] == -2.0
+    assert payload["meta"]["s_minus_2_interval"]["relative_likelihood_cutoff"] == pytest.approx(
+        math.exp(-2.0)
+    )
+    assert payload["meta"]["s_minus_2_interval"]["likelihood_ratio_mle_to_bound"] == pytest.approx(
+        math.exp(2.0)
+    )
     assert payload["summary"]["estimate_display"] == 0.42
     assert payload["summary"]["null_display"] == 0.0
     assert payload["summary"]["critical_effect_distance_working"] > 0
@@ -76,6 +84,50 @@ def test_threshold_support_response_metadata_is_json_serializable() -> None:
     assert threshold_summary["relative_likelihood"] > 0
     assert threshold_summary["likelihood_ratio_mle_to_threshold"] > 1
     assert threshold_summary["log_likelihood_ratio_threshold_to_null"] is not None
+
+
+def test_s_minus_2_interval_response_metadata_is_json_serializable() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "odds_ratio",
+            "lower": 1.2,
+            "upper": 2.7,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    interval = payload["meta"]["s_minus_2_interval"]
+    estimate_working = payload["summary"]["estimate_working"]
+    se = payload["summary"]["working_scale_se"]
+    expected_working = [estimate_working - 2.0 * se, estimate_working + 2.0 * se]
+    assert interval["support_cutoff"] == -2.0
+    assert interval["relative_likelihood_cutoff"] == pytest.approx(math.exp(-2.0))
+    assert interval["likelihood_ratio_mle_to_bound"] == pytest.approx(math.exp(2.0))
+    assert interval["range_working"] == pytest.approx(expected_working)
+    assert interval["range_display"][0] < interval["range_display"][1]
+
+
+def test_extreme_additive_s_minus_2_interval_stays_strict_json_serializable() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "lower": 1e308,
+            "upper": 1.79e308,
+            "grid_points": 401,
+        }
+    )
+
+    payload = json.loads(json.dumps(response, allow_nan=False))
+    interval = payload["meta"]["s_minus_2_interval"]
+    assert all(math.isfinite(value) for value in interval["range_working"])
+    assert all(math.isfinite(value) for value in interval["range_display"])
+    assert interval["range_working"][1] == MAX_FLOAT
+    assert interval["range_display"][1] == MAX_FLOAT
+    assert any(
+        "Working-scale S-2 interval endpoints were clipped" in message
+        for message in payload["warnings"]
+    )
 
 
 def test_provided_estimate_sets_provided_validated_meta_flag() -> None:

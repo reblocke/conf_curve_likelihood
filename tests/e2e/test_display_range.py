@@ -3,7 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from helpers import open_advanced_options, wait_for_ready, xaxis_bounds
+from helpers import (
+    ci_band_count,
+    open_advanced_options,
+    plot_annotation_texts,
+    s_minus_2_band_count,
+    s_minus_2_guide_count,
+    wait_for_ready,
+    xaxis_bounds,
+)
 from playwright.sync_api import Page, expect
 
 pytestmark = pytest.mark.e2e
@@ -45,6 +53,12 @@ def test_ratio_plausible_display_range_constrains_plot_and_warns(app_url: str, p
     expect(page.locator("#warnings-list")).to_contain_text(
         "The chosen display range excludes one or more critical-effect markers."
     )
+    assert ci_band_count(page) == 0
+    assert s_minus_2_band_count(page) == 0
+    assert s_minus_2_guide_count(page) == 1
+    annotations = plot_annotation_texts(page)
+    assert "Reported 95% CI" not in annotations
+    assert "S−2 interval: within 7.4x of peak support" not in annotations
 
 
 def test_plausible_display_range_csv_exports_current_grid(

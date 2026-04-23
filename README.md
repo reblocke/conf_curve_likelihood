@@ -17,6 +17,7 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 - accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional user-supplied clinical/reference thresholds, and ratio-axis spacing
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding compatibility curve and normalized relative-likelihood curve in both-panel, compatibility-only, or likelihood-only view modes
+- highlights the reported 95% CI on compatibility-visible views and the evidential S−2 support interval on likelihood-visible views
 - reports summary quantities such as the CI-implied estimate, reconstructed SE, design-threshold markers for `alpha = 0.05` and `power = 0.80`, null relative likelihood, threshold-support comparisons, and the two-sided Wald p-value
 - exports the current x-grid as CSV, the dashboard plot as PNG, and a figure-only manuscript PNG with a separate copyable caption
 
@@ -46,6 +47,10 @@ Use the wording “normalized Wald relative likelihood” or “approximate prof
 For ratio measures, the app computes on the log scale, labels the x-axis on the natural ratio scale, and can display that natural-scale axis with logarithmic or linear spacing.
 
 The optional plausible display range constrains only the plotted and exported x-grid. It does not change the CI-derived estimate, reconstructed standard error, null summaries, threshold-support summaries, design-threshold markers, or reconstruction warnings.
+
+The S−2 support interval is shown on the normalized Wald relative-likelihood panel as the effects with relative likelihood at least `exp(-2)` compared with the CI-implied estimate. Equivalently, the CI-implied estimate is no more than `exp(2)` or about `7.4x` as supported as values inside the interval.
+
+The paired design-threshold markers are Wald `alpha = 0.05`, `power = 0.80` benchmarks around the null. They are a design-interpretation aid related to critical-effect-size thinking, not a replacement for a study-specific critical-effect-size or power analysis.
 
 ## Quickstart
 
@@ -107,3 +112,6 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - `AGENTS.md` defines repo-specific engineering rules.
 - `docs/DECISIONS.md` records architectural choices.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
+- Source links used for app terminology and presentation notes, retrieved 2026-04-23:
+  - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals.
+  - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale.

@@ -207,6 +207,8 @@
               <p>
                 Compatibility / confidence curve = the two-sided Wald p-value function across candidate effect sizes.
                 Relative likelihood = a monotone transform of the same Wald distance, normalized to 1 at the CI-implied estimate.
+                S−2 interval = candidate effects with support no less than −2 versus the MLE, equivalent here to relative
+                likelihood at least exp(−2) or the MLE being no more than 7.4x as supported.
               </p>
               <p>
                 Both views come from the same CI-based Wald reconstruction. The likelihood view is often easier to read as
@@ -239,6 +241,32 @@
         <section class="warnings-card">
           <p class="eyebrow">Technical reconstruction notes</p>
           <ul id="warnings-list"></ul>
+        </section>
+
+        <section class="sources-footer" id="sources-footer" aria-labelledby="sources-heading">
+          <p class="eyebrow" id="sources-heading">More information</p>
+          <ul>
+            <li>
+              <a
+                href="https://academic.oup.com/ajrccm/article/211/9/1610/8300617"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Zampieri et al., AJRCCM 2025
+              </a>
+              <span>for evidential likelihood, likelihood ratios, support, and S−2 intervals.</span>
+            </li>
+            <li>
+              <a
+                href="https://journals.sagepub.com/doi/10.1177/25152459251335298"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Perugini et al., AMPS 2025
+              </a>
+              <span>for critical-effect-size values and design-interpretation rationale.</span>
+            </li>
+          </ul>
         </section>
       </main>
     </div>

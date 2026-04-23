@@ -3,10 +3,13 @@ from __future__ import annotations
 import pytest
 from helpers import (
     annotation_overlaps_x_axis_title,
+    ci_band_count,
     horizontal_cutoff_count,
     open_advanced_options,
     plot_annotation_texts,
     plot_trace_names,
+    s_minus_2_band_count,
+    s_minus_2_guide_count,
     wait_for_ready,
     x_axis_ticklabel_visibility,
     x_axis_titles,
@@ -26,8 +29,13 @@ def test_direct_labels_and_panel_annotations_render_on_plot(app_url: str, page: 
     assert "Estimate" in annotations
     assert "Null" in annotations
     assert "Design threshold" in annotations
+    assert "Reported 95% CI" in annotations
+    assert "S−2 interval: within 7.4x of peak support" in annotations
     assert "A. Compatibility curve (two-sided Wald p-value function)" in annotations
     assert "B. Relative likelihood (normalized to 1 at the CI-implied estimate)" in annotations
+    assert ci_band_count(page) == 1
+    assert s_minus_2_band_count(page) == 1
+    assert s_minus_2_guide_count(page) == 1
     _, default_upper_bound = xaxis_bounds(page)
     assert default_upper_bound < 10
 
@@ -80,6 +88,8 @@ def test_plot_key_tracks_thresholds_and_cutoffs(app_url: str, page: Page) -> Non
 
     expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
+    expect(page.locator("#plot-key")).to_contain_text("Reported 95% CI")
+    expect(page.locator("#plot-key")).to_contain_text("S−2 support interval")
 
     page.locator("#thresholds").fill("0.8, 1.25")
     page.wait_for_function(
@@ -119,6 +129,11 @@ def test_likelihood_only_view_hides_compatibility_panel(app_url: str, page: Page
     assert x_axis_titles(page) == ["Odds ratio (natural scale)"]
     assert y_axis_titles(page) == ["Relative likelihood"]
     assert horizontal_cutoff_count(page) == 0
+    assert ci_band_count(page) == 0
+    assert s_minus_2_band_count(page) == 1
+    assert s_minus_2_guide_count(page) == 1
+    expect(page.locator("#plot-key")).to_contain_text("S−2 support interval")
+    expect(page.locator("#plot-key")).not_to_contain_text("Reported 95% CI")
     expect(page.locator("#plot-key")).not_to_contain_text("Compatibility cutoffs")
     expect(page.locator("#commentary-text")).to_contain_text("relative evidentiary support")
 
@@ -142,6 +157,11 @@ def test_compatibility_only_view_hides_likelihood_panel(app_url: str, page: Page
     assert x_axis_titles(page) == ["Odds ratio (natural scale)"]
     assert y_axis_titles(page) == ["Compatibility / confidence curve"]
     assert horizontal_cutoff_count(page) == 3
+    assert ci_band_count(page) == 1
+    assert s_minus_2_band_count(page) == 0
+    assert s_minus_2_guide_count(page) == 0
+    expect(page.locator("#plot-key")).to_contain_text("Reported 95% CI")
+    expect(page.locator("#plot-key")).not_to_contain_text("S−2 support interval")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
     expect(page.locator("#commentary-text")).to_contain_text("two-sided Wald p-value function")
 

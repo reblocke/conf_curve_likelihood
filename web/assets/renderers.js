@@ -45,10 +45,11 @@ export function renderComparisonHeader(response, elements) {
 
 export function buildFigureCaption(response, displayOptions) {
   const effect = effectOptionForResponse(response);
+  const viewMode = displayOptions.viewMode ?? "both";
   const panelText =
-    displayOptions.viewMode === "likelihood"
+    viewMode === "likelihood"
       ? "The figure shows relative likelihood only."
-      : displayOptions.viewMode === "compatibility"
+      : viewMode === "compatibility"
         ? "The figure shows the compatibility curve only."
         : "Panel A shows the compatibility curve and Panel B shows relative likelihood.";
   const thresholdValues = response.meta.thresholds_display ?? [];
@@ -56,12 +57,18 @@ export function buildFigureCaption(response, displayOptions) {
     thresholdValues.length > 0
       ? ` Clinical thresholds are marked at ${thresholdValues.map(formatNumber).join(", ")}.`
       : "";
+  const ciText = hasCompatibilityPanel(viewMode)
+    ? " The shaded band on the compatibility panel marks the reported 95% CI."
+    : "";
+  const sMinus2Text = hasLikelihoodPanel(viewMode)
+    ? " The shaded S−2 interval marks candidate effects with relative likelihood at least exp(−2), so the CI-implied estimate is no more than 7.4x as supported."
+    : "";
 
   return (
     `Figure. Wald reconstruction from the reported 95% CI (${formatRange(response.summary.ci_display)}) for ${effect.label.toLowerCase()}. ` +
     `The CI-implied point estimate is ${effectValueLabel(effect, response.summary.estimate_display)} and the null is ${effectValueLabel(effect, response.summary.null_display)}. ` +
     `${panelText} Relative likelihood is normalized to 1 at the CI-implied estimate; compatibility is the two-sided Wald p-value function across candidate effect sizes.` +
-    `${thresholdText} This is not exact fitted-model profile likelihood.`
+    `${ciText}${sMinus2Text}${thresholdText} This is not exact fitted-model profile likelihood.`
   );
 }
 
@@ -131,16 +138,27 @@ export function hasCompatibilityPanel(viewMode) {
   return viewMode !== "likelihood";
 }
 
+export function hasLikelihoodPanel(viewMode) {
+  return viewMode !== "compatibility";
+}
+
 export function renderPlotKey(response, displayOptions, plotKey) {
+  const viewMode = displayOptions.viewMode ?? "both";
   const keyRows = [
     ["estimate", "Point estimate"],
     ["null", "Null value"],
     ["critical", "Design threshold markers"],
   ];
+  if (hasCompatibilityPanel(viewMode)) {
+    keyRows.push(["ci", "Reported 95% CI"]);
+  }
+  if (hasLikelihoodPanel(viewMode)) {
+    keyRows.push(["s-minus-2", "S−2 support interval"]);
+  }
   if (response.meta.thresholds_display.length > 0) {
     keyRows.push(["threshold", "Clinical thresholds"]);
   }
-  if (response.meta.show_cutoffs && hasCompatibilityPanel(displayOptions.viewMode)) {
+  if (response.meta.show_cutoffs && hasCompatibilityPanel(viewMode)) {
     keyRows.push(["cutoff", "Compatibility cutoffs"]);
   }
 
@@ -205,6 +223,11 @@ export function renderWarnings(response, displayOptions, warningsList) {
       displayOptions.viewMode === "both" ? "upper compatibility panel" : "compatibility panel";
     notes.push(
       `Horizontal guide lines on the ${cutoffPanel} mark 90%, 95%, and 99% compatibility cutoffs.`,
+    );
+  }
+  if (hasLikelihoodPanel(displayOptions.viewMode)) {
+    notes.push(
+      "The S−2 support interval marks relative likelihood >= exp(−2), equivalent to an MLE:candidate likelihood ratio <= exp(2).",
     );
   }
   const messages = [...notes, ...response.warnings];

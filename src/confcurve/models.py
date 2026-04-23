@@ -123,6 +123,14 @@ class ThresholdSupportPayload(TypedDict):
     direction_from_null: str
 
 
+class SMinus2IntervalPayload(TypedDict):
+    support_cutoff: float
+    relative_likelihood_cutoff: float
+    likelihood_ratio_mle_to_bound: float
+    range_display: list[float]
+    range_working: list[float]
+
+
 class MetaPayload(TypedDict):
     effect_spec: dict[str, object]
     display_axis_scale: str
@@ -138,6 +146,7 @@ class MetaPayload(TypedDict):
     display_range_display: list[float] | None
     display_range_working: list[float] | None
     threshold_support_summaries: list[ThresholdSupportPayload]
+    s_minus_2_interval: SMinus2IntervalPayload
 
 
 class SummaryPayload(TypedDict):

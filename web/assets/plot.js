@@ -6,6 +6,8 @@ import {
   logAxisTickConfig,
   makeDirectLabelAnnotations,
   makeGuideShapes,
+  makeIntervalAnnotations,
+  makeIntervalShapes,
   makePanelAnnotations,
   makeVerticalShapes,
 } from "./plot-helpers.js";
@@ -129,9 +131,14 @@ export async function renderCurves(plotElement, response, displayOptions) {
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
     },
-    shapes: [...makeVerticalShapes(response), ...makeGuideShapes(response, viewMode)],
+    shapes: [
+      ...makeIntervalShapes(response, viewMode),
+      ...makeVerticalShapes(response),
+      ...makeGuideShapes(response, viewMode),
+    ],
     annotations: [
       ...makePanelAnnotations(viewMode, manuscript),
+      ...makeIntervalAnnotations(response, viewMode, xAxisType, manuscript),
       ...makeDirectLabelAnnotations(response, displayOptions, xAxisType),
     ],
   };

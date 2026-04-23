@@ -22,7 +22,15 @@ from .core import (
     to_working_scale,
     validate_inputs,
 )
-from .models import CurveRequest, CurveResponse, ThresholdSupportPayload
+from .models import (
+    CurveRequest,
+    CurveResponse,
+    SMinus2IntervalPayload,
+    ThresholdSupportPayload,
+)
+
+S_MINUS_2_SUPPORT_CUTOFF = -2.0
+S_MINUS_2_DISTANCE = 2.0
 
 
 def _float_list(values: float | np.ndarray) -> list[float]:
@@ -145,6 +153,52 @@ def _threshold_support_summaries(
             }
         )
     return summaries_payload
+
+
+def _finite_s_minus_2_endpoint(
+    theta_hat: float,
+    se: float,
+    direction: float,
+) -> tuple[float, bool]:
+    half_endpoint = (theta_hat * 0.5) + (direction * se)
+    if not np.isfinite(half_endpoint) or abs(half_endpoint) > (MAX_FLOAT * 0.5):
+        return (MAX_FLOAT if half_endpoint >= 0 else -MAX_FLOAT), True
+    endpoint = half_endpoint * 2.0
+    return float(endpoint), False
+
+
+def _s_minus_2_interval(
+    *,
+    effect_type: str,
+    working_scale: str,
+    theta_hat: float,
+    se: float,
+    display_natural_axis: bool,
+) -> tuple[SMinus2IntervalPayload, bool, bool]:
+    lower_working, lower_working_clipped = _finite_s_minus_2_endpoint(theta_hat, se, -1.0)
+    upper_working, upper_working_clipped = _finite_s_minus_2_endpoint(theta_hat, se, 1.0)
+    working_range = np.asarray([lower_working, upper_working], dtype=float)
+    working_clipped = lower_working_clipped or upper_working_clipped
+
+    if display_natural_axis:
+        display_range, display_clipped = _safe_display_values(
+            effect_type, working_scale, working_range
+        )
+    else:
+        display_range = working_range
+        display_clipped = False
+
+    return (
+        {
+            "support_cutoff": S_MINUS_2_SUPPORT_CUTOFF,
+            "relative_likelihood_cutoff": float(np.exp(S_MINUS_2_SUPPORT_CUTOFF)),
+            "likelihood_ratio_mle_to_bound": float(np.exp(-S_MINUS_2_SUPPORT_CUTOFF)),
+            "range_display": _float_list(display_range),
+            "range_working": _float_list(working_range),
+        },
+        display_clipped,
+        working_clipped,
+    )
 
 
 def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
@@ -300,6 +354,23 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         se=se_info.se,
         log_null_relative_likelihood=null_summary["log_null_relative_likelihood"],
     )
+    s_minus_2_interval, s_minus_2_display_clipped, s_minus_2_working_clipped = _s_minus_2_interval(
+        effect_type=effect_type,
+        working_scale=validated.effect_spec.working_scale,
+        theta_hat=theta_hat,
+        se=se_info.se,
+        display_natural_axis=validated.display_natural_axis,
+    )
+    if s_minus_2_working_clipped:
+        warning_messages.append(
+            "Working-scale S-2 interval endpoints were clipped at the largest finite "
+            "floating-point value. Wald summaries are unchanged."
+        )
+    if s_minus_2_display_clipped:
+        warning_messages.append(
+            "Natural-axis S-2 interval endpoints were clipped at the largest finite "
+            "floating-point value. Working-scale calculations are unchanged."
+        )
 
     return {
         "meta": {
@@ -332,6 +403,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
                 else [float(grid_working[0]), float(grid_working[-1])]
             ),
             "threshold_support_summaries": threshold_summaries,
+            "s_minus_2_interval": s_minus_2_interval,
         },
         "summary": {
             "estimate_display": float(estimate_display),
