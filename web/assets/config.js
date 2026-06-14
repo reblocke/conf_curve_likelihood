@@ -9,7 +9,6 @@ export const PYTHON_PACKAGE_FILES = [
   "web_contract.py",
 ];
 export const DEFAULT_VIEW_MODE = "both";
-export const DEFAULT_DESIGN_METRIC = "power";
 
 export const DESIGN_SELECTION_RULE_OPTIONS = [
   {
@@ -173,7 +172,6 @@ export const DEFAULT_VALUES = {
   design_true_effects: "",
   design_plausible_range_lower: "",
   design_plausible_range_upper: "",
-  design_metric: DEFAULT_DESIGN_METRIC,
 };
 
 export function effectOptionForKey(effectKey) {

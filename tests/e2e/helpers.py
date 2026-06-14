@@ -45,9 +45,19 @@ def plot_trace_names(page: Page) -> list[str]:
 def y_axis_titles(page: Page) -> list[str]:
     return page.locator("#curve-plot").evaluate(
         """
-        (element) => Array.from(element.querySelectorAll(".g-ytitle text, .g-y2title text"))
+        (element) => {
+          const selectors = [
+            ".g-ytitle text",
+            ".g-y2title text",
+            ".g-y3title text",
+            ".g-y4title text",
+            ".g-y5title text",
+            ".g-y6title text",
+          ].join(", ");
+          return Array.from(element.querySelectorAll(selectors))
           .map((node) => node.textContent?.trim())
-          .filter(Boolean)
+          .filter(Boolean);
+        }
         """
     )
 
@@ -55,9 +65,19 @@ def y_axis_titles(page: Page) -> list[str]:
 def x_axis_titles(page: Page) -> list[str]:
     return page.locator("#curve-plot").evaluate(
         """
-        (element) => Array.from(element.querySelectorAll(".g-xtitle text, .g-x2title text"))
+        (element) => {
+          const selectors = [
+            ".g-xtitle text",
+            ".g-x2title text",
+            ".g-x3title text",
+            ".g-x4title text",
+            ".g-x5title text",
+            ".g-x6title text",
+          ].join(", ");
+          return Array.from(element.querySelectorAll(selectors))
           .map((node) => node.textContent?.trim())
-          .filter(Boolean)
+          .filter(Boolean);
+        }
         """
     )
 
@@ -68,6 +88,10 @@ def x_axis_ticklabel_visibility(page: Page) -> dict[str, bool | None]:
         (element) => ({
           xaxis: element._fullLayout.xaxis?.showticklabels,
           xaxis2: element._fullLayout.xaxis2?.showticklabels,
+          xaxis3: element._fullLayout.xaxis3?.showticklabels,
+          xaxis4: element._fullLayout.xaxis4?.showticklabels,
+          xaxis5: element._fullLayout.xaxis5?.showticklabels,
+          xaxis6: element._fullLayout.xaxis6?.showticklabels,
         })
         """
     )

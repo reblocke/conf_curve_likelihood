@@ -11,12 +11,25 @@ import {
   thresholdVsNullPhrase,
 } from "./formatters.js";
 
+const DESIGN_RATIO_DISPLAY_CAP = 10;
+
 function effectOptionForResponse(response) {
   return effectOptionForKey(response.meta.effect_spec.key);
 }
 
 function hasDesign(response) {
   return response.design?.config?.enabled === true;
+}
+
+function hasRatioDesignPlotOmissions(response) {
+  if (!hasDesign(response)) {
+    return false;
+  }
+  return ["type_m", "observed_exaggeration"].some((field) =>
+    response.design.grid[field].some(
+      (value) => Number.isFinite(value) && value > DESIGN_RATIO_DISPLAY_CAP,
+    ),
+  );
 }
 
 function sourceLabel(source) {
@@ -27,7 +40,7 @@ function sourceLabel(source) {
     return "CI-implied estimate";
   }
   if (source === "threshold") {
-    return "Threshold / MCID";
+    return "Reference threshold / MCID";
   }
   return "Custom assumed true effect";
 }
@@ -118,7 +131,7 @@ export function buildComparisonTakeaway(response) {
 
   if (thresholdSummaries.length > 0) {
     const thresholdSummary = thresholdSummaries[0];
-    takeaway += ` The clinical threshold ${effectValueLabel(effect, thresholdSummary.threshold_display)} ${thresholdVsNullPhrase(thresholdSummary)}.`;
+    takeaway += ` The reference threshold / MCID ${effectValueLabel(effect, thresholdSummary.threshold_display)} ${thresholdVsNullPhrase(thresholdSummary)}.`;
   } else {
     takeaway += ` The CI-implied estimate is ${formatLikelihoodRatio(response.summary)}x as supported as the null under this reconstruction.`;
   }
@@ -132,7 +145,7 @@ export function renderComparisonHeader(response, elements) {
 
   elements.plotTitle.textContent = `How the data compare candidate ${effect.candidateLabel}`;
   elements.plotSubtitle.textContent = hasThresholds
-    ? `Relative to the null ${effect.shortLabel} = ${formatNumber(response.summary.null_display)} and clinical thresholds`
+    ? `Relative to the null ${effect.shortLabel} = ${formatNumber(response.summary.null_display)} and reference thresholds / MCIDs`
     : "Relative to the null and the CI-implied estimate";
   elements.comparisonTakeaway.textContent = buildComparisonTakeaway(response);
 }
@@ -149,7 +162,7 @@ export function buildFigureCaption(response, displayOptions) {
   const thresholdValues = response.meta.thresholds_display ?? [];
   const thresholdText =
     thresholdValues.length > 0
-      ? ` Clinical thresholds are marked at ${thresholdValues.map(formatNumber).join(", ")}.`
+      ? ` Reference thresholds/MCIDs are marked at ${thresholdValues.map(formatNumber).join(", ")}.`
       : "";
   const ciText = hasCompatibilityPanel(viewMode)
     ? " The shaded band on the compatibility panel marks the reported 95% CI."
@@ -158,7 +171,7 @@ export function buildFigureCaption(response, displayOptions) {
     ? " The shaded S−2 interval marks candidate effects with relative likelihood at least exp(−2), so the CI-implied estimate is no more than 7.4x as supported."
     : "";
   const designText = hasDesign(response)
-    ? ` The design-calibration panel treats each x-axis value as an assumed true effect and shows repeated-study operating characteristics under ${response.design.config.selection_rule_label} with ${formatRatio(response.design.config.information_multiplier)} the CI-implied information.`
+    ? ` The design-calibration panels treat each x-axis value as an assumed true effect and show repeated-study operating characteristics under ${response.design.config.selection_rule_label} with ${formatRatio(response.design.config.information_multiplier)} the CI-implied information.`
     : "";
 
   return (
@@ -181,7 +194,7 @@ export function renderSummary(response, summaryGrid) {
       "Computation scale",
       response.meta.effect_spec.working_scale === "log" ? "Log working scale" : "Natural working scale",
     ],
-    ["Design threshold markers", formatRange(response.summary.critical_effect_markers_display)],
+    ["80% power benchmarks", formatRange(response.summary.critical_effect_markers_display)],
   ];
   if (response.meta.display_range_active && response.meta.display_range_display) {
     technicalItems.push(["Display range", formatRange(response.meta.display_range_display)]);
@@ -259,7 +272,7 @@ export function renderPlotKey(response, displayOptions, plotKey) {
   const keyRows = [
     ["estimate", "Point estimate"],
     ["null", "Null value"],
-    ["critical", "Design threshold markers"],
+    ["critical", "80% power benchmarks"],
   ];
   if (hasCompatibilityPanel(viewMode)) {
     keyRows.push(["ci", "Reported 95% CI"]);
@@ -268,13 +281,16 @@ export function renderPlotKey(response, displayOptions, plotKey) {
     keyRows.push(["s-minus-2", "S−2 support interval"]);
   }
   if (response.meta.thresholds_display.length > 0) {
-    keyRows.push(["threshold", "Clinical thresholds"]);
+    keyRows.push(["threshold", "Reference thresholds / MCIDs"]);
+  }
+  if (hasDesign(response) && response.design.config.claim_threshold_display !== null) {
+    keyRows.push(["claim-threshold", "Claim threshold for selected-claim rule"]);
   }
   if (response.meta.show_cutoffs && hasCompatibilityPanel(viewMode)) {
     keyRows.push(["cutoff", "Compatibility cutoffs"]);
   }
   if (hasDesign(response)) {
-    keyRows.push(["design", "Design calibration metric"]);
+    keyRows.push(["design", "Design calibration panels"]);
   }
 
   plotKey.innerHTML = keyRows
@@ -316,7 +332,7 @@ export function renderCommentary(response, displayOptions, commentaryText) {
     `${viewClause} ` +
     `${estimateClause} ` +
     `${spacingClause} ` +
-    `The paired design threshold markers show the alpha=0.05, power=0.80 distance around the null. ` +
+    `The paired 80% power benchmark markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
     `${designClause} ` +
     `This display is reconstructed from the confidence interval; it is not the exact fitted-model profile likelihood from the original study.`;
@@ -330,7 +346,7 @@ export function renderWarnings(response, displayOptions, warningsList) {
     `Standard error reconstruction method: ${response.meta.se_method}.`,
   ];
   if (response.meta.thresholds_display.length > 0) {
-    notes.push("Clinical thresholds are shown as dashed green vertical reference lines.");
+    notes.push("Reference thresholds/MCIDs are shown as dashed green vertical reference lines.");
   }
   if (response.meta.display_range_active && response.meta.display_range_display) {
     notes.push(
@@ -350,6 +366,11 @@ export function renderWarnings(response, displayOptions, warningsList) {
     );
   }
   if (hasDesign(response)) {
+    if (hasRatioDesignPlotOmissions(response)) {
+      notes.push(
+        "Ratio design curves omit values above 10x near the null to keep the plotted scale readable.",
+      );
+    }
     notes.push(...response.design.warnings);
   }
   const messages = [...notes, ...response.warnings];

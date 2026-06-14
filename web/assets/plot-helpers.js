@@ -20,6 +20,11 @@ const REFERENCE_STYLES = {
     dash: "dash",
     width: 3,
   },
+  claimThreshold: {
+    color: "#4c8a5b",
+    dash: "dashdot",
+    width: 3,
+  },
 };
 const INTERVAL_STYLES = {
   ci: {
@@ -33,6 +38,42 @@ const INTERVAL_STYLES = {
     labelColor: "#132a3a",
   },
 };
+const DESIGN_DOMAINS_BOTH = {
+  primary: [0.86, 1],
+  secondary: [0.7, 0.82],
+  design: {
+    3: [0.53, 0.62],
+    4: [0.39, 0.48],
+    5: [0.25, 0.34],
+    6: [0.11, 0.2],
+  },
+  designZone: [0.11, 0.62],
+  separatorY: 0.66,
+};
+const DESIGN_DOMAINS_SINGLE = {
+  primary: [0.78, 1],
+  design: {
+    3: [0.58, 0.67],
+    4: [0.43, 0.52],
+    5: [0.28, 0.37],
+    6: [0.13, 0.22],
+  },
+  designZone: [0.13, 0.67],
+  separatorY: 0.72,
+};
+
+export function panelDomains(viewMode, designEnabled = false) {
+  if (!designEnabled) {
+    return {
+      primary: viewMode === "both" ? [0.58, 1] : [0, 1],
+      secondary: viewMode === "both" ? [0, 0.4] : null,
+      design: {},
+      designZone: null,
+      separatorY: null,
+    };
+  }
+  return viewMode === "both" ? DESIGN_DOMAINS_BOTH : DESIGN_DOMAINS_SINGLE;
+}
 
 export function formatHoverNumber(value) {
   if (!Number.isFinite(value)) {
@@ -71,25 +112,39 @@ function makeReferenceMarkers(response) {
     ...criticalMarkers.map((value) => ({
       key: "critical",
       value,
-      label: "Design threshold",
+      label: "80% power benchmark",
     })),
     ...thresholds.map((value) => ({
       key: "threshold",
       value,
-      label: `Threshold ${formatAxisTick(value)}`,
+      label: `Reference threshold ${formatAxisTick(value)}`,
     })),
   ];
 }
 
-export function makeVerticalShapes(response) {
-  return makeReferenceMarkers(response).map((marker) => ({
+function makeClaimThresholdMarkers(response) {
+  const value = response.design?.config?.claim_threshold_display;
+  if (!Number.isFinite(value)) {
+    return [];
+  }
+  return [
+    {
+      key: "claimThreshold",
+      value,
+      label: `Claim threshold ${formatAxisTick(value)}`,
+    },
+  ];
+}
+
+function markerVerticalShapes(markers, xref, yref, y0, y1) {
+  return markers.map((marker) => ({
     type: "line",
-    xref: "x",
-    yref: "paper",
+    xref,
+    yref,
     x0: marker.value,
     x1: marker.value,
-    y0: 0,
-    y1: 1,
+    y0,
+    y1,
     line: {
       color: REFERENCE_STYLES[marker.key].color,
       dash: REFERENCE_STYLES[marker.key].dash,
@@ -97,6 +152,33 @@ export function makeVerticalShapes(response) {
     },
     layer: "below",
   }));
+}
+
+export function makeVerticalShapes(response, options = {}) {
+  const { designEnabled = false, viewMode = "both" } = options;
+  const domains = panelDomains(viewMode, designEnabled);
+  const observedZoneBottom = designEnabled ? domains.separatorY : 0;
+  const observedShapes = markerVerticalShapes(
+    makeReferenceMarkers(response),
+    "x",
+    "paper",
+    observedZoneBottom,
+    1,
+  );
+  if (!designEnabled) {
+    return observedShapes;
+  }
+
+  return [
+    ...observedShapes,
+    ...markerVerticalShapes(
+      makeClaimThresholdMarkers(response),
+      "x3",
+      "paper",
+      domains.designZone[0],
+      domains.designZone[1],
+    ),
+  ];
 }
 
 export function makeGuideShapes(response, viewMode) {
@@ -246,13 +328,14 @@ export function makeIntervalShapes(response, viewMode) {
 export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscript, designEnabled = false) {
   const annotations = [];
   const fontSize = manuscript ? 14 : 11;
+  const domains = panelDomains(viewMode, designEnabled);
   const ciInterval = clippedVisibleInterval(response.summary.ci_display, response);
   if (hasCompatibilityPanel(viewMode) && ciInterval !== null) {
     const x = normalizedXPosition(intervalMidpoint(ciInterval, xAxisType), response, xAxisType);
     if (Number.isFinite(x)) {
       annotations.push({
         x,
-        y: viewMode === "both" ? 0.965 : 0.93,
+        y: Math.min(0.98, domains.primary[1] - 0.035),
         xref: "paper",
         yref: "paper",
         text: "Reported 95% CI",
@@ -279,8 +362,8 @@ export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscrip
       xAxisType,
     );
     if (Number.isFinite(x)) {
-      const yPosition =
-        viewMode === "both" ? (designEnabled ? 0.47 : 0.15) : designEnabled ? 0.52 : 0.22;
+      const likelihoodDomain = viewMode === "both" ? domains.secondary : domains.primary;
+      const yPosition = likelihoodDomain[0] + (likelihoodDomain[1] - likelihoodDomain[0]) * 0.38;
       annotations.push({
         x,
         y: yPosition,
@@ -304,9 +387,14 @@ export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscrip
   return annotations;
 }
 
-export function axisTitle(response) {
+export function axisTitle(response, designEnabled = false) {
   const label = response.meta.effect_spec.label;
-  return response.meta.effect_spec.family === "ratio" ? `${label} (natural scale)` : label;
+  if (response.meta.effect_spec.family === "ratio") {
+    return designEnabled
+      ? `${label} (natural scale; design panels treat x as the assumed true effect)`
+      : `${label} (natural scale)`;
+  }
+  return designEnabled ? `${label} (design panels treat x as the assumed true effect)` : label;
 }
 
 export function axisType(response, displayOptions) {
@@ -327,7 +415,10 @@ function visibleRange(response) {
   return [values[0], values[values.length - 1]];
 }
 
-function shouldShowDirectLabel(marker, displayOptions, thresholdCount) {
+function shouldShowDirectLabel(marker, displayOptions, thresholdCount, designEnabled) {
+  if (designEnabled && marker.key === "critical") {
+    return false;
+  }
   const isCompact = !displayOptions.manuscript && window.innerWidth < 700;
   if (!isCompact) {
     return true;
@@ -338,7 +429,7 @@ function shouldShowDirectLabel(marker, displayOptions, thresholdCount) {
   return marker.key === "threshold" && thresholdCount === 1;
 }
 
-export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) {
+function markerLabelAnnotations(response, markers, displayOptions, xAxisType, yPosition) {
   const [lowerBound, upperBound] = visibleRange(response);
   const lowerPosition = valuePosition(lowerBound, xAxisType);
   const upperPosition = valuePosition(upperBound, xAxisType);
@@ -347,8 +438,7 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
     return [];
   }
 
-  const thresholdCount = response.meta.thresholds_display?.length ?? 0;
-  const markers = makeReferenceMarkers(response)
+  const visibleMarkers = markers
     .filter((marker) => {
       if (!Number.isFinite(marker.value)) {
         return false;
@@ -356,7 +446,7 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
       if (marker.value < lowerBound || marker.value > upperBound) {
         return false;
       }
-      return shouldShowDirectLabel(marker, displayOptions, thresholdCount);
+      return true;
     })
     .map((marker) => ({
       ...marker,
@@ -371,7 +461,7 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
   let staggerIndex = 0;
   const collisionDistance = span * 0.08;
 
-  for (const marker of markers) {
+  for (const marker of visibleMarkers) {
     if (marker.position - previousPosition < collisionDistance) {
       staggerIndex = (staggerIndex + 1) % 3;
     } else {
@@ -384,7 +474,7 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
 
     annotations.push({
       x: Math.min(1, Math.max(0, normalizedPosition)),
-      y: 1.015,
+      y: yPosition,
       xref: "paper",
       yref: "paper",
       text: marker.label,
@@ -405,102 +495,80 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
   return annotations;
 }
 
-export function makePanelAnnotations(viewMode, manuscript, designEnabled = false) {
+export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) {
+  const designEnabled = response.design?.config?.enabled === true;
+  const isCompact = !displayOptions.manuscript && window.innerWidth < 700;
+  const domains = panelDomains(displayOptions.viewMode, designEnabled);
+  const thresholdCount = response.meta.thresholds_display?.length ?? 0;
+  const observedMarkers = makeReferenceMarkers(response).filter((marker) =>
+    shouldShowDirectLabel(marker, displayOptions, thresholdCount, designEnabled),
+  );
+  const designMarkers = designEnabled && !isCompact ? makeClaimThresholdMarkers(response) : [];
+  const designLabelY = designEnabled ? domains.designZone[1] + 0.01 : 0;
+
+  return [
+    ...markerLabelAnnotations(response, observedMarkers, displayOptions, xAxisType, 1.015),
+    ...markerLabelAnnotations(response, designMarkers, displayOptions, xAxisType, designLabelY),
+  ];
+}
+
+export function makePanelAnnotations(
+  viewMode,
+  manuscript,
+  designEnabled = false,
+) {
   const font = {
     size: manuscript ? 16 : 13,
     color: "#132a3a",
   };
+  const compatibilityLabel =
+    "A. Observed compatibility: candidate effects compared with the reported CI";
+  const likelihoodLabel =
+    "B. Observed likelihood: candidate effects compared with the CI-implied estimate";
+  const designLabels = [
+    ["3", "C. Design calibration: selected-claim probability if x is true"],
+    ["4", "D. Design calibration: Type S probability if x is true"],
+    ["5", "E. Design calibration: Type M exaggeration if x is true"],
+    ["6", "F. Design calibration: observed exaggeration if x is true"],
+  ];
+  const domains = panelDomains(viewMode, designEnabled);
   const annotations = [];
-  if (viewMode === "likelihood") {
+  const addPanelLabel = (text, y) => {
     annotations.push({
       x: 0,
-      y: 1.105,
+      y,
       xref: "paper",
       yref: "paper",
-      text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+      text,
       showarrow: false,
       xanchor: "left",
       yanchor: "bottom",
       font,
     });
+  };
+  const addDesignLabels = () => {
+    for (const [axisId, label] of designLabels) {
+      addPanelLabel(label, domains.design[axisId][1] + 0.015);
+    }
+  };
+  if (viewMode === "likelihood") {
+    addPanelLabel(likelihoodLabel, 1.075);
     if (designEnabled) {
-      annotations.push({
-        x: 0,
-        y: 0.335,
-        xref: "paper",
-        yref: "paper",
-        text: "C. Design calibration (assumed true-effect operating characteristics)",
-        showarrow: false,
-        xanchor: "left",
-        yanchor: "bottom",
-        font,
-      });
+      addDesignLabels();
     }
     return annotations;
   }
   if (viewMode === "compatibility") {
-    annotations.push({
-      x: 0,
-      y: 1.105,
-      xref: "paper",
-      yref: "paper",
-      text: "A. Compatibility curve (two-sided Wald p-value function)",
-      showarrow: false,
-      xanchor: "left",
-      yanchor: "bottom",
-      font,
-    });
+    addPanelLabel(compatibilityLabel, 1.075);
     if (designEnabled) {
-      annotations.push({
-        x: 0,
-        y: 0.335,
-        xref: "paper",
-        yref: "paper",
-        text: "B. Design calibration (assumed true-effect operating characteristics)",
-        showarrow: false,
-        xanchor: "left",
-        yanchor: "bottom",
-        font,
-      });
+      addDesignLabels();
     }
     return annotations;
   }
-  annotations.push(
-    {
-      x: 0,
-      y: 1.105,
-      xref: "paper",
-      yref: "paper",
-      text: "A. Compatibility curve (two-sided Wald p-value function)",
-      showarrow: false,
-      xanchor: "left",
-      yanchor: "bottom",
-      font,
-    },
-    {
-      x: 0,
-      y: designEnabled ? 0.655 : 0.435,
-      xref: "paper",
-      yref: "paper",
-      text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
-      showarrow: false,
-      xanchor: "left",
-      yanchor: "bottom",
-      font,
-    },
-  );
+  addPanelLabel(compatibilityLabel, 1.075);
+  addPanelLabel(likelihoodLabel, domains.secondary[1] + (designEnabled ? 0.015 : 0.035));
   if (designEnabled) {
-    annotations.push({
-      x: 0,
-      y: 0.315,
-      xref: "paper",
-      yref: "paper",
-      text: "C. Design calibration (assumed true-effect operating characteristics)",
-      showarrow: false,
-      xanchor: "left",
-      yanchor: "bottom",
-      font,
-    });
+    addDesignLabels();
   }
   return annotations;
 }

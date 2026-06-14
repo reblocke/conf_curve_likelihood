@@ -128,7 +128,7 @@ about `7.4x` as supported as interval values. Because
   2:1 likelihood interval.
 - The S−2 overlay is explanatory plot metadata and does not change summaries, reconstruction
   formulas, CSV export schema, or default inputs.
-- The paired design-threshold markers remain the app's Wald `alpha = 0.05`, `power = 0.80`
+- The paired 80% power benchmark markers remain the app's Wald `alpha = 0.05`, `power = 0.80`
   benchmarks around the null. The critical-effect-size source is cited as related rationale, not
   as a claim that the app implements that article's alpha-only critical-effect-size calculations.
 - Source provenance is recorded here and summarized in `README.md`; no external figures, tables,
@@ -214,3 +214,51 @@ rule, direction, threshold, alpha, and target true effect.
 - Precision-target results may be blank with warnings when no finite meaningful solution is available.
 - Public wording must describe these as repeated-study Wald design calculations, not clinical guidance
   or posterior probabilities.
+
+## 2026-06-14: Visually separate observed evidence from design calibration
+
+**Context:**
+
+The optional design panel uses the same displayed x-values as the observed compatibility and
+likelihood panels, but the interpretation changes. In panels A/B, x-values are candidate effect
+sizes evaluated against the observed CI-derived Wald reconstruction. In panel C, x-values are
+assumed true effects used to compute repeated-study operating characteristics.
+
+**Decision:**
+
+Keep all panels in one Plotly figure with a shared numeric x-range, but visually separate the
+observed-data zone from the design-calibration zone. Panel titles, hover text, and the bottom x-axis
+title must state that panel C treats x as the assumed true effect. Rename the former
+"design-threshold" markers to "80% power benchmarks" and reserve "claim threshold" for the
+user-entered selected-claim-rule threshold.
+
+**Consequences:**
+
+- The plot remains directly comparable across panels without implying that panel C conditions on the
+  observed data in the same way as panels A/B.
+- Reference thresholds/MCIDs, claim thresholds, and assumed true-effect scenarios must be labeled as
+  separate concepts in the UI and docs.
+
+## 2026-06-14: Show all design metrics in separate panels
+
+**Context:**
+
+The metric selector made panel C switch between power, Type S, Type M, and observed exaggeration.
+After separating observed evidence from design calibration, hiding three design metrics behind a
+selector made the figure harder to compare and obscured that all metrics share the same assumed-true
+x-axis interpretation.
+
+**Decision:**
+
+When design calibration is enabled, plot all four design operating-characteristic metrics as fixed
+panels C-F: selected-claim probability, Type S probability, Type M exaggeration, and observed
+exaggeration if true. Type M and observed exaggeration may be unbounded near the null, so their plot
+traces omit values above `10x` and use capped y-axes for readability. This cap applies only to the
+rendered curves, not to the JSON contract, scenario tables, reviewer text, or CSV exports.
+
+**Consequences:**
+
+- The design figure is taller but no longer requires the reader to discover metrics through a
+  dropdown.
+- Ratio design panels may show intentional gaps near the null; warnings explain that those omitted
+  values exceed the display cap.

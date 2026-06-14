@@ -45,11 +45,11 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(page.locator("#summary-grid")).to_contain_text("Technical reconstruction")
     expect(page.locator("#plot-key")).to_contain_text("Point estimate")
     expect(page.locator("#plot-key")).to_contain_text("Null value")
-    expect(page.locator("#plot-key")).to_contain_text("Design threshold markers")
+    expect(page.locator("#plot-key")).to_contain_text("80% power benchmarks")
     expect(page.locator("#plot-key")).to_contain_text("Reported 95% CI")
     expect(page.locator("#plot-key")).to_contain_text("S−2 support interval")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
-    expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
+    expect(page.locator("#plot-key")).not_to_contain_text("Reference thresholds / MCIDs")
     expect(page.locator("#commentary-text")).to_contain_text("CI-implied midpoint")
     expect(page.locator("#figure-caption")).to_contain_text("Wald reconstruction")
     expect(page.locator("#figure-caption")).to_contain_text("reported 95% CI")
@@ -87,14 +87,16 @@ def test_comparison_header_updates_for_thresholds_and_effect_measure(
     page.wait_for_function(
         """
         () => document.getElementById("plot-subtitle")
-          ?.textContent?.includes("clinical thresholds")
+          ?.textContent?.includes("reference thresholds / MCIDs")
         """,
         timeout=120000,
     )
     expect(page.locator("#plot-subtitle")).to_contain_text(
-        "Relative to the null OR = 1 and clinical thresholds"
+        "Relative to the null OR = 1 and reference thresholds / MCIDs"
     )
-    expect(page.locator("#comparison-takeaway")).to_contain_text("clinical threshold OR = 1.25")
+    expect(page.locator("#comparison-takeaway")).to_contain_text(
+        "reference threshold / MCID OR = 1.25"
+    )
 
     page.select_option("#effect-type", "mean_difference")
     page.locator("#ci-lower").fill("0.11")
@@ -110,7 +112,7 @@ def test_comparison_header_updates_for_thresholds_and_effect_measure(
 
     expect(page.locator("#plot-title")).to_contain_text("candidate mean differences")
     expect(page.locator("#plot-subtitle")).to_contain_text(
-        "Relative to the null mean difference = 0 and clinical thresholds"
+        "Relative to the null mean difference = 0 and reference thresholds / MCIDs"
     )
 
 
@@ -298,7 +300,7 @@ def test_threshold_and_grid_point_controls_are_visibly_separated(app_url: str, p
     )
 
     assert "Grid points" not in thresholds_section_text
-    assert "Clinical thresholds" not in grid_points_section_text
+    assert "Reference thresholds" not in grid_points_section_text
 
     page.locator("#grid-points").evaluate(
         """

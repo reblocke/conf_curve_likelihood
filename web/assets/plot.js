@@ -11,7 +11,36 @@ import {
   makeIntervalShapes,
   makePanelAnnotations,
   makeVerticalShapes,
+  panelDomains,
 } from "./plot-helpers.js";
+
+const DESIGN_RATIO_DISPLAY_CAP = 10;
+const DESIGN_PANEL_SPECS = [
+  {
+    key: "power",
+    axisId: "3",
+    color: "#4c8a5b",
+    cap: null,
+  },
+  {
+    key: "type_s",
+    axisId: "4",
+    color: "#7a4f9a",
+    cap: null,
+  },
+  {
+    key: "type_m",
+    axisId: "5",
+    color: "#8f6b1f",
+    cap: DESIGN_RATIO_DISPLAY_CAP,
+  },
+  {
+    key: "observed_exaggeration",
+    axisId: "6",
+    color: "#2f6f8f",
+    cap: DESIGN_RATIO_DISPLAY_CAP,
+  },
+];
 
 function hasDesign(response) {
   return response.design?.config?.enabled === true;
@@ -32,9 +61,20 @@ function designMetricField(metricKey) {
   return designMetricOptionForKey(metricKey).field;
 }
 
-function designMetricValues(response, metricKey) {
+function designMetricValues(response, metricKey, cap = null) {
   const field = designMetricField(metricKey);
-  return response.design.grid[field].map((value) => (value === null ? null : value));
+  return response.design.grid[field].map((value) => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+    if (cap !== null && value > cap) {
+      return null;
+    }
+    return value;
+  });
 }
 
 function designYAxisTitle(metricKey) {
@@ -50,11 +90,46 @@ function designYAxisTitle(metricKey) {
   return "Observed exaggeration ratio";
 }
 
-function designYAxisOptions(metricKey) {
+function ratioYAxisRange(values) {
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) {
+    return [0, DESIGN_RATIO_DISPLAY_CAP];
+  }
+  const maxValue = Math.max(...finiteValues);
+  const paddedMax = Math.min(DESIGN_RATIO_DISPLAY_CAP, Math.max(1.05, maxValue * 1.08));
+  return [0, paddedMax];
+}
+
+function designYAxisOptions(metricKey, values, cap = null) {
   if (metricKey === "power" || metricKey === "type_s") {
     return { range: [0, 1.02] };
   }
+  if (cap !== null) {
+    return { range: ratioYAxisRange(values) };
+  }
   return { rangemode: "tozero" };
+}
+
+function makeDesignSeparatorShape(designEnabled, domains) {
+  if (!designEnabled) {
+    return [];
+  }
+  return [
+    {
+      type: "line",
+      xref: "paper",
+      yref: "paper",
+      x0: 0,
+      x1: 1,
+      y0: domains.separatorY,
+      y1: domains.separatorY,
+      line: {
+        color: "rgba(19, 42, 58, 0.22)",
+        width: 1,
+      },
+      layer: "above",
+    },
+  ];
 }
 
 function makeDesignRangeShapes(response, xref, yref) {
@@ -89,7 +164,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
   const viewMode = displayOptions.viewMode ?? "both";
   const manuscript = displayOptions.manuscript === true;
   const designEnabled = hasDesign(response);
-  const selectedDesignMetric = displayOptions.designMetric ?? "power";
+  const domains = panelDomains(viewMode, designEnabled);
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
@@ -164,24 +239,23 @@ export async function renderCurves(plotElement, response, displayOptions) {
     showlegend: false,
   });
 
-  const makeDesignTrace = (xaxis, yaxis) => ({
+  const makeDesignTrace = (spec, values) => ({
     type: "scatter",
     mode: "lines",
     x: response.design.grid.true_effect_display,
-    y: designMetricValues(response, selectedDesignMetric),
-    xaxis,
-    yaxis,
+    y: values,
+    xaxis: `x${spec.axisId}`,
+    yaxis: `y${spec.axisId}`,
     connectgaps: false,
     line: {
-      color: "#4c8a5b",
+      color: spec.color,
       dash: "solid",
       width: 3,
     },
     hovertemplate:
-      "<b>Candidate true effect</b>: %{x}<br>" +
+      "<b>Assume this x-value is the true effect</b>: %{x}<br>" +
       "Observed compatibility p-value: %{customdata[0]}<br>" +
       "Relative likelihood vs estimate: %{customdata[1]}<br>" +
-      "If this value were true:<br>" +
       "Claim rule: %{customdata[6]}<br>" +
       "Information multiplier: %{customdata[7]}<br>" +
       "Power: %{customdata[2]}<br>" +
@@ -198,13 +272,13 @@ export async function renderCurves(plotElement, response, displayOptions) {
       response.design.config.selection_rule_label,
       formatHoverNumber(response.design.config.information_multiplier),
     ]),
-    name: designMetricLabel(selectedDesignMetric),
+    name: designMetricLabel(spec.key),
     showlegend: false,
   });
 
   const xAxisLayout = {
     title: {
-      text: axisTitle(response),
+      text: axisTitle(response, designEnabled),
       standoff: 12,
     },
     type: xAxisType,
@@ -249,12 +323,8 @@ export async function renderCurves(plotElement, response, displayOptions) {
       },
       domain:
         viewMode === "both"
-          ? designEnabled
-            ? [0.72, 1]
-            : [0.58, 1]
-          : designEnabled
-            ? [0.42, 1]
-            : [0, 1],
+          ? domains.primary
+          : domains.primary,
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
@@ -263,9 +333,14 @@ export async function renderCurves(plotElement, response, displayOptions) {
     },
     shapes: [
       ...makeIntervalShapes(response, viewMode),
-      ...makeVerticalShapes(response),
+      ...makeVerticalShapes(response, { viewMode, designEnabled }),
       ...makeGuideShapes(response, viewMode),
-      ...(designEnabled ? makeDesignRangeShapes(response, "x3", "y3") : []),
+      ...makeDesignSeparatorShape(designEnabled, domains),
+      ...(designEnabled
+        ? DESIGN_PANEL_SPECS.flatMap((spec) =>
+            makeDesignRangeShapes(response, `x${spec.axisId}`, `y${spec.axisId}`),
+          )
+        : []),
     ],
     annotations: [
       ...makePanelAnnotations(viewMode, manuscript, designEnabled),
@@ -297,7 +372,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
         text: "Relative likelihood",
         standoff: 12,
       },
-      domain: designEnabled ? [0.39, 0.63] : [0, 0.4],
+      domain: domains.secondary,
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
@@ -306,24 +381,35 @@ export async function renderCurves(plotElement, response, displayOptions) {
     };
   }
   if (designEnabled) {
-    traces.push(makeDesignTrace("x3", "y3"));
-    layout.xaxis3 = {
-      ...xAxisLayout,
-      anchor: "y3",
-      matches: "x",
-    };
-    layout.yaxis3 = {
-      title: {
-        text: designYAxisTitle(selectedDesignMetric),
-        standoff: 12,
-      },
-      domain: viewMode === "both" ? [0, 0.28] : [0, 0.3],
-      automargin: true,
-      showgrid: true,
-      gridcolor: "rgba(19, 42, 58, 0.08)",
-      zeroline: false,
-      ...designYAxisOptions(selectedDesignMetric),
-    };
+    for (const spec of DESIGN_PANEL_SPECS) {
+      const values = designMetricValues(response, spec.key, spec.cap);
+      const isBottomDesignPanel = spec.axisId === "6";
+      traces.push(makeDesignTrace(spec, values));
+      layout[`xaxis${spec.axisId}`] = {
+        ...xAxisLayout,
+        anchor: `y${spec.axisId}`,
+        matches: "x",
+        ...(isBottomDesignPanel
+          ? {}
+          : {
+              title: { text: "" },
+              showticklabels: false,
+              ticks: "",
+            }),
+      };
+      layout[`yaxis${spec.axisId}`] = {
+        title: {
+          text: designYAxisTitle(spec.key),
+          standoff: 12,
+        },
+        domain: domains.design[spec.axisId],
+        automargin: true,
+        showgrid: true,
+        gridcolor: "rgba(19, 42, 58, 0.08)",
+        zeroline: false,
+        ...designYAxisOptions(spec.key, values, spec.cap),
+      };
+    }
   }
 
   const config = {
@@ -344,9 +430,10 @@ export async function renderCurves(plotElement, response, displayOptions) {
 }
 
 export async function exportPlotPng(plotElement, filename) {
+  const height = plotElement.dataset.designEnabled === "true" ? 1600 : 1100;
   const dataUrl = await Plotly.toImage(plotElement, {
     format: "png",
-    height: 1100,
+    height,
     width: 1400,
     scale: 2,
   });
@@ -358,11 +445,12 @@ export async function exportPlotPng(plotElement, filename) {
 
 export async function exportManuscriptPng(response, displayOptions, filename) {
   const exportElement = document.createElement("div");
+  const exportHeight = hasDesign(response) ? 1500 : 1000;
   exportElement.style.position = "fixed";
   exportElement.style.left = "-10000px";
   exportElement.style.top = "0";
   exportElement.style.width = "1400px";
-  exportElement.style.height = "1000px";
+  exportElement.style.height = `${exportHeight}px`;
   document.body.append(exportElement);
 
   try {
@@ -372,7 +460,7 @@ export async function exportManuscriptPng(response, displayOptions, filename) {
     });
     const dataUrl = await Plotly.toImage(exportElement, {
       format: "png",
-      height: 1000,
+      height: exportHeight,
       width: 1400,
       scale: 2,
     });

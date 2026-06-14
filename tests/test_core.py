@@ -367,7 +367,7 @@ def test_display_range_warns_when_key_references_are_excluded() -> None:
     assert "excludes the lower 95% CI bound" in messages
     assert "excludes the upper 95% CI bound" in messages
     assert "excludes the null value" in messages
-    assert "excludes one or more clinical thresholds" in messages
+    assert "excludes one or more reference thresholds / MCIDs" in messages
     assert "excludes one or more critical-effect markers" in messages
 
 

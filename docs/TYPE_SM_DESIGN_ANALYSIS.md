@@ -7,6 +7,11 @@ The app has two separate interpretation layers:
 1. The observed-evidence layer reconstructs the compatibility curve and normalized Wald relative likelihood from a reported estimate and 95% CI.
 2. The design-calibration layer asks what repeated studies would look like if each candidate x-axis value were the true effect under a selected-claim rule and a chosen Wald standard error.
 
+The same numeric x-axis can therefore have two readings in the figure. In observed panels, an x-value
+is a candidate effect compared with the observed CI-derived reconstruction. In the design panels, that
+same x-value is an assumed true effect used to compute repeated-study operating characteristics for
+power, Type S, Type M, and observed exaggeration.
+
 Type S and Type M complement the observed confidence and likelihood displays by showing how reliable selected claims would be under assumed true effects. They are not posterior probabilities that the observed estimate is wrong.
 
 ## Model
@@ -43,6 +48,12 @@ The selected-claim rule defines which repeated-study results count as selected c
 
 Threshold-conditioned rules require a threshold above the null for positive claims and below the null for negative claims. These thresholds are user-defined reference values; the app does not validate that they are clinically or scientifically justified.
 
+The app distinguishes three user-facing inputs:
+
+- reference thresholds/MCIDs are vertical markers and support-comparison rows for the observed evidence display
+- claim thresholds/MCIDs define threshold-based selected-claim rules in design calibration
+- assumed true-effect scenarios add design scenario rows and precision-target choices, but do not define selected-claim cutoffs
+
 ## Metrics
 
 Selected-claim probability is the probability a future study would satisfy the selected-claim rule. For the default two-sided rule:
@@ -67,6 +78,11 @@ Observed exaggeration if true is a retrospective comparison, not Type M:
 ```text
 observed_exaggeration = abs(eta_hat - eta_null) / abs(eta_true - eta_null)
 ```
+
+The browser figure plots all four design metrics at once. Type M and observed exaggeration can grow
+without bound near the null, so the plot omits ratio-curve values above `10x` to keep the visible
+scale readable. This is display-only; scenario tables, CSV exports, and the JSON contract retain the
+uncapped values.
 
 ## Precision Targets
 

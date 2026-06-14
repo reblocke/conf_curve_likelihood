@@ -4,7 +4,7 @@ This repository builds a static web app and Python package that reconstruct:
 
 - a compatibility / confidence curve,
 - a normalized Wald relative-likelihood curve, and
-- point-estimate, null, user-supplied threshold, and design-threshold markers
+- point-estimate, null, user-supplied reference-threshold, and 80% power benchmark markers
 
 from a 95% confidence interval and an optional validating point estimate.
 
@@ -18,7 +18,7 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding compatibility curve and normalized relative-likelihood curve in both-panel, compatibility-only, or likelihood-only view modes
 - highlights the reported 95% CI on compatibility-visible views and the evidential S−2 support interval on likelihood-visible views
-- reports summary quantities such as the CI-implied estimate, reconstructed SE, design-threshold markers for `alpha = 0.05` and `power = 0.80`, null relative likelihood, threshold-support comparisons, and the two-sided Wald p-value
+- reports summary quantities such as the CI-implied estimate, reconstructed SE, 80% power benchmark markers for `alpha = 0.05` and `power = 0.80`, null relative likelihood, threshold-support comparisons, and the two-sided Wald p-value
 - optionally computes design-calibration quantities - selected-claim probability, Type S wrong-sign probability, Type M magnitude exaggeration, and observed exaggeration - across candidate assumed true effects using a user-selected Wald claim rule
 - supports design-only information multipliers and inverse precision targets for asking what approximate Wald SE or information multiplier would meet power, Type S, or Type M targets at an assumed true effect
 - exports the current x-grid as CSV, the dashboard plot as PNG, and a figure-only manuscript PNG with a separate copyable caption
@@ -50,11 +50,11 @@ Use the wording “normalized Wald relative likelihood” or “approximate prof
 For ratio measures, the app computes on the log scale, labels the x-axis on the natural ratio scale, and can display that natural-scale axis with logarithmic or linear spacing.
 Type M design calibration for ratio measures is also computed on the log working scale, not as direct inflation of the natural odds/risk/hazard ratio.
 
-The optional plausible display range constrains only the plotted and exported x-grid. It does not change the CI-derived estimate, reconstructed standard error, null summaries, threshold-support summaries, design-threshold markers, or reconstruction warnings.
+The optional plausible display range constrains only the plotted and exported x-grid. It does not change the CI-derived estimate, reconstructed standard error, null summaries, threshold-support summaries, 80% power benchmark markers, or reconstruction warnings.
 
 The S−2 support interval is shown on the normalized Wald relative-likelihood panel as the effects with relative likelihood at least `exp(-2)` compared with the CI-implied estimate. Equivalently, the CI-implied estimate is no more than `exp(2)` or about `7.4x` as supported as values inside the interval.
 
-The paired design-threshold markers are Wald `alpha = 0.05`, `power = 0.80` benchmarks around the null. They are a design-interpretation aid related to critical-effect-size thinking, not a replacement for a study-specific critical-effect-size or power analysis.
+The paired 80% power benchmark markers are Wald `alpha = 0.05`, `power = 0.80` benchmarks around the null. They are a design-interpretation aid related to critical-effect-size thinking, not a replacement for a study-specific critical-effect-size or power analysis. User-supplied reference thresholds/MCIDs are observed-display markers; design claim thresholds are separate selected-claim-rule inputs.
 
 ## Quickstart
 
@@ -110,7 +110,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - Additive example: mean difference 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
 - Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default, both-panel view by default, and optional plausible display range such as `0.9` to `1.1`
 - Threshold example: add comma-separated reference values such as `0.8, 1.25` to compare user-defined thresholds against the CI-implied estimate and null under the same Wald reconstruction
-- Design example: enable design calibration, choose a selected-claim rule, and set an information multiplier such as `4` to view Type S/M under a hypothetical SE equal to half the CI-implied SE
+- Design example: enable design calibration, choose a selected-claim rule, and set an information multiplier such as `4` to view power, Type S, Type M, and observed-exaggeration design panels under a hypothetical SE equal to half the CI-implied SE
 
 ## Documentation and citation
 

@@ -3,10 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from helpers import wait_for_ready
+from helpers import plot_annotation_texts, wait_for_ready, x_axis_titles
 from playwright.sync_api import Page, expect
 
 pytestmark = pytest.mark.e2e
+
+DESIGN_PANEL_LABELS = [
+    "C. Design calibration: selected-claim probability if x is true",
+    "D. Design calibration: Type S probability if x is true",
+    "E. Design calibration: Type M exaggeration if x is true",
+    "F. Design calibration: observed exaggeration if x is true",
+]
 
 
 def enable_design(page: Page) -> None:
@@ -40,12 +47,29 @@ def test_design_controls_are_default_off_and_enable_results(app_url: str, page: 
         """
         () => {
           const plot = document.getElementById("curve-plot");
-          return plot?.data?.length === 3
-            && plot.data.some((trace) => trace.name === "Power");
+          const annotations = plot?._fullLayout?.annotations?.map((item) => item.text) ?? [];
+          const traceNames = plot?.data?.map((trace) => trace.name) ?? [];
+          return plot?.data?.length === 6
+            && plot.data.some((trace) => trace.name === "Power")
+            && traceNames.includes("Type S probability")
+            && traceNames.includes("Type M exaggeration")
+            && traceNames.includes("Observed exaggeration if true")
+            && [
+              "C. Design calibration: selected-claim probability if x is true",
+              "D. Design calibration: Type S probability if x is true",
+              "E. Design calibration: Type M exaggeration if x is true",
+              "F. Design calibration: observed exaggeration if x is true",
+            ].every((label) => annotations.includes(label));
         }
         """,
         timeout=120000,
     )
+    expect(page.locator("#design-metric")).to_have_count(0)
+    expect(page.locator("#design-results")).not_to_contain_text("Changes panel C only")
+    assert "Design threshold" not in plot_annotation_texts(page)
+    assert x_axis_titles(page) == [
+        "Odds ratio (natural scale; design panels treat x as the assumed true effect)"
+    ]
 
     page.locator("#design-enabled").uncheck()
     wait_for_ready(page)
@@ -58,23 +82,66 @@ def test_design_controls_are_default_off_and_enable_results(app_url: str, page: 
     )
 
 
-def test_design_metric_selector_changes_design_trace(app_url: str, page: Page) -> None:
+def test_design_panels_show_all_metrics_and_cap_ratio_curves(app_url: str, page: Page) -> None:
     page.goto(app_url)
     wait_for_ready(page)
     enable_design(page)
+    page.locator("#design-true-effects").fill("1.01")
+    wait_for_ready(page)
 
-    page.select_option("#design-metric", "type_m")
-    page.wait_for_function(
+    panel_state = page.locator("#curve-plot").evaluate(
         """
-        () => {
-          const plot = document.getElementById("curve-plot");
-          const titles = Array.from(plot?.querySelectorAll(".g-y3title text") ?? [])
-            .map((node) => node.textContent?.trim());
-          return plot?.data?.some((trace) => trace.name === "Type M exaggeration")
-            && titles.includes("Type M exaggeration ratio");
+        (plot) => {
+          const byName = Object.fromEntries(plot.data.map((trace) => [trace.name, trace]));
+          const typeM = byName["Type M exaggeration"];
+          const observed = byName["Observed exaggeration if true"];
+          const firstOmittedTypeM = typeM.y.findIndex((value, index) =>
+            value === null && Number.parseFloat(typeM.customdata[index][4]) > 10
+          );
+          const firstOmittedObserved = observed.y.findIndex((value, index) =>
+            value === null && Number.parseFloat(observed.customdata[index][5]) > 10
+          );
+          const yTitleSelectors = [
+            ".g-ytitle text",
+            ".g-y2title text",
+            ".g-y3title text",
+            ".g-y4title text",
+            ".g-y5title text",
+            ".g-y6title text",
+          ].join(", ");
+          return {
+            names: plot.data.map((trace) => trace.name),
+            yAxisTitles: Array.from(
+              plot.querySelectorAll(yTitleSelectors) ?? []
+            ).map((node) => node.textContent?.trim()).filter(Boolean),
+            typeMUpper: plot._fullLayout.yaxis5.range[1],
+            observedUpper: plot._fullLayout.yaxis6.range[1],
+            firstOmittedTypeM,
+            firstOmittedObserved,
+          };
         }
-        """,
-        timeout=120000,
+        """
+    )
+    assert panel_state["names"] == [
+        "Compatibility / confidence curve",
+        "Relative likelihood curve",
+        "Power",
+        "Type S probability",
+        "Type M exaggeration",
+        "Observed exaggeration if true",
+    ]
+    assert "Type M exaggeration ratio" in panel_state["yAxisTitles"]
+    assert "Observed exaggeration ratio" in panel_state["yAxisTitles"]
+    assert panel_state["typeMUpper"] <= 10
+    assert panel_state["observedUpper"] <= 10
+    assert panel_state["firstOmittedTypeM"] >= 0
+    assert panel_state["firstOmittedObserved"] >= 0
+
+    custom_row = page.locator("#design-scenario-table tbody tr").filter(has_text="1.01")
+    type_m_text = custom_row.locator("td").nth(5).inner_text().replace("x", "")
+    assert float(type_m_text) > 10
+    expect(page.locator("#warnings-list")).to_contain_text(
+        "Ratio design curves omit values above 10x near the null"
     )
     expect(page.locator("#warnings-list")).to_contain_text("Type M is computed on the log")
 
@@ -91,9 +158,9 @@ def test_design_likelihood_only_panel_labels_are_unique(app_url: str, page: Page
           const plot = document.getElementById("curve-plot");
           const annotations = plot?._fullLayout?.annotations?.map((item) => item.text) ?? [];
           const likelihoodLabel =
-            "B. Relative likelihood (normalized to 1 at the CI-implied estimate)";
+            "B. Observed likelihood: candidate effects compared with the CI-implied estimate";
           const designLabel =
-            "C. Design calibration (assumed true-effect operating characteristics)";
+            "C. Design calibration: selected-claim probability if x is true";
           return plot?.dataset?.viewMode === "likelihood"
             && annotations.includes(likelihoodLabel)
             && annotations.includes(designLabel);
@@ -144,6 +211,72 @@ def test_design_selection_rule_and_threshold_controls_update_summary(
     expect(page.locator("#warnings-list")).to_contain_text(
         "Selected-claim rule: CI at selected alpha excludes the claim threshold"
     )
+    expect(page.locator("#plot-key")).to_contain_text("Claim threshold for selected-claim rule")
+    page.wait_for_function(
+        """
+        () => {
+          const plot = document.getElementById("curve-plot");
+          const annotations = plot?._fullLayout?.annotations?.map((item) => item.text) ?? [];
+          const claimThresholdShape = plot?._fullLayout?.shapes?.some((shape) =>
+            shape.xref === "x3"
+              && shape.yref === "paper"
+              && shape.y0 < 0.2
+              && shape.y1 > 0.6
+              && Math.abs(shape.x0 - 1.25) < 1e-9
+          );
+          return annotations.includes("Claim threshold 1.25")
+            && !annotations.some((text) => String(text).includes("Design threshold"))
+            && claimThresholdShape;
+        }
+        """,
+        timeout=120000,
+    )
+
+
+def test_design_panel_labels_do_not_overlap_desktop(app_url: str, page: Page) -> None:
+    page.set_viewport_size({"width": 1440, "height": 1100})
+    page.goto(app_url)
+    wait_for_ready(page)
+    enable_design(page)
+
+    overlaps = page.locator("#curve-plot").evaluate(
+        """
+        (plot) => {
+          const importantLabels = new Set([
+            "A. Observed compatibility: candidate effects compared with the reported CI",
+            "B. Observed likelihood: candidate effects compared with the CI-implied estimate",
+            "C. Design calibration: selected-claim probability if x is true",
+            "D. Design calibration: Type S probability if x is true",
+            "E. Design calibration: Type M exaggeration if x is true",
+            "F. Design calibration: observed exaggeration if x is true",
+            "Estimate",
+            "Null",
+          ]);
+          const nodes = Array.from(plot.querySelectorAll(".annotation-text"))
+            .filter((node) => importantLabels.has(node.textContent?.trim()));
+          const boxes = nodes.map((node) => ({
+            text: node.textContent?.trim(),
+            box: node.getBoundingClientRect(),
+          }));
+          const overlaps = [];
+          for (let i = 0; i < boxes.length; i += 1) {
+            for (let j = i + 1; j < boxes.length; j += 1) {
+              const a = boxes[i].box;
+              const b = boxes[j].box;
+              const separated = a.right <= b.left
+                || a.left >= b.right
+                || a.bottom <= b.top
+                || a.top >= b.bottom;
+              if (!separated) {
+                overlaps.push(`${boxes[i].text} / ${boxes[j].text}`);
+              }
+            }
+          }
+          return overlaps;
+        }
+        """
+    )
+    assert overlaps == []
 
 
 def test_threshold_rule_requires_threshold(app_url: str, page: Page) -> None:
@@ -170,7 +303,7 @@ def test_information_multiplier_changes_design_not_observed_traces(
         (plot) => ({
           compatibility: plot.data[0].y.slice(0, 12),
           likelihood: plot.data[1].y.slice(0, 12),
-          design: plot.data[plot.data.length - 1].y.slice(0, 12),
+          design: plot.data.find((trace) => trace.name === "Power").y.slice(0, 12),
         })
         """
     )
@@ -181,7 +314,7 @@ def test_information_multiplier_changes_design_not_observed_traces(
         (plot) => ({
           compatibility: plot.data[0].y.slice(0, 12),
           likelihood: plot.data[1].y.slice(0, 12),
-          design: plot.data[plot.data.length - 1].y.slice(0, 12),
+          design: plot.data.find((trace) => trace.name === "Power").y.slice(0, 12),
         })
         """
     )
@@ -215,6 +348,7 @@ def test_design_csv_and_png_exports_include_design_panel(
     enable_design(page)
     page.locator("#design-true-effects").fill("1.25")
     wait_for_ready(page)
+    expect(page.locator("#figure-caption")).to_contain_text("design-calibration panels")
 
     with page.expect_download() as csv_download_info:
         page.locator("#export-csv").click()

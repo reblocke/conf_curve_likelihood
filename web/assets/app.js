@@ -1,8 +1,6 @@
 import {
-  DEFAULT_DESIGN_METRIC,
   DEFAULT_VALUES,
   DEFAULT_VIEW_MODE,
-  DESIGN_METRIC_OPTIONS,
   DESIGN_SELECTION_RULE_OPTIONS,
   EFFECT_OPTIONS,
 } from "./config.js";
@@ -56,7 +54,6 @@ const designPrecisionTargetSelect = document.getElementById("design-precision-ta
 const designTargetPowerInput = document.getElementById("design-target-power");
 const designMaxTypeSInput = document.getElementById("design-max-type-s");
 const designMaxTypeMInput = document.getElementById("design-max-type-m");
-const designMetricSelect = document.getElementById("design-metric");
 const designResults = document.getElementById("design-results");
 const designSummary = document.getElementById("design-summary");
 const designScenarioTable = document.getElementById("design-scenario-table");
@@ -216,7 +213,7 @@ function refreshPrecisionTargetOptions() {
   const previousValue = designPrecisionTargetSelect.value;
   const candidates = deduplicateTargetCandidates([
     ...safeParseNumberList(thresholdsInput.value).map((value) => ({
-      label: `Threshold / MCID: ${value}`,
+      label: `Reference threshold scenario: ${value}`,
       value,
     })),
     ...safeParseNumberList(designTrueEffectsInput.value).map((value) => ({
@@ -255,7 +252,6 @@ function currentDisplayOptions() {
   return {
     axisSpacing: currentAxisSpacing(),
     viewMode: currentViewMode(),
-    designMetric: designMetricSelect.value || DEFAULT_DESIGN_METRIC,
   };
 }
 
@@ -513,10 +509,6 @@ function initializeForm() {
   designMaxTypeMInput.value = DEFAULT_VALUES.design_max_type_m;
   refreshPrecisionTargetOptions();
   designPrecisionTargetSelect.value = DEFAULT_VALUES.design_precision_target_effect;
-  designMetricSelect.innerHTML = DESIGN_METRIC_OPTIONS.map(
-    (option) => `<option value="${option.key}">${option.label}</option>`,
-  ).join("");
-  designMetricSelect.value = DEFAULT_VALUES.design_metric;
   displayRangeLowerInput.value = DEFAULT_VALUES.display_range_lower;
   displayRangeUpperInput.value = DEFAULT_VALUES.display_range_upper;
   axisSpacingSelect.value = DEFAULT_VALUES.axis_spacing;
@@ -600,9 +592,6 @@ function initializeUi() {
       updateDesignControls();
     });
   }
-  designMetricSelect.addEventListener("change", () => {
-    void rerenderCurrentResponse();
-  });
   reviewerScenarioSelect.addEventListener("change", () => {
     if (runtimeState.currentResponse) {
       renderDesignResults(runtimeState.currentResponse, designResultElements);

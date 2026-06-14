@@ -425,6 +425,19 @@ button:hover {
   border-top-style: dashed;
 }
 
+.key-line-claim-threshold {
+  color: #4c8a5b;
+  border-top-style: solid;
+  border-image: repeating-linear-gradient(
+      90deg,
+      currentColor 0 10px,
+      transparent 10px 14px,
+      currentColor 14px 17px,
+      transparent 17px 21px
+    )
+    1;
+}
+
 .key-line-design {
   color: #4c8a5b;
 }
@@ -442,7 +455,7 @@ button:hover {
 }
 
 .plot-surface[data-design-enabled="true"] {
-  min-height: 820px;
+  min-height: 1320px;
 }
 
 .figure-caption-block {
@@ -527,7 +540,7 @@ button:hover {
 
 .design-results-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -535,11 +548,6 @@ button:hover {
 .design-results-header h3 {
   margin: 0 0 6px;
   font-size: 1.05rem;
-}
-
-.design-metric-label {
-  display: grid;
-  gap: 8px;
 }
 
 .design-table-wrap {
@@ -754,6 +762,10 @@ button:hover {
 
   .plot-surface {
     min-height: 560px;
+  }
+
+  .plot-surface[data-design-enabled="true"] {
+    min-height: 1120px;
   }
 }
 

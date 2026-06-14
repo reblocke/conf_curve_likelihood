@@ -28,11 +28,16 @@ def test_direct_labels_and_panel_annotations_render_on_plot(app_url: str, page: 
     annotations = plot_annotation_texts(page)
     assert "Estimate" in annotations
     assert "Null" in annotations
-    assert "Design threshold" in annotations
+    assert "80% power benchmark" in annotations
     assert "Reported 95% CI" in annotations
     assert "S−2 interval: within 7.4x of peak support" in annotations
-    assert "A. Compatibility curve (two-sided Wald p-value function)" in annotations
-    assert "B. Relative likelihood (normalized to 1 at the CI-implied estimate)" in annotations
+    assert (
+        "A. Observed compatibility: candidate effects compared with the reported CI" in annotations
+    )
+    assert (
+        "B. Observed likelihood: candidate effects compared with the CI-implied estimate"
+        in annotations
+    )
     assert ci_band_count(page) == 1
     assert s_minus_2_band_count(page) == 1
     assert s_minus_2_guide_count(page) == 1
@@ -43,11 +48,11 @@ def test_direct_labels_and_panel_annotations_render_on_plot(app_url: str, page: 
     page.wait_for_function(
         """
         () => (document.getElementById("curve-plot")?._fullLayout?.annotations || [])
-          .some((annotation) => String(annotation.text).includes("Threshold 1.25"))
+          .some((annotation) => String(annotation.text).includes("Reference threshold 1.25"))
         """,
         timeout=120000,
     )
-    assert "Threshold 1.25" in plot_annotation_texts(page)
+    assert "Reference threshold 1.25" in plot_annotation_texts(page)
 
 
 def test_cutoff_checkbox_toggles_horizontal_guides(app_url: str, page: Page) -> None:
@@ -86,7 +91,7 @@ def test_plot_key_tracks_thresholds_and_cutoffs(app_url: str, page: Page) -> Non
     wait_for_ready(page)
     open_advanced_options(page)
 
-    expect(page.locator("#plot-key")).not_to_contain_text("Clinical thresholds")
+    expect(page.locator("#plot-key")).not_to_contain_text("Reference thresholds / MCIDs")
     expect(page.locator("#plot-key")).to_contain_text("Compatibility cutoffs")
     expect(page.locator("#plot-key")).to_contain_text("Reported 95% CI")
     expect(page.locator("#plot-key")).to_contain_text("S−2 support interval")
@@ -94,11 +99,13 @@ def test_plot_key_tracks_thresholds_and_cutoffs(app_url: str, page: Page) -> Non
     page.locator("#thresholds").fill("0.8, 1.25")
     page.wait_for_function(
         """
-        () => document.getElementById("plot-key")?.textContent?.includes("Clinical thresholds")
+        () => document.getElementById("plot-key")?.textContent?.includes(
+          "Reference thresholds / MCIDs"
+        )
         """,
         timeout=120000,
     )
-    expect(page.locator("#plot-key")).to_contain_text("Clinical thresholds")
+    expect(page.locator("#plot-key")).to_contain_text("Reference thresholds / MCIDs")
 
     page.locator("#show-cutoffs").uncheck()
     page.wait_for_function(
@@ -176,7 +183,7 @@ def test_both_mode_uses_lower_shared_x_axis_without_title_overlap(app_url: str, 
     assert ticklabel_visibility["xaxis2"] is not False
     assert not annotation_overlaps_x_axis_title(
         page,
-        "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+        "B. Observed likelihood: candidate effects compared with the CI-implied estimate",
     )
 
 

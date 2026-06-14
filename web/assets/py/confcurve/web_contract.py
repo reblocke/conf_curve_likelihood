@@ -103,7 +103,9 @@ def _display_range_exclusion_warnings(
     if outside_range(null_working):
         warnings.append("The chosen display range excludes the null value.")
     if any(outside_range(value) for value in thresholds_working):
-        warnings.append("The chosen display range excludes one or more clinical thresholds.")
+        warnings.append(
+            "The chosen display range excludes one or more reference thresholds / MCIDs."
+        )
     if any(outside_range(value) for value in critical_markers_working):
         warnings.append("The chosen display range excludes one or more critical-effect markers.")
     return warnings
@@ -603,7 +605,7 @@ def _design_payload(
         )
     if plausible_range_display is not None:
         design_warnings.append(
-            "The plausible true-effect range is shown only in the design panel and does not "
+            "The plausible true-effect range is shown only in the design panels and does not "
             "change the observed reconstruction."
         )
     if information_multiplier != 1.0:
