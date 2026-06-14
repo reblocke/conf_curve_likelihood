@@ -1,3 +1,4 @@
+import { designMetricOptionForKey } from "./config.js";
 import {
   axisTitle,
   axisType,
@@ -12,9 +13,83 @@ import {
   makeVerticalShapes,
 } from "./plot-helpers.js";
 
+function hasDesign(response) {
+  return response.design?.config?.enabled === true;
+}
+
+function formatOptionalHoverNumber(value) {
+  if (value === null || value === undefined) {
+    return "undefined near null";
+  }
+  return formatHoverNumber(value);
+}
+
+function designMetricLabel(metricKey) {
+  return designMetricOptionForKey(metricKey).label;
+}
+
+function designMetricField(metricKey) {
+  return designMetricOptionForKey(metricKey).field;
+}
+
+function designMetricValues(response, metricKey) {
+  const field = designMetricField(metricKey);
+  return response.design.grid[field].map((value) => (value === null ? null : value));
+}
+
+function designYAxisTitle(metricKey) {
+  if (metricKey === "power") {
+    return "Power";
+  }
+  if (metricKey === "type_s") {
+    return "Type S probability";
+  }
+  if (metricKey === "type_m") {
+    return "Type M exaggeration ratio";
+  }
+  return "Observed exaggeration ratio";
+}
+
+function designYAxisOptions(metricKey) {
+  if (metricKey === "power" || metricKey === "type_s") {
+    return { range: [0, 1.02] };
+  }
+  return { rangemode: "tozero" };
+}
+
+function makeDesignRangeShapes(response, xref, yref) {
+  const range = response.design?.config?.plausible_range_display;
+  if (!Array.isArray(range) || range.length !== 2) {
+    return [];
+  }
+  const [lower, upper] = range;
+  if (!Number.isFinite(lower) || !Number.isFinite(upper) || lower >= upper) {
+    return [];
+  }
+  return [
+    {
+      type: "rect",
+      xref,
+      yref: `${yref} domain`,
+      x0: lower,
+      x1: upper,
+      y0: 0,
+      y1: 1,
+      fillcolor: "rgba(76, 138, 91, 0.08)",
+      line: {
+        color: "rgba(76, 138, 91, 0.2)",
+        width: 1,
+      },
+      layer: "below",
+    },
+  ];
+}
+
 export async function renderCurves(plotElement, response, displayOptions) {
   const viewMode = displayOptions.viewMode ?? "both";
   const manuscript = displayOptions.manuscript === true;
+  const designEnabled = hasDesign(response);
+  const selectedDesignMetric = displayOptions.designMetric ?? "power";
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
   const likelihoodRatioVsNull = response.grid.relative_likelihood.map((value) =>
     nullRelativeLikelihood === 0 ? Number.POSITIVE_INFINITY : value / nullRelativeLikelihood,
@@ -24,8 +99,13 @@ export async function renderCurves(plotElement, response, displayOptions) {
   const xAxisRange = explicitAxisRange(response, xAxisType);
   const previousAxisType = plotElement._fullLayout?.xaxis?.type || "linear";
   const previousViewMode = plotElement.dataset.viewMode || "both";
+  const previousDesignEnabled = plotElement.dataset.designEnabled === "true";
 
-  if (previousAxisType !== xAxisType || previousViewMode !== viewMode) {
+  if (
+    previousAxisType !== xAxisType ||
+    previousViewMode !== viewMode ||
+    previousDesignEnabled !== designEnabled
+  ) {
     Plotly.purge(plotElement);
     plotElement.innerHTML = "";
   }
@@ -84,6 +164,44 @@ export async function renderCurves(plotElement, response, displayOptions) {
     showlegend: false,
   });
 
+  const makeDesignTrace = (xaxis, yaxis) => ({
+    type: "scatter",
+    mode: "lines",
+    x: response.design.grid.true_effect_display,
+    y: designMetricValues(response, selectedDesignMetric),
+    xaxis,
+    yaxis,
+    connectgaps: false,
+    line: {
+      color: "#4c8a5b",
+      dash: "solid",
+      width: 3,
+    },
+    hovertemplate:
+      "<b>Candidate true effect</b>: %{x}<br>" +
+      "Observed compatibility p-value: %{customdata[0]}<br>" +
+      "Relative likelihood vs estimate: %{customdata[1]}<br>" +
+      "If this value were true:<br>" +
+      "Claim rule: %{customdata[6]}<br>" +
+      "Information multiplier: %{customdata[7]}<br>" +
+      "Power: %{customdata[2]}<br>" +
+      "Type S: %{customdata[3]}<br>" +
+      "Type M: %{customdata[4]}<br>" +
+      "Observed exaggeration: %{customdata[5]}<extra></extra>",
+    customdata: response.grid.compatibility.map((compatibility, index) => [
+      formatHoverNumber(compatibility),
+      formatHoverNumber(response.grid.relative_likelihood[index]),
+      formatHoverNumber(response.design.grid.power[index]),
+      formatOptionalHoverNumber(response.design.grid.type_s[index]),
+      formatOptionalHoverNumber(response.design.grid.type_m[index]),
+      formatOptionalHoverNumber(response.design.grid.observed_exaggeration[index]),
+      response.design.config.selection_rule_label,
+      formatHoverNumber(response.design.config.information_multiplier),
+    ]),
+    name: designMetricLabel(selectedDesignMetric),
+    showlegend: false,
+  });
+
   const xAxisLayout = {
     title: {
       text: axisTitle(response),
@@ -105,12 +223,17 @@ export async function renderCurves(plotElement, response, displayOptions) {
       size: manuscript ? 15 : 13,
       color: "#132a3a",
     },
-    margin: { l: manuscript ? 110 : 92, r: manuscript ? 70 : 36, t: 96, b: manuscript ? 78 : 66 },
+    margin: {
+      l: manuscript ? 110 : 92,
+      r: manuscript ? 70 : 36,
+      t: 96,
+      b: manuscript ? 78 : 66,
+    },
     hovermode: "closest",
     xaxis: {
       ...xAxisLayout,
       anchor: "y",
-      ...(viewMode === "both"
+      ...(viewMode === "both" || designEnabled
         ? {
             title: { text: "" },
             showticklabels: false,
@@ -124,7 +247,14 @@ export async function renderCurves(plotElement, response, displayOptions) {
           viewMode === "likelihood" ? "Relative likelihood" : "Compatibility / confidence curve",
         standoff: 12,
       },
-      domain: viewMode === "both" ? [0.58, 1] : [0, 1],
+      domain:
+        viewMode === "both"
+          ? designEnabled
+            ? [0.72, 1]
+            : [0.58, 1]
+          : designEnabled
+            ? [0.42, 1]
+            : [0, 1],
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
@@ -135,10 +265,11 @@ export async function renderCurves(plotElement, response, displayOptions) {
       ...makeIntervalShapes(response, viewMode),
       ...makeVerticalShapes(response),
       ...makeGuideShapes(response, viewMode),
+      ...(designEnabled ? makeDesignRangeShapes(response, "x3", "y3") : []),
     ],
     annotations: [
-      ...makePanelAnnotations(viewMode, manuscript),
-      ...makeIntervalAnnotations(response, viewMode, xAxisType, manuscript),
+      ...makePanelAnnotations(viewMode, manuscript, designEnabled),
+      ...makeIntervalAnnotations(response, viewMode, xAxisType, manuscript, designEnabled),
       ...makeDirectLabelAnnotations(response, displayOptions, xAxisType),
     ],
   };
@@ -153,18 +284,45 @@ export async function renderCurves(plotElement, response, displayOptions) {
       ...xAxisLayout,
       anchor: "y2",
       matches: "x",
+      ...(designEnabled
+        ? {
+            title: { text: "" },
+            showticklabels: false,
+            ticks: "",
+          }
+        : {}),
     };
     layout.yaxis2 = {
       title: {
         text: "Relative likelihood",
         standoff: 12,
       },
-      domain: [0, 0.4],
+      domain: designEnabled ? [0.39, 0.63] : [0, 0.4],
       range: [0, 1.02],
       automargin: true,
       showgrid: true,
       gridcolor: "rgba(19, 42, 58, 0.08)",
       zeroline: false,
+    };
+  }
+  if (designEnabled) {
+    traces.push(makeDesignTrace("x3", "y3"));
+    layout.xaxis3 = {
+      ...xAxisLayout,
+      anchor: "y3",
+      matches: "x",
+    };
+    layout.yaxis3 = {
+      title: {
+        text: designYAxisTitle(selectedDesignMetric),
+        standoff: 12,
+      },
+      domain: viewMode === "both" ? [0, 0.28] : [0, 0.3],
+      automargin: true,
+      showgrid: true,
+      gridcolor: "rgba(19, 42, 58, 0.08)",
+      zeroline: false,
+      ...designYAxisOptions(selectedDesignMetric),
     };
   }
 
@@ -180,6 +338,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
     ],
   };
 
+  plotElement.dataset.designEnabled = String(designEnabled);
   await Plotly.react(plotElement, traces, layout, config);
   plotElement.dataset.viewMode = viewMode;
 }

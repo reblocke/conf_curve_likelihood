@@ -83,6 +83,158 @@
             </p>
           </section>
 
+          <section class="control-group design-control-group">
+            <label class="checkbox">
+              <input id="design-enabled" name="design_enabled" type="checkbox" />
+              <span>Enable design calibration: Type S / Type M risk</span>
+            </label>
+            <p class="field-note">
+              Design calibration treats each x-axis value as a possible true effect. It estimates
+              repeated-study operating characteristics, not posterior probabilities about the
+              observed result.
+            </p>
+            <div id="design-fields" class="design-fields" hidden>
+              <section class="control-subgroup">
+                <label for="design-alpha">Selection threshold alpha</label>
+                <input id="design-alpha" name="design_alpha" type="number" min="0" max="1" step="any" />
+                <p class="field-note">Used by the selected-claim rule for design calibration.</p>
+              </section>
+
+              <section class="control-subgroup">
+                <label for="design-selection-rule">Selection rule</label>
+                <select id="design-selection-rule" name="design_selection_rule"></select>
+                <p class="field-note">
+                  The rule defines which repeated-study results count as selected claims.
+                </p>
+              </section>
+
+              <section class="control-subgroup" id="design-claim-direction-group" hidden>
+                <label for="design-claim-direction">Claim direction</label>
+                <select id="design-claim-direction" name="design_claim_direction">
+                  <option value="positive">Positive / above null</option>
+                  <option value="negative">Negative / below null</option>
+                </select>
+              </section>
+
+              <section class="control-subgroup" id="design-claim-threshold-group" hidden>
+                <label for="design-claim-threshold">Claim threshold / MCID</label>
+                <input
+                  id="design-claim-threshold"
+                  name="design_claim_threshold"
+                  type="number"
+                  step="any"
+                />
+                <p class="field-note">
+                  Used only by threshold-conditioned selected-claim rules.
+                </p>
+              </section>
+
+              <section class="control-subgroup">
+                <label for="design-information-multiplier">Information multiplier</label>
+                <input
+                  id="design-information-multiplier"
+                  name="design_information_multiplier"
+                  type="number"
+                  min="0"
+                  step="any"
+                />
+                <p class="field-note">
+                  Design-only precision scaling: 4x information halves the design SE.
+                </p>
+              </section>
+
+              <section class="control-subgroup">
+                <label for="design-true-effects">Assumed true effects / MCIDs</label>
+                <input
+                  id="design-true-effects"
+                  name="design_true_effects"
+                  type="text"
+                  placeholder="e.g. 0.80, 1.20, 1.50"
+                />
+                <p class="field-note">Comma-separated values on the displayed effect scale.</p>
+              </section>
+
+              <section class="control-subgroup">
+                <label>Plausible true-effect range</label>
+                <div class="range-input-grid">
+                  <div>
+                    <label for="design-range-lower">Lower</label>
+                    <input
+                      id="design-range-lower"
+                      name="design_plausible_range_lower"
+                      type="number"
+                      step="any"
+                    />
+                  </div>
+                  <div>
+                    <label for="design-range-upper">Upper</label>
+                    <input
+                      id="design-range-upper"
+                      name="design_plausible_range_upper"
+                      type="number"
+                      step="any"
+                    />
+                  </div>
+                </div>
+                <p class="field-note">
+                  Shown only in the design panel; observed reconstruction stays unchanged.
+                </p>
+              </section>
+
+              <section class="control-subgroup">
+                <label for="design-precision-target-effect">Precision target scenario</label>
+                <select
+                  id="design-precision-target-effect"
+                  name="design_precision_target_effect"
+                ></select>
+                <div class="range-input-grid">
+                  <div>
+                    <label for="design-target-power">Target power</label>
+                    <input
+                      id="design-target-power"
+                      name="design_target_power"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="any"
+                    />
+                  </div>
+                  <div>
+                    <label for="design-max-type-s">Max Type S</label>
+                    <input
+                      id="design-max-type-s"
+                      name="design_max_type_s"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="any"
+                      placeholder="optional"
+                    />
+                  </div>
+                  <div>
+                    <label for="design-max-type-m">Max Type M</label>
+                    <input
+                      id="design-max-type-m"
+                      name="design_max_type_m"
+                      type="number"
+                      min="1"
+                      step="any"
+                      placeholder="optional"
+                    />
+                  </div>
+                </div>
+                <p class="field-note">
+                  Targets use one-parameter Wald information scaling for the selected scenario.
+                </p>
+              </section>
+
+              <p class="field-note">
+                For ratio measures, Type M is computed on the log scale away from the selected
+                null ratio. Type M is undefined at or very near the null.
+              </p>
+            </div>
+          </section>
+
           <details class="advanced-controls" id="advanced-display-options">
             <summary>Advanced display options</summary>
             <div class="advanced-controls-body">
@@ -224,6 +376,27 @@
             <p id="figure-caption"></p>
             <button id="copy-caption" type="button">Copy caption</button>
           </div>
+          <section class="design-results" id="design-results" hidden>
+            <div class="design-results-header">
+              <div>
+                <p class="eyebrow">Design calibration</p>
+                <h3>Repeated-study operating characteristics</h3>
+                <p id="design-summary" class="plot-subtitle"></p>
+              </div>
+              <label for="design-metric" class="design-metric-label">
+                Metric
+                <select id="design-metric"></select>
+              </label>
+            </div>
+            <div id="design-scenario-table" class="design-table-wrap"></div>
+            <div id="design-precision-target-table" class="design-table-wrap"></div>
+            <div class="reviewer-copy-block">
+              <label for="reviewer-scenario">Reviewer text scenario</label>
+              <select id="reviewer-scenario"></select>
+              <p id="reviewer-text"></p>
+              <button id="copy-reviewer-text" type="button">Copy reviewer text</button>
+            </div>
+          </section>
         </section>
 
         <section class="card-grid">

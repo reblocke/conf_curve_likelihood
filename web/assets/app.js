@@ -1,10 +1,18 @@
-import { DEFAULT_VALUES, DEFAULT_VIEW_MODE, EFFECT_OPTIONS } from "./config.js";
+import {
+  DEFAULT_DESIGN_METRIC,
+  DEFAULT_VALUES,
+  DEFAULT_VIEW_MODE,
+  DESIGN_METRIC_OPTIONS,
+  DESIGN_SELECTION_RULE_OPTIONS,
+  EFFECT_OPTIONS,
+} from "./config.js";
 import { exportManuscriptPng, exportPlotPng, renderCurves } from "./plot.js";
 import {
   buildCsv,
   buildFigureCaption,
   renderCommentary,
   renderComparisonHeader,
+  renderDesignResults,
   renderPlotKey,
   renderSummary,
   renderWarnings,
@@ -32,6 +40,30 @@ const lowerInput = document.getElementById("ci-lower");
 const upperInput = document.getElementById("ci-upper");
 const nullInput = document.getElementById("null-value");
 const thresholdsInput = document.getElementById("thresholds");
+const designEnabledInput = document.getElementById("design-enabled");
+const designFields = document.getElementById("design-fields");
+const designAlphaInput = document.getElementById("design-alpha");
+const designSelectionRuleSelect = document.getElementById("design-selection-rule");
+const designClaimDirectionGroup = document.getElementById("design-claim-direction-group");
+const designClaimDirectionSelect = document.getElementById("design-claim-direction");
+const designClaimThresholdGroup = document.getElementById("design-claim-threshold-group");
+const designClaimThresholdInput = document.getElementById("design-claim-threshold");
+const designInformationMultiplierInput = document.getElementById("design-information-multiplier");
+const designTrueEffectsInput = document.getElementById("design-true-effects");
+const designRangeLowerInput = document.getElementById("design-range-lower");
+const designRangeUpperInput = document.getElementById("design-range-upper");
+const designPrecisionTargetSelect = document.getElementById("design-precision-target-effect");
+const designTargetPowerInput = document.getElementById("design-target-power");
+const designMaxTypeSInput = document.getElementById("design-max-type-s");
+const designMaxTypeMInput = document.getElementById("design-max-type-m");
+const designMetricSelect = document.getElementById("design-metric");
+const designResults = document.getElementById("design-results");
+const designSummary = document.getElementById("design-summary");
+const designScenarioTable = document.getElementById("design-scenario-table");
+const designPrecisionTargetTable = document.getElementById("design-precision-target-table");
+const reviewerScenarioSelect = document.getElementById("reviewer-scenario");
+const reviewerText = document.getElementById("reviewer-text");
+const copyReviewerTextButton = document.getElementById("copy-reviewer-text");
 const axisSpacingGroup = document.getElementById("axis-spacing-group");
 const axisSpacingSelect = document.getElementById("axis-spacing");
 const displayRangeLowerInput = document.getElementById("display-range-lower");
@@ -49,6 +81,16 @@ const comparisonHeaderElements = {
   plotTitle,
   plotSubtitle,
   comparisonTakeaway,
+};
+
+const designResultElements = {
+  container: designResults,
+  summary: designSummary,
+  scenarioTable: designScenarioTable,
+  precisionTargetTable: designPrecisionTargetTable,
+  reviewerScenarioSelect,
+  reviewerText,
+  copyReviewerTextButton,
 };
 
 const runtimeState = {
@@ -82,6 +124,13 @@ function clearRenderedState() {
   comparisonTakeaway.textContent = "Enter a 95% confidence interval to compute the main comparison.";
   figureCaption.textContent = "";
   copyCaptionButton.disabled = true;
+  designResults.hidden = true;
+  designSummary.textContent = "";
+  designScenarioTable.innerHTML = "";
+  designPrecisionTargetTable.innerHTML = "";
+  reviewerScenarioSelect.innerHTML = "";
+  reviewerText.textContent = "";
+  copyReviewerTextButton.disabled = true;
   if (typeof Plotly !== "undefined") {
     Plotly.purge(plotElement);
   }
@@ -117,6 +166,78 @@ function parseThresholds(rawValue) {
     });
 }
 
+function parseNumberList(rawValue, errorMessage) {
+  if (rawValue.trim() === "") {
+    return [];
+  }
+  return rawValue
+    .split(/[,\s]+/)
+    .filter(Boolean)
+    .map((value) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        throw new Error(errorMessage);
+      }
+      return parsed;
+    });
+}
+
+function safeParseNumberList(rawValue) {
+  try {
+    return parseNumberList(rawValue, "Values must be comma-separated finite numbers.");
+  } catch {
+    return [];
+  }
+}
+
+function designSelectionRuleOption() {
+  return (
+    DESIGN_SELECTION_RULE_OPTIONS.find((option) => option.key === designSelectionRuleSelect.value) ??
+    DESIGN_SELECTION_RULE_OPTIONS[0]
+  );
+}
+
+function deduplicateTargetCandidates(candidates) {
+  const deduplicated = [];
+  for (const candidate of candidates) {
+    const alreadySeen = deduplicated.some(
+      (existing) =>
+        Math.abs(existing.value - candidate.value) <=
+        Math.max(1e-12, Math.abs(candidate.value) * 1e-10),
+    );
+    if (!alreadySeen) {
+      deduplicated.push(candidate);
+    }
+  }
+  return deduplicated;
+}
+
+function refreshPrecisionTargetOptions() {
+  const previousValue = designPrecisionTargetSelect.value;
+  const candidates = deduplicateTargetCandidates([
+    ...safeParseNumberList(thresholdsInput.value).map((value) => ({
+      label: `Threshold / MCID: ${value}`,
+      value,
+    })),
+    ...safeParseNumberList(designTrueEffectsInput.value).map((value) => ({
+      label: `Assumed true effect: ${value}`,
+      value,
+    })),
+  ]);
+
+  const emptyLabel =
+    candidates.length === 0 ? "Add a threshold or assumed true effect" : "No precision target";
+  designPrecisionTargetSelect.innerHTML = [
+    `<option value="">${emptyLabel}</option>`,
+    ...candidates.map((candidate) => `<option value="${candidate.value}">${candidate.label}</option>`),
+  ].join("");
+  if (candidates.some((candidate) => String(candidate.value) === previousValue)) {
+    designPrecisionTargetSelect.value = previousValue;
+  } else {
+    designPrecisionTargetSelect.value = "";
+  }
+}
+
 function getSelectedEffect() {
   return EFFECT_OPTIONS.find((option) => option.key === effectTypeSelect.value) ?? EFFECT_OPTIONS[0];
 }
@@ -134,6 +255,7 @@ function currentDisplayOptions() {
   return {
     axisSpacing: currentAxisSpacing(),
     viewMode: currentViewMode(),
+    designMetric: designMetricSelect.value || DEFAULT_DESIGN_METRIC,
   };
 }
 
@@ -175,8 +297,70 @@ function updateEffectControls() {
   plotTitle.textContent = `How the data compare candidate ${effect.candidateLabel}`;
 }
 
+function updateDesignControls() {
+  const enabled = designEnabledInput.checked;
+  const ruleOption = designSelectionRuleOption();
+
+  refreshPrecisionTargetOptions();
+  const hasPrecisionTarget = designPrecisionTargetSelect.value !== "";
+  designFields.hidden = !enabled;
+  designClaimDirectionGroup.hidden = !ruleOption.usesDirection;
+  designClaimThresholdGroup.hidden = !ruleOption.usesThreshold;
+  for (const input of designFields.querySelectorAll("input, select")) {
+    input.disabled = !enabled;
+  }
+  if (!enabled || !ruleOption.usesDirection) {
+    designClaimDirectionSelect.disabled = true;
+  }
+  if (!enabled || !ruleOption.usesThreshold) {
+    designClaimThresholdInput.disabled = true;
+  }
+  for (const input of [designTargetPowerInput, designMaxTypeSInput, designMaxTypeMInput]) {
+    input.disabled = !enabled || !hasPrecisionTarget;
+  }
+}
+
 function buildPayload() {
   const effect = getSelectedEffect();
+  const designEnabled = designEnabledInput.checked;
+  const designAlpha = parseOptionalNumber(designAlphaInput.value);
+  const designSelectionRule = designSelectionRuleSelect.value;
+  const designRuleOption = designSelectionRuleOption();
+  const designClaimThreshold = parseOptionalNumber(designClaimThresholdInput.value);
+  const designInformationMultiplier = parseOptionalNumber(designInformationMultiplierInput.value);
+  const designRangeLower = parseOptionalNumber(designRangeLowerInput.value);
+  const designRangeUpper = parseOptionalNumber(designRangeUpperInput.value);
+  const designPrecisionTargetEffect = parseOptionalNumber(designPrecisionTargetSelect.value);
+  const designTargetPower = parseOptionalNumber(designTargetPowerInput.value);
+  const designMaxTypeS = parseOptionalNumber(designMaxTypeSInput.value);
+  const designMaxTypeM = parseOptionalNumber(designMaxTypeMInput.value);
+  if (designEnabled && (designAlpha === null || designAlpha <= 0 || designAlpha >= 1)) {
+    throw new Error("Selection threshold alpha must be greater than 0 and less than 1.");
+  }
+  if (
+    designEnabled &&
+    (designInformationMultiplier === null || designInformationMultiplier <= 0)
+  ) {
+    throw new Error("Design information multiplier must be greater than 0.");
+  }
+  if (designEnabled && designRuleOption.usesThreshold && designClaimThreshold === null) {
+    throw new Error("This selection rule requires a finite claim threshold / MCID.");
+  }
+  if (designEnabled && (designRangeLower === null) !== (designRangeUpper === null)) {
+    throw new Error("Design plausible true-effect range lower and upper must be supplied together.");
+  }
+  if (designEnabled && designPrecisionTargetEffect !== null) {
+    if (designTargetPower !== null && (designTargetPower <= 0 || designTargetPower >= 1)) {
+      throw new Error("Target power must be greater than 0 and less than 1.");
+    }
+    if (designMaxTypeS !== null && (designMaxTypeS <= 0 || designMaxTypeS >= 1)) {
+      throw new Error("Maximum Type S must be greater than 0 and less than 1.");
+    }
+    if (designMaxTypeM !== null && designMaxTypeM <= 1) {
+      throw new Error("Maximum Type M must be greater than 1.");
+    }
+  }
+
   return {
     effect_type: effect.key,
     estimate: parseOptionalNumber(estimateInput.value),
@@ -189,6 +373,32 @@ function buildPayload() {
     display_natural_axis: effect.family === "ratio",
     grid_points: Number(gridPointsInput.value),
     show_cutoffs: showCutoffsInput.checked,
+    design_enabled: designEnabled,
+    design_alpha: designAlpha ?? Number(DEFAULT_VALUES.design_alpha),
+    design_selection_rule: designEnabled ? designSelectionRule : DEFAULT_VALUES.design_selection_rule,
+    design_claim_direction: designEnabled
+      ? designClaimDirectionSelect.value
+      : DEFAULT_VALUES.design_claim_direction,
+    design_claim_threshold:
+      designEnabled && designRuleOption.usesThreshold ? designClaimThreshold : null,
+    design_information_multiplier: designEnabled
+      ? designInformationMultiplier
+      : Number(DEFAULT_VALUES.design_information_multiplier),
+    design_precision_target_effect: designEnabled ? designPrecisionTargetEffect : null,
+    design_target_power:
+      designEnabled && designPrecisionTargetEffect !== null ? designTargetPower : null,
+    design_max_type_s:
+      designEnabled && designPrecisionTargetEffect !== null ? designMaxTypeS : null,
+    design_max_type_m:
+      designEnabled && designPrecisionTargetEffect !== null ? designMaxTypeM : null,
+    design_true_effects: designEnabled
+      ? parseNumberList(
+          designTrueEffectsInput.value,
+          "Assumed true effects must be comma-separated finite numbers.",
+        )
+      : [],
+    design_plausible_range_lower: designEnabled ? designRangeLower : null,
+    design_plausible_range_upper: designEnabled ? designRangeUpper : null,
   };
 }
 
@@ -198,6 +408,7 @@ async function renderResponse(response, displayOptions) {
   renderCommentary(response, displayOptions, commentaryText);
   renderWarnings(response, displayOptions, warningsList);
   renderPlotKey(response, displayOptions, plotKey);
+  renderDesignResults(response, designResultElements);
   figureCaption.textContent = buildFigureCaption(response, displayOptions);
   copyCaptionButton.disabled = false;
   await renderCurves(plotElement, response, displayOptions);
@@ -285,6 +496,27 @@ function initializeForm() {
   upperInput.value = DEFAULT_VALUES.upper;
   nullInput.value = DEFAULT_VALUES.null_value;
   thresholdsInput.value = DEFAULT_VALUES.thresholds;
+  designEnabledInput.checked = DEFAULT_VALUES.design_enabled;
+  designAlphaInput.value = DEFAULT_VALUES.design_alpha;
+  designSelectionRuleSelect.innerHTML = DESIGN_SELECTION_RULE_OPTIONS.map(
+    (option) => `<option value="${option.key}">${option.label}</option>`,
+  ).join("");
+  designSelectionRuleSelect.value = DEFAULT_VALUES.design_selection_rule;
+  designClaimDirectionSelect.value = DEFAULT_VALUES.design_claim_direction;
+  designClaimThresholdInput.value = DEFAULT_VALUES.design_claim_threshold;
+  designInformationMultiplierInput.value = DEFAULT_VALUES.design_information_multiplier;
+  designTrueEffectsInput.value = DEFAULT_VALUES.design_true_effects;
+  designRangeLowerInput.value = DEFAULT_VALUES.design_plausible_range_lower;
+  designRangeUpperInput.value = DEFAULT_VALUES.design_plausible_range_upper;
+  designTargetPowerInput.value = DEFAULT_VALUES.design_target_power;
+  designMaxTypeSInput.value = DEFAULT_VALUES.design_max_type_s;
+  designMaxTypeMInput.value = DEFAULT_VALUES.design_max_type_m;
+  refreshPrecisionTargetOptions();
+  designPrecisionTargetSelect.value = DEFAULT_VALUES.design_precision_target_effect;
+  designMetricSelect.innerHTML = DESIGN_METRIC_OPTIONS.map(
+    (option) => `<option value="${option.key}">${option.label}</option>`,
+  ).join("");
+  designMetricSelect.value = DEFAULT_VALUES.design_metric;
   displayRangeLowerInput.value = DEFAULT_VALUES.display_range_lower;
   displayRangeUpperInput.value = DEFAULT_VALUES.display_range_upper;
   axisSpacingSelect.value = DEFAULT_VALUES.axis_spacing;
@@ -298,6 +530,7 @@ function initializeForm() {
   runtimeState.lastDefaultNull = getSelectedEffect().defaultNull;
 
   updateEffectControls();
+  updateDesignControls();
 }
 
 function initializeUi() {
@@ -305,6 +538,7 @@ function initializeUi() {
   sidebar.dataset.collapsed = "false";
   setExportEnabled(false);
   copyCaptionButton.disabled = true;
+  copyReviewerTextButton.disabled = true;
   toggleButton.addEventListener("click", () => {
     const nextCollapsed = sidebar.dataset.collapsed !== "true";
     sidebar.dataset.collapsed = nextCollapsed ? "true" : "false";
@@ -349,6 +583,31 @@ function initializeUi() {
       void rerenderCurrentResponse();
     });
   }
+  designEnabledInput.addEventListener("change", () => {
+    updateDesignControls();
+    scheduleCompute();
+  });
+  designSelectionRuleSelect.addEventListener("change", () => {
+    updateDesignControls();
+    scheduleCompute();
+  });
+  designPrecisionTargetSelect.addEventListener("change", () => {
+    updateDesignControls();
+    scheduleCompute();
+  });
+  for (const input of [thresholdsInput, designTrueEffectsInput]) {
+    input.addEventListener("input", () => {
+      updateDesignControls();
+    });
+  }
+  designMetricSelect.addEventListener("change", () => {
+    void rerenderCurrentResponse();
+  });
+  reviewerScenarioSelect.addEventListener("change", () => {
+    if (runtimeState.currentResponse) {
+      renderDesignResults(runtimeState.currentResponse, designResultElements);
+    }
+  });
 
   form.addEventListener("input", (event) => {
     if (event.target !== gridPointsInput) {
@@ -410,6 +669,33 @@ function initializeUi() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setStatus("error", `Could not copy caption: ${message}`);
+    }
+  });
+
+  copyReviewerTextButton.addEventListener("click", async () => {
+    const text = reviewerText.textContent.trim();
+    if (!text) {
+      return;
+    }
+    const originalText = copyReviewerTextButton.textContent;
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.append(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      copyReviewerTextButton.textContent = "Copied";
+      window.setTimeout(() => {
+        copyReviewerTextButton.textContent = originalText;
+      }, 1400);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus("error", `Could not copy reviewer text: ${message}`);
     }
   });
 }

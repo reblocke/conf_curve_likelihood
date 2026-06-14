@@ -40,6 +40,23 @@ export function formatRange(values) {
   return `${formatNumber(values[0])} to ${formatNumber(values[1])}`;
 }
 
+export function formatPercent(value) {
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: value < 0.01 ? 2 : 1,
+    style: "percent",
+  }).format(value);
+}
+
+export function formatRatio(value) {
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+  return `${formatNumber(value)}x`;
+}
+
 export function estimateSourceLabel(estimateSource) {
   return estimateSource === "provided_validated"
     ? "Provided and validated"

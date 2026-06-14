@@ -425,6 +425,10 @@ button:hover {
   border-top-style: dashed;
 }
 
+.key-line-design {
+  color: #4c8a5b;
+}
+
 .key-line-cutoff {
   color: rgba(19, 42, 58, 0.45);
   border-top-width: 2px;
@@ -435,6 +439,10 @@ button:hover {
   min-height: 680px;
   min-width: 0;
   width: 100%;
+}
+
+.plot-surface[data-design-enabled="true"] {
+  min-height: 820px;
 }
 
 .figure-caption-block {
@@ -492,6 +500,108 @@ button:hover {
   border-radius: 0;
   box-shadow: none;
 }
+
+.design-fields {
+  display: grid;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.design-fields .control-subgroup {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.design-results {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(19, 42, 58, 0.1);
+}
+
+.design-results-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 14px;
+  align-items: start;
+}
+
+.design-results-header h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.design-metric-label {
+  display: grid;
+  gap: 8px;
+}
+
+.design-table-wrap {
+  overflow-x: auto;
+}
+
+.design-scenario-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  font-size: 0.86rem;
+}
+
+.design-scenario-table th,
+.design-scenario-table td {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(19, 42, 58, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.design-scenario-table th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.design-scenario-table tr[data-selected="true"] td {
+  background: rgba(76, 138, 91, 0.08);
+}
+
+.design-scenario-table td span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.reviewer-copy-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(19, 42, 58, 0.1);
+}
+
+.reviewer-copy-block p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.reviewer-copy-block button {
+  justify-self: start;
+  padding: 9px 13px;
+  background: var(--surface-strong);
+  border: 1px solid rgba(19, 42, 58, 0.18);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .card-grid {
@@ -666,6 +776,10 @@ button:hover {
   }
 
   .figure-caption-block {
+    grid-template-columns: 1fr;
+  }
+
+  .design-results-header {
     grid-template-columns: 1fr;
   }
 }

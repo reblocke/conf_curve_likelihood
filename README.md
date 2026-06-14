@@ -19,13 +19,16 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 - displays the corresponding compatibility curve and normalized relative-likelihood curve in both-panel, compatibility-only, or likelihood-only view modes
 - highlights the reported 95% CI on compatibility-visible views and the evidential S−2 support interval on likelihood-visible views
 - reports summary quantities such as the CI-implied estimate, reconstructed SE, design-threshold markers for `alpha = 0.05` and `power = 0.80`, null relative likelihood, threshold-support comparisons, and the two-sided Wald p-value
+- optionally computes design-calibration quantities - selected-claim probability, Type S wrong-sign probability, Type M magnitude exaggeration, and observed exaggeration - across candidate assumed true effects using a user-selected Wald claim rule
+- supports design-only information multipliers and inverse precision targets for asking what approximate Wald SE or information multiplier would meet power, Type S, or Type M targets at an assumed true effect
 - exports the current x-grid as CSV, the dashboard plot as PNG, and a figure-only manuscript PNG with a separate copyable caption
 
 ## What the app does not do
 
 - it does not recover the exact model-based profile likelihood from the fitted model
-- it does not infer the original study design or variance estimator
+- it does not infer the original study design, variance estimator, or sample-size model
 - it does not validate whether the published interval was truly Wald-based beyond symmetry checks
+- it does not treat Type S/M as posterior probabilities that the observed estimate is wrong; Type S/M are repeated-study operating characteristics under user-specified assumed true effects and a selected claim rule
 - it does not provide clinical decision support or medical-device functionality; threshold fields are user-defined reference markers for interpreting the reconstructed display
 
 Use the wording “normalized Wald relative likelihood” or “approximate profile-likelihood-style view under Wald assumptions” consistently. Avoid presenting the likelihood panel as exact fitted-model profile likelihood.
@@ -45,6 +48,7 @@ Use the wording “normalized Wald relative likelihood” or “approximate prof
   - ratio of means
 
 For ratio measures, the app computes on the log scale, labels the x-axis on the natural ratio scale, and can display that natural-scale axis with logarithmic or linear spacing.
+Type M design calibration for ratio measures is also computed on the log working scale, not as direct inflation of the natural odds/risk/hazard ratio.
 
 The optional plausible display range constrains only the plotted and exported x-grid. It does not change the CI-derived estimate, reconstructed standard error, null summaries, threshold-support summaries, design-threshold markers, or reconstruction warnings.
 
@@ -106,11 +110,13 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - Additive example: mean difference 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
 - Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default, both-panel view by default, and optional plausible display range such as `0.9` to `1.1`
 - Threshold example: add comma-separated reference values such as `0.8, 1.25` to compare user-defined thresholds against the CI-implied estimate and null under the same Wald reconstruction
+- Design example: enable design calibration, choose a selected-claim rule, and set an information multiplier such as `4` to view Type S/M under a hypothetical SE equal to half the CI-implied SE
 
 ## Documentation and citation
 
 - `AGENTS.md` defines repo-specific engineering rules.
 - `docs/DECISIONS.md` records architectural choices.
+- `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
 - Source links used for app terminology and presentation notes, retrieved 2026-04-23:
   - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals.

@@ -3,11 +3,75 @@ export const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VE
 export const PYTHON_PACKAGE_FILES = [
   "__init__.py",
   "core.py",
+  "design.py",
   "models.py",
   "stage.py",
   "web_contract.py",
 ];
 export const DEFAULT_VIEW_MODE = "both";
+export const DEFAULT_DESIGN_METRIC = "power";
+
+export const DESIGN_SELECTION_RULE_OPTIONS = [
+  {
+    key: "two_sided_p_lt_alpha",
+    label: "Two-sided p < alpha against the null",
+    usesDirection: false,
+    usesThreshold: false,
+  },
+  {
+    key: "one_sided_positive_p_lt_alpha",
+    label: "One-sided positive p < alpha",
+    usesDirection: false,
+    usesThreshold: false,
+  },
+  {
+    key: "one_sided_negative_p_lt_alpha",
+    label: "One-sided negative p < alpha",
+    usesDirection: false,
+    usesThreshold: false,
+  },
+  {
+    key: "ci_excludes_null_in_beneficial_direction",
+    label: "CI at selected alpha excludes null in selected direction",
+    usesDirection: true,
+    usesThreshold: false,
+  },
+  {
+    key: "estimate_exceeds_mcid_and_p_lt_alpha",
+    label: "Estimate exceeds threshold and p < alpha",
+    usesDirection: true,
+    usesThreshold: true,
+  },
+  {
+    key: "ci_excludes_mcid",
+    label: "CI at selected alpha excludes claim threshold",
+    usesDirection: true,
+    usesThreshold: true,
+  },
+];
+
+export const DESIGN_METRIC_OPTIONS = [
+  {
+    key: "power",
+    label: "Power",
+    field: "power",
+  },
+  {
+    key: "type_s",
+    label: "Type S probability",
+    field: "type_s",
+  },
+  {
+    key: "type_m",
+    label: "Type M exaggeration",
+    field: "type_m",
+  },
+  {
+    key: "observed_exaggeration",
+    label: "Observed exaggeration if true",
+    field: "observed_exaggeration",
+  },
+];
 
 export const EFFECT_OPTIONS = [
   {
@@ -96,8 +160,28 @@ export const DEFAULT_VALUES = {
   axis_spacing: "log",
   grid_points: "801",
   show_cutoffs: true,
+  design_enabled: false,
+  design_alpha: "0.05",
+  design_selection_rule: "two_sided_p_lt_alpha",
+  design_claim_direction: "positive",
+  design_claim_threshold: "",
+  design_information_multiplier: "1",
+  design_precision_target_effect: "",
+  design_target_power: "0.80",
+  design_max_type_s: "",
+  design_max_type_m: "",
+  design_true_effects: "",
+  design_plausible_range_lower: "",
+  design_plausible_range_upper: "",
+  design_metric: DEFAULT_DESIGN_METRIC,
 };
 
 export function effectOptionForKey(effectKey) {
   return EFFECT_OPTIONS.find((option) => option.key === effectKey) ?? EFFECT_OPTIONS[0];
+}
+
+export function designMetricOptionForKey(metricKey) {
+  return (
+    DESIGN_METRIC_OPTIONS.find((option) => option.key === metricKey) ?? DESIGN_METRIC_OPTIONS[0]
+  );
 }

@@ -6,6 +6,15 @@ from typing import Literal, TypedDict
 EffectFamily = Literal["additive", "ratio"]
 WorkingScale = Literal["identity", "log"]
 EstimateSource = Literal["inferred_from_ci", "provided_validated"]
+DesignSelectionRule = Literal[
+    "two_sided_p_lt_alpha",
+    "one_sided_positive_p_lt_alpha",
+    "one_sided_negative_p_lt_alpha",
+    "ci_excludes_null_in_beneficial_direction",
+    "estimate_exceeds_mcid_and_p_lt_alpha",
+    "ci_excludes_mcid",
+]
+DesignClaimDirection = Literal["positive", "negative"]
 
 
 @dataclass(frozen=True)
@@ -108,6 +117,19 @@ class CurveRequest(TypedDict, total=False):
     display_natural_axis: bool
     grid_points: int
     show_cutoffs: bool
+    design_enabled: bool
+    design_alpha: float
+    design_selection_rule: str
+    design_claim_direction: str
+    design_claim_threshold: float | None
+    design_information_multiplier: float
+    design_precision_target_effect: float | None
+    design_target_power: float | None
+    design_max_type_s: float | None
+    design_max_type_m: float | None
+    design_true_effects: list[float]
+    design_plausible_range_lower: float | None
+    design_plausible_range_upper: float | None
 
 
 class ThresholdSupportPayload(TypedDict):
@@ -177,8 +199,77 @@ class GridPayload(TypedDict):
     log_relative_likelihood: list[float]
 
 
+class DesignConfigPayload(TypedDict):
+    enabled: bool
+    alpha: float
+    selection_rule: DesignSelectionRule
+    selection_rule_label: str
+    claim_direction: DesignClaimDirection
+    claim_threshold_display: float | None
+    claim_threshold_working: float | None
+    se_working: float
+    current_se_working: float
+    design_se_working: float
+    information_multiplier: float
+    current_ci_width_working: float
+    approx_design_ci_width_working: float
+    null_working: float
+    estimate_working: float
+    near_null_delta: float
+    type_m_scale_note: str
+    plausible_range_display: list[float] | None
+    plausible_range_working: list[float] | None
+
+
+class DesignGridPayload(TypedDict):
+    true_effect_display: list[float]
+    true_effect_working: list[float]
+    delta: list[float]
+    power: list[float]
+    type_s: list[float | None]
+    type_m: list[float | None]
+    expected_selected_abs_z: list[float | None]
+    observed_exaggeration: list[float | None]
+
+
+class DesignScenarioPayload(TypedDict):
+    label: str
+    source: str
+    true_effect_display: float
+    true_effect_working: float
+    delta: float
+    power: float
+    type_s: float | None
+    type_m: float | None
+    observed_exaggeration: float | None
+    note: str | None
+
+
+class DesignPrecisionTargetPayload(TypedDict):
+    target: str
+    requested_value: float
+    target_effect_display: float
+    target_effect_working: float
+    required_se: float | None
+    required_information_multiplier: float | None
+    approx_95_ci_width_working: float | None
+    achieved_power: float | None
+    achieved_type_s: float | None
+    achieved_type_m: float | None
+    note: str
+
+
+class DesignPayload(TypedDict):
+    config: DesignConfigPayload
+    grid: DesignGridPayload
+    scenarios: list[DesignScenarioPayload]
+    precision_targets: list[DesignPrecisionTargetPayload]
+    warnings: list[str]
+
+
 class CurveResponse(TypedDict):
     meta: MetaPayload
     summary: SummaryPayload
     warnings: list[str]
     grid: GridPayload
+    design: DesignPayload | None

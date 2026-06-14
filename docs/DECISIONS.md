@@ -133,3 +133,84 @@ about `7.4x` as supported as interval values. Because
   as a claim that the app implements that article's alpha-only critical-effect-size calculations.
 - Source provenance is recorded here and summarized in `README.md`; no external figures, tables,
   or substantial source text are copied into the repository.
+
+## 2026-06-13: Add Type S/M design calibration as a separate repeated-study layer
+
+**Context:**
+
+The app now supports optional design calibration from the same CI-implied Wald standard error used
+for the observed compatibility and relative-likelihood reconstruction. The design layer computes
+power, Type S wrong-sign probability, Type M magnitude exaggeration, and observed exaggeration across
+candidate assumed true effects.
+
+**Decision:**
+
+Keep Type S/M calculations in `src/confcurve/` as Python numerical code and expose them through the
+existing browser JSON contract. For the MVP, support only the one-parameter normal/Wald model with a
+two-sided `p < alpha` selected-claim rule. Compute Type M on the working-scale distance from the null;
+for ratio measures this means the log scale. Return JSON `null` and UI blanks for Type S/M and
+observed exaggeration at or very near the null.
+
+Design plausible true-effect ranges are display metadata only. They may shade the design panel, but
+they do not change the observed x-grid, confidence reconstruction, p-value curve, relative-likelihood
+curve, or CSV observed columns.
+
+**Alternatives considered:**
+
+- JavaScript-only Type S/M calculations: simpler UI wiring, but it would split scientific formulas away
+  from the tested Python source of truth.
+- Selection-rule abstraction for one-sided or MCID-conditioned claims in the MVP: useful later, but too
+  much surface area before the two-sided rule is stable and tested.
+- Reporting Type S as `0.5` at the null: mathematically tempting under symmetric tails, but misleading
+  for "wrong sign" because the true-effect direction is undefined at the null.
+
+**Consequences:**
+
+- Existing observed-data behavior remains the default when design calibration is disabled.
+- Browser-facing Python must include `design.py` in the staging list and must be restaged before browser
+  tests or deployment.
+- Public wording must keep the observed-evidence layer separate from the repeated-study design layer
+  and avoid presenting Type S/M as posterior probabilities or clinical decision guidance.
+
+## 2026-06-13: Extend design calibration with precision scenarios and selected-claim rules
+
+**Context:**
+
+The original Type S/M ticket pack deferred precision scenarios and selection-rule extensibility until
+after the MVP two-sided design layer was stable. Those extensions are useful for grant/sample-size
+critique and for teaching how Type S/M depend on the rule that defines a selected claim.
+
+**Decision:**
+
+Add a tested selected-claim rule abstraction in `src/confcurve/design.py` and expose six Wald rules:
+
+- two-sided `p < alpha` against the null,
+- one-sided positive `p < alpha`,
+- one-sided negative `p < alpha`,
+- CI at selected alpha excludes the null in the selected claim direction,
+- estimate exceeds a claim threshold / MCID and two-sided `p < alpha`,
+- CI at selected alpha excludes a claim threshold / MCID.
+
+Add design-only information multipliers, where `se_design = se_current / sqrt(multiplier)`, and inverse
+precision targets that solve for the approximate Wald SE, 95% CI width, and information multiplier
+needed to meet requested power, Type S, or Type M targets at a selected assumed true effect.
+
+Threshold-conditioned rules require an explicit user-supplied threshold above the null for positive
+claims and below the null for negative claims. Precision targets use the currently selected claim
+rule, direction, threshold, alpha, and target true effect.
+
+**Alternatives considered:**
+
+- Keep selection rules as documentation-only roadmap: simpler, but leaves precision targets tied to
+  only the default two-sided rule and makes later rule support harder to verify.
+- Implement precision targets only for two-sided `p < alpha`: less UI and testing work, but duplicates
+  the design formulas and risks inconsistent behavior once rule selection is added.
+
+**Consequences:**
+
+- Observed confidence, compatibility, likelihood, display-range, CSV observed columns, and export
+  behavior remain unchanged when design calibration is disabled.
+- Information multipliers affect only the design block and design panel, not observed reconstruction.
+- Precision-target results may be blank with warnings when no finite meaningful solution is available.
+- Public wording must describe these as repeated-study Wald design calculations, not clinical guidance
+  or posterior probabilities.

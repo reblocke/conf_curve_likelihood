@@ -4,13 +4,107 @@ import {
   estimateSourceLabel,
   formatLikelihoodRatio,
   formatNumber,
+  formatPercent,
   formatRange,
+  formatRatio,
   supportPhrase,
   thresholdVsNullPhrase,
 } from "./formatters.js";
 
 function effectOptionForResponse(response) {
   return effectOptionForKey(response.meta.effect_spec.key);
+}
+
+function hasDesign(response) {
+  return response.design?.config?.enabled === true;
+}
+
+function sourceLabel(source) {
+  if (source === "null") {
+    return "Null";
+  }
+  if (source === "ci_implied_estimate") {
+    return "CI-implied estimate";
+  }
+  if (source === "threshold") {
+    return "Threshold / MCID";
+  }
+  return "Custom assumed true effect";
+}
+
+function selectedScenarioIndex(scenarios, requestedValue) {
+  const requestedIndex = Number(requestedValue);
+  if (
+    Number.isInteger(requestedIndex) &&
+    requestedIndex >= 0 &&
+    requestedIndex < scenarios.length
+  ) {
+    return requestedIndex;
+  }
+  const customIndex = scenarios.findIndex((scenario) => scenario.source === "custom_true_effect");
+  if (customIndex >= 0) {
+    return customIndex;
+  }
+  const thresholdIndex = scenarios.findIndex((scenario) => scenario.source === "threshold");
+  if (thresholdIndex >= 0) {
+    return thresholdIndex;
+  }
+  const estimateIndex = scenarios.findIndex(
+    (scenario) => scenario.source === "ci_implied_estimate",
+  );
+  return estimateIndex >= 0 ? estimateIndex : 0;
+}
+
+function optionalPercent(value) {
+  return value === null ? "undefined" : formatPercent(value);
+}
+
+function optionalRatio(value) {
+  return value === null ? "undefined" : formatRatio(value);
+}
+
+function optionalNumber(value) {
+  return value === null || value === undefined ? "not available" : formatNumber(value);
+}
+
+function optionalCiWidth(value) {
+  return value === null || value === undefined ? "not available" : formatNumber(value);
+}
+
+function buildReviewerText(response, scenario) {
+  const design = response.design;
+  const effect = effectOptionForResponse(response);
+  const trueEffect = effectValueLabel(effect, scenario.true_effect_display);
+  const scaleLabel = response.meta.effect_spec.working_scale === "log" ? "log" : "working";
+  const alpha = formatNumber(design.config.alpha);
+  const rule = design.config.selection_rule_label;
+  const informationMultiplier = formatRatio(design.config.information_multiplier);
+  const firstPrecisionTarget = design.precision_targets?.[0];
+  const precisionSentence = firstPrecisionTarget
+    ? firstPrecisionTarget.required_information_multiplier === null
+      ? ` The precision target table did not find a finite solution for ${firstPrecisionTarget.target.toLowerCase()} under this rule.`
+      : ` For the selected precision target effect, the ${firstPrecisionTarget.target.toLowerCase()} target requires about ${formatRatio(firstPrecisionTarget.required_information_multiplier)} the current information.`
+    : "";
+
+  if (scenario.type_s === null || scenario.type_m === null) {
+    return (
+      `Using ${informationMultiplier} the CI-implied Wald information and assuming a true effect of ${trueEffect}, ` +
+      `this design would have ${formatPercent(scenario.power)} selected-claim probability under ${rule} at alpha ${alpha}. ` +
+      "Because the assumed true effect is at or very near the null, Type S and Type M are " +
+      "undefined or unstable; interpret only the power/type-I-error behavior at the null. " +
+      "These are repeated-study operating characteristics under the assumed true effect, not posterior probabilities that the observed result is wrong." +
+      precisionSentence
+    );
+  }
+
+  return (
+    `Using ${informationMultiplier} the CI-implied Wald information and assuming a true effect of ${trueEffect}, ` +
+    `this design would have ${formatPercent(scenario.power)} selected-claim probability under ${rule} at alpha ${alpha}. ` +
+    `Conditional on a selected claim, the wrong-sign probability would be ${formatPercent(scenario.type_s)} ` +
+    `and the expected magnitude exaggeration would be ${formatRatio(scenario.type_m)} on the ${scaleLabel} scale. ` +
+    "These are repeated-study operating characteristics under the assumed true effect, not posterior probabilities that the observed result is wrong." +
+    precisionSentence
+  );
 }
 
 export function buildComparisonTakeaway(response) {
@@ -63,12 +157,15 @@ export function buildFigureCaption(response, displayOptions) {
   const sMinus2Text = hasLikelihoodPanel(viewMode)
     ? " The shaded S−2 interval marks candidate effects with relative likelihood at least exp(−2), so the CI-implied estimate is no more than 7.4x as supported."
     : "";
+  const designText = hasDesign(response)
+    ? ` The design-calibration panel treats each x-axis value as an assumed true effect and shows repeated-study operating characteristics under ${response.design.config.selection_rule_label} with ${formatRatio(response.design.config.information_multiplier)} the CI-implied information.`
+    : "";
 
   return (
     `Figure. Wald reconstruction from the reported 95% CI (${formatRange(response.summary.ci_display)}) for ${effect.label.toLowerCase()}. ` +
     `The CI-implied point estimate is ${effectValueLabel(effect, response.summary.estimate_display)} and the null is ${effectValueLabel(effect, response.summary.null_display)}. ` +
     `${panelText} Relative likelihood is normalized to 1 at the CI-implied estimate; compatibility is the two-sided Wald p-value function across candidate effect sizes.` +
-    `${ciText}${sMinus2Text}${thresholdText} This is not exact fitted-model profile likelihood.`
+    `${ciText}${sMinus2Text}${thresholdText}${designText} This is not exact fitted-model profile likelihood.`
   );
 }
 
@@ -105,11 +202,26 @@ export function renderSummary(response, summaryGrid) {
         ...thresholdRows,
       ],
     },
-    {
+  ];
+  if (hasDesign(response)) {
+    groups.push({
+      title: "Design calibration",
+      items: [
+        ["Selection alpha", response.design.config.alpha],
+        ["Selection rule", response.design.config.selection_rule_label],
+        ["Claim direction", response.design.config.claim_direction],
+        ["Information multiplier", formatRatio(response.design.config.information_multiplier)],
+        ["Current SE", response.design.config.current_se_working],
+        ["Design SE", response.design.config.design_se_working],
+        ["Approx design 95% CI width", response.design.config.approx_design_ci_width_working],
+        ["Type M scale", response.design.config.type_m_scale_note],
+      ],
+    });
+  }
+  groups.push({
       title: "Technical reconstruction",
       items: technicalItems,
-    },
-  ];
+    });
 
   summaryGrid.innerHTML = groups
     .map(
@@ -161,6 +273,9 @@ export function renderPlotKey(response, displayOptions, plotKey) {
   if (response.meta.show_cutoffs && hasCompatibilityPanel(viewMode)) {
     keyRows.push(["cutoff", "Compatibility cutoffs"]);
   }
+  if (hasDesign(response)) {
+    keyRows.push(["design", "Design calibration metric"]);
+  }
 
   plotKey.innerHTML = keyRows
     .map(
@@ -194,12 +309,16 @@ export function renderCommentary(response, displayOptions, commentaryText) {
       : displayOptions.viewMode === "compatibility"
         ? "The visible panel is the compatibility / confidence curve: a two-sided Wald p-value function evaluated across candidate effect sizes."
         : "The two panels summarize the same Wald approximation in different units: the compatibility / confidence curve is a two-sided p-value function, and the relative likelihood curve is a monotone transform of the same Wald distance.";
+  const designClause = hasDesign(response)
+    ? `Design calibration treats candidate x-axis values as assumed true effects under ${response.design.config.selection_rule_label}; the information multiplier changes only design calculations and does not revise the observed compatibility or likelihood curves.`
+    : "";
   commentaryText.textContent =
     `${viewClause} ` +
     `${estimateClause} ` +
     `${spacingClause} ` +
     `The paired design threshold markers show the alpha=0.05, power=0.80 distance around the null. ` +
     `${likelihoodRatioClause} ` +
+    `${designClause} ` +
     `This display is reconstructed from the confidence interval; it is not the exact fitted-model profile likelihood from the original study.`;
 }
 
@@ -230,12 +349,18 @@ export function renderWarnings(response, displayOptions, warningsList) {
       "The S−2 support interval marks relative likelihood >= exp(−2), equivalent to an MLE:candidate likelihood ratio <= exp(2).",
     );
   }
+  if (hasDesign(response)) {
+    notes.push(...response.design.warnings);
+  }
   const messages = [...notes, ...response.warnings];
 
   warningsList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
 }
 
 function csvValue(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
   if (Number.isFinite(value)) {
     return String(value);
   }
@@ -243,7 +368,7 @@ function csvValue(value) {
 }
 
 export function buildCsv(response) {
-  const headers = [
+  const observedHeaders = [
     "effect_display",
     "effect_working",
     "z",
@@ -251,11 +376,154 @@ export function buildCsv(response) {
     "relative_likelihood",
     "log_relative_likelihood",
   ];
+  const designHeaders = hasDesign(response)
+    ? [
+        "design_selection_rule",
+        "design_claim_direction",
+        "design_information_multiplier",
+        "design_claim_threshold_working",
+        "design_delta_if_true",
+        "design_power_if_true",
+        "design_type_s_if_true",
+        "design_type_m_if_true",
+        "design_expected_selected_abs_z_if_true",
+        "design_observed_exaggeration_if_true",
+      ]
+    : [];
+  const headers = [...observedHeaders, ...designHeaders];
   const rows = [headers.join(",")];
 
   for (let index = 0; index < response.grid.effect_display.length; index += 1) {
-    rows.push(headers.map((header) => csvValue(response.grid[header][index])).join(","));
+    const observedValues = observedHeaders.map((header) => response.grid[header][index]);
+    const designValues = hasDesign(response)
+      ? [
+          response.design.config.selection_rule,
+          response.design.config.claim_direction,
+          response.design.config.information_multiplier,
+          response.design.config.claim_threshold_working,
+          response.design.grid.delta[index],
+          response.design.grid.power[index],
+          response.design.grid.type_s[index],
+          response.design.grid.type_m[index],
+          response.design.grid.expected_selected_abs_z[index],
+          response.design.grid.observed_exaggeration[index],
+        ]
+      : [];
+    rows.push([...observedValues, ...designValues].map(csvValue).join(","));
   }
 
   return `${rows.join("\n")}\n`;
+}
+
+export function renderDesignResults(response, elements) {
+  if (!hasDesign(response)) {
+    elements.container.hidden = true;
+    elements.summary.textContent = "";
+    elements.scenarioTable.innerHTML = "";
+    elements.precisionTargetTable.innerHTML = "";
+    elements.reviewerScenarioSelect.innerHTML = "";
+    elements.reviewerText.textContent = "";
+    elements.copyReviewerTextButton.disabled = true;
+    return;
+  }
+
+  const design = response.design;
+  const scenarios = design.scenarios ?? [];
+  const selectedIndex = selectedScenarioIndex(scenarios, elements.reviewerScenarioSelect.value);
+  const selectedScenario = scenarios[selectedIndex] ?? scenarios[0];
+  elements.container.hidden = false;
+  elements.summary.textContent =
+    `Design calibration enabled: alpha = ${formatNumber(design.config.alpha)}, ` +
+    `rule = ${design.config.selection_rule_label}, ` +
+    `information = ${formatRatio(design.config.information_multiplier)}. ` +
+    "These values are repeated-study operating characteristics.";
+
+  elements.scenarioTable.innerHTML = `
+    <table class="design-scenario-table">
+      <thead>
+        <tr>
+          <th>Assumed true effect</th>
+          <th>Source / note</th>
+          <th>Delta vs null, design SE</th>
+          <th>Power</th>
+          <th>Type S</th>
+          <th>Type M</th>
+          <th>Observed exaggeration</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${scenarios
+          .map(
+            (scenario, index) => `
+              <tr data-selected="${index === selectedIndex}">
+                <td>${formatNumber(scenario.true_effect_display)}</td>
+                <td>
+                  <strong>${sourceLabel(scenario.source)}</strong>
+                  ${scenario.note ? `<span>${scenario.note}</span>` : ""}
+                </td>
+                <td>${formatNumber(scenario.delta)} SE</td>
+                <td>${formatPercent(scenario.power)}</td>
+                <td>${optionalPercent(scenario.type_s)}</td>
+                <td>${optionalRatio(scenario.type_m)}</td>
+                <td>${optionalRatio(scenario.observed_exaggeration)}</td>
+              </tr>
+            `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+
+  const precisionTargets = design.precision_targets ?? [];
+  elements.precisionTargetTable.innerHTML =
+    precisionTargets.length === 0
+      ? ""
+      : `
+    <table class="design-scenario-table">
+      <thead>
+        <tr>
+          <th>Precision target</th>
+          <th>Target true effect</th>
+          <th>Required SE</th>
+          <th>Required 95% CI width</th>
+          <th>Information multiplier</th>
+          <th>Achieved metric</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${precisionTargets
+          .map(
+            (target) => `
+              <tr>
+                <td>${target.target}: ${formatNumber(target.requested_value)}</td>
+                <td>${formatNumber(target.target_effect_display)}</td>
+                <td>${optionalNumber(target.required_se)}</td>
+                <td>${optionalCiWidth(target.approx_95_ci_width_working)}</td>
+                <td>${optionalRatio(target.required_information_multiplier)}</td>
+                <td>
+                  Power ${optionalPercent(target.achieved_power)};
+                  Type S ${optionalPercent(target.achieved_type_s)};
+                  Type M ${optionalRatio(target.achieved_type_m)}
+                </td>
+                <td>${target.note}</td>
+              </tr>
+            `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+
+  elements.reviewerScenarioSelect.innerHTML = scenarios
+    .map(
+      (scenario, index) =>
+        `<option value="${index}">${scenario.label}${
+          scenario.source === "ci_implied_estimate" ? " (optimistic)" : ""
+        }</option>`,
+    )
+    .join("");
+  elements.reviewerScenarioSelect.value = String(selectedIndex);
+  elements.reviewerText.textContent = buildReviewerText(response, selectedScenario);
+  elements.copyReviewerTextButton.disabled = false;
 }

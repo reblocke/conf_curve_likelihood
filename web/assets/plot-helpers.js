@@ -243,7 +243,7 @@ export function makeIntervalShapes(response, viewMode) {
   return shapes;
 }
 
-export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscript) {
+export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscript, designEnabled = false) {
   const annotations = [];
   const fontSize = manuscript ? 14 : 11;
   const ciInterval = clippedVisibleInterval(response.summary.ci_display, response);
@@ -279,9 +279,11 @@ export function makeIntervalAnnotations(response, viewMode, xAxisType, manuscrip
       xAxisType,
     );
     if (Number.isFinite(x)) {
+      const yPosition =
+        viewMode === "both" ? (designEnabled ? 0.47 : 0.15) : designEnabled ? 0.52 : 0.22;
       annotations.push({
         x,
-        y: viewMode === "both" ? 0.15 : 0.22,
+        y: yPosition,
         xref: "paper",
         yref: "paper",
         text: "S−2 interval: within 7.4x of peak support",
@@ -403,42 +405,67 @@ export function makeDirectLabelAnnotations(response, displayOptions, xAxisType) 
   return annotations;
 }
 
-export function makePanelAnnotations(viewMode, manuscript) {
+export function makePanelAnnotations(viewMode, manuscript, designEnabled = false) {
   const font = {
     size: manuscript ? 16 : 13,
     color: "#132a3a",
   };
+  const annotations = [];
   if (viewMode === "likelihood") {
-    return [
-      {
+    annotations.push({
+      x: 0,
+      y: 1.105,
+      xref: "paper",
+      yref: "paper",
+      text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+      showarrow: false,
+      xanchor: "left",
+      yanchor: "bottom",
+      font,
+    });
+    if (designEnabled) {
+      annotations.push({
         x: 0,
-        y: 1.105,
+        y: 0.335,
         xref: "paper",
         yref: "paper",
-        text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
+        text: "C. Design calibration (assumed true-effect operating characteristics)",
         showarrow: false,
         xanchor: "left",
         yanchor: "bottom",
         font,
-      },
-    ];
+      });
+    }
+    return annotations;
   }
   if (viewMode === "compatibility") {
-    return [
-      {
+    annotations.push({
+      x: 0,
+      y: 1.105,
+      xref: "paper",
+      yref: "paper",
+      text: "A. Compatibility curve (two-sided Wald p-value function)",
+      showarrow: false,
+      xanchor: "left",
+      yanchor: "bottom",
+      font,
+    });
+    if (designEnabled) {
+      annotations.push({
         x: 0,
-        y: 1.105,
+        y: 0.335,
         xref: "paper",
         yref: "paper",
-        text: "A. Compatibility curve (two-sided Wald p-value function)",
+        text: "B. Design calibration (assumed true-effect operating characteristics)",
         showarrow: false,
         xanchor: "left",
         yanchor: "bottom",
         font,
-      },
-    ];
+      });
+    }
+    return annotations;
   }
-  return [
+  annotations.push(
     {
       x: 0,
       y: 1.105,
@@ -452,7 +479,7 @@ export function makePanelAnnotations(viewMode, manuscript) {
     },
     {
       x: 0,
-      y: 0.435,
+      y: designEnabled ? 0.655 : 0.435,
       xref: "paper",
       yref: "paper",
       text: "B. Relative likelihood (normalized to 1 at the CI-implied estimate)",
@@ -461,7 +488,21 @@ export function makePanelAnnotations(viewMode, manuscript) {
       yanchor: "bottom",
       font,
     },
-  ];
+  );
+  if (designEnabled) {
+    annotations.push({
+      x: 0,
+      y: 0.315,
+      xref: "paper",
+      yref: "paper",
+      text: "C. Design calibration (assumed true-effect operating characteristics)",
+      showarrow: false,
+      xanchor: "left",
+      yanchor: "bottom",
+      font,
+    });
+  }
+  return annotations;
 }
 
 function roundToSignificantDigits(value, digits) {

@@ -6,6 +6,7 @@ from shutil import copyfile
 PACKAGE_FILES = [
     "__init__.py",
     "core.py",
+    "design.py",
     "models.py",
     "stage.py",
     "web_contract.py",
