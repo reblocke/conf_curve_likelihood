@@ -368,7 +368,7 @@ export function renderWarnings(response, displayOptions, warningsList) {
   if (hasDesign(response)) {
     if (hasRatioDesignPlotOmissions(response)) {
       notes.push(
-        "Ratio design curves omit values above 10x near the null to keep the plotted scale readable.",
+        "In ratio panels, 1x means no exaggeration and 2x means a two-fold magnitude overestimate; values above 10x are omitted from the plotted curve.",
       );
     }
     notes.push(...response.design.warnings);

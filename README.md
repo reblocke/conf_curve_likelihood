@@ -14,7 +14,7 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 
 ## What the app does
 
-- accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional user-supplied clinical/reference thresholds, and ratio-axis spacing
+- accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional user-supplied reference thresholds/MCIDs, and ratio-axis spacing
 - computes the Wald standardized distance on the appropriate working scale
 - displays the corresponding compatibility curve and normalized relative-likelihood curve in both-panel, compatibility-only, or likelihood-only view modes
 - highlights the reported 95% CI on compatibility-visible views and the evidential S−2 support interval on likelihood-visible views
@@ -110,7 +110,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - Additive example: mean difference 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
 - Ratio example: odds ratio 95% CI `1.2` to `2.7`, implied point estimate `1.8`, null `1`, natural-scale axis with logarithmic spacing by default, both-panel view by default, and optional plausible display range such as `0.9` to `1.1`
 - Threshold example: add comma-separated reference values such as `0.8, 1.25` to compare user-defined thresholds against the CI-implied estimate and null under the same Wald reconstruction
-- Design example: enable design calibration, choose a selected-claim rule, and set an information multiplier such as `4` to view power, Type S, Type M, and observed-exaggeration design panels under a hypothetical SE equal to half the CI-implied SE
+- Design example: enable design calibration, choose a selected-claim rule, and set an information multiplier such as `4` to view fixed C-F panels for power, Type S, Type M, and observed exaggeration under a hypothetical SE equal to half the CI-implied SE; ratio design curves are display-capped at `10x` near the null while tables and exports retain uncapped values
 
 ## Documentation and citation
 
@@ -118,9 +118,10 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - `docs/DECISIONS.md` records architectural choices.
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
-- Source links used for app terminology and presentation notes, retrieved 2026-04-23:
-  - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals.
-  - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale.
+- Source links used for app terminology and presentation notes:
+  - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals; retrieved 2026-04-23.
+  - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale; retrieved 2026-04-23.
+  - [Gelman & Carlin 2014](https://journals.sagepub.com/doi/abs/10.1177/1745691614551642) for Type S sign error, Type M magnitude/exaggeration ratio, and design calculations; retrieved 2026-06-14.
 
 ## Repository Notes
 

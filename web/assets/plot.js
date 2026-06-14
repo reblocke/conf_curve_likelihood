@@ -15,6 +15,8 @@ import {
 } from "./plot-helpers.js";
 
 const DESIGN_RATIO_DISPLAY_CAP = 10;
+const DESIGN_RATIO_GUIDE_VALUE = 2;
+const DESIGN_RATIO_TICK_VALUES = [0, 1, 2, 5, 10];
 const DESIGN_PANEL_SPECS = [
   {
     key: "power",
@@ -85,9 +87,9 @@ function designYAxisTitle(metricKey) {
     return "Type S probability";
   }
   if (metricKey === "type_m") {
-    return "Type M exaggeration ratio";
+    return "Type M (x-fold exaggeration)";
   }
-  return "Observed exaggeration ratio";
+  return "Observed ratio (x-fold)";
 }
 
 function ratioYAxisRange(values) {
@@ -105,9 +107,43 @@ function designYAxisOptions(metricKey, values, cap = null) {
     return { range: [0, 1.02] };
   }
   if (cap !== null) {
-    return { range: ratioYAxisRange(values) };
+    const range = ratioYAxisRange(values);
+    const tickvals = DESIGN_RATIO_TICK_VALUES.filter((value) => value <= range[1] + 1e-9);
+    return {
+      range,
+      tickmode: "array",
+      tickvals,
+      ticktext: tickvals.map((value) => (value === 0 ? "0" : `${value}x`)),
+    };
   }
   return { rangemode: "tozero" };
+}
+
+function makeDesignRatioGuideShapes(response, spec, values) {
+  if (spec.cap === null || ratioYAxisRange(values)[1] < DESIGN_RATIO_GUIDE_VALUE) {
+    return [];
+  }
+  const xValues = response.design.grid.true_effect_display.filter((value) => Number.isFinite(value));
+  if (xValues.length < 2) {
+    return [];
+  }
+  return [
+    {
+      type: "line",
+      xref: `x${spec.axisId}`,
+      yref: `y${spec.axisId}`,
+      x0: xValues[0],
+      x1: xValues[xValues.length - 1],
+      y0: DESIGN_RATIO_GUIDE_VALUE,
+      y1: DESIGN_RATIO_GUIDE_VALUE,
+      line: {
+        color: "rgba(19, 42, 58, 0.22)",
+        dash: "dot",
+        width: 1.25,
+      },
+      layer: "below",
+    },
+  ];
 }
 
 function makeDesignSeparatorShape(designEnabled, domains) {
@@ -384,7 +420,13 @@ export async function renderCurves(plotElement, response, displayOptions) {
     for (const spec of DESIGN_PANEL_SPECS) {
       const values = designMetricValues(response, spec.key, spec.cap);
       const isBottomDesignPanel = spec.axisId === "6";
+      const yAxisTitle = {
+        text: designYAxisTitle(spec.key),
+        standoff: 12,
+        ...(spec.cap === null ? {} : { font: { size: manuscript ? 13 : 11 } }),
+      };
       traces.push(makeDesignTrace(spec, values));
+      layout.shapes.push(...makeDesignRatioGuideShapes(response, spec, values));
       layout[`xaxis${spec.axisId}`] = {
         ...xAxisLayout,
         anchor: `y${spec.axisId}`,
@@ -398,10 +440,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
             }),
       };
       layout[`yaxis${spec.axisId}`] = {
-        title: {
-          text: designYAxisTitle(spec.key),
-          standoff: 12,
-        },
+        title: yAxisTitle,
         domain: domains.design[spec.axisId],
         automargin: true,
         showgrid: true,

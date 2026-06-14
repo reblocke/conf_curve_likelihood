@@ -262,3 +262,25 @@ rendered curves, not to the JSON contract, scenario tables, reviewer text, or CS
   dropdown.
 - Ratio design panels may show intentional gaps near the null; warnings explain that those omitted
   values exceed the display cap.
+
+## 2026-06-14: Label ratio design panels as x-fold exaggeration
+
+**Context:**
+
+Panels E and F both plot ratio-valued operating characteristics that can grow near the null. Their
+long y-axis titles overlapped in the stacked design-panel layout, and the display needed a clearer
+visual cue for common magnitude-overestimation thresholds.
+
+**Decision:**
+
+Use shorter x-fold y-axis titles for the ratio panels, add a subtle `2x` horizontal guide, and label
+visible ratio ticks as `1x`, `2x`, `5x`, and `10x` where they fall inside the active y-range. Keep the
+existing display-only `10x` omission rule. Cite Gelman and Carlin (2014) as the primary Type S/M
+methodology reference for sign error, magnitude/exaggeration ratio, and design calculations.
+
+**Consequences:**
+
+- The plotted y-axis now communicates magnitude overestimation directly without changing any JSON,
+  CSV, scenario-table, or reviewer-text values.
+- The `2x` guide is a visual reference only; it is not a selected-claim rule, precision target, or
+  validation threshold.

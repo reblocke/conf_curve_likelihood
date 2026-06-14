@@ -62,11 +62,15 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(page.locator("#sources-footer")).to_contain_text("evidential likelihood")
     expect(page.locator("#sources-footer")).to_contain_text("S−2 intervals")
     expect(page.locator("#sources-footer")).to_contain_text("critical-effect-size values")
+    expect(page.locator("#sources-footer")).to_contain_text("Type S sign error")
     zampieri_link = page.locator(
         "#sources-footer a[href='https://academic.oup.com/ajrccm/article/211/9/1610/8300617']"
     )
     perugini_link = page.locator(
         "#sources-footer a[href='https://journals.sagepub.com/doi/10.1177/25152459251335298']"
+    )
+    gelman_carlin_link = page.locator(
+        "#sources-footer a[href='https://journals.sagepub.com/doi/abs/10.1177/1745691614551642']"
     )
     expect(zampieri_link).to_have_text("Zampieri et al., AJRCCM 2025")
     expect(zampieri_link).to_have_attribute("target", "_blank")
@@ -74,6 +78,9 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(perugini_link).to_have_text("Perugini et al., AMPS 2025")
     expect(perugini_link).to_have_attribute("target", "_blank")
     expect(perugini_link).to_have_attribute("rel", "noopener noreferrer")
+    expect(gelman_carlin_link).to_have_text("Gelman & Carlin 2014")
+    expect(gelman_carlin_link).to_have_attribute("target", "_blank")
+    expect(gelman_carlin_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 
 

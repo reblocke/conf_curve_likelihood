@@ -83,6 +83,7 @@ def test_design_controls_are_default_off_and_enable_results(app_url: str, page: 
 
 
 def test_design_panels_show_all_metrics_and_cap_ratio_curves(app_url: str, page: Page) -> None:
+    page.set_viewport_size({"width": 1440, "height": 1100})
     page.goto(app_url)
     wait_for_ready(page)
     enable_design(page)
@@ -116,6 +117,14 @@ def test_design_panels_show_all_metrics_and_cap_ratio_curves(app_url: str, page:
             ).map((node) => node.textContent?.trim()).filter(Boolean),
             typeMUpper: plot._fullLayout.yaxis5.range[1],
             observedUpper: plot._fullLayout.yaxis6.range[1],
+            typeMTickText: plot._fullLayout.yaxis5.ticktext,
+            observedTickText: plot._fullLayout.yaxis6.ticktext,
+            twoXGuideCount: plot._fullLayout.shapes.filter((shape) =>
+              shape.type === "line"
+              && ["y5", "y6"].includes(shape.yref)
+              && Math.abs(shape.y0 - 2) < 1e-9
+              && Math.abs(shape.y1 - 2) < 1e-9
+            ).length,
             firstOmittedTypeM,
             firstOmittedObserved,
           };
@@ -130,10 +139,13 @@ def test_design_panels_show_all_metrics_and_cap_ratio_curves(app_url: str, page:
         "Type M exaggeration",
         "Observed exaggeration if true",
     ]
-    assert "Type M exaggeration ratio" in panel_state["yAxisTitles"]
-    assert "Observed exaggeration ratio" in panel_state["yAxisTitles"]
+    assert "Type M (x-fold exaggeration)" in panel_state["yAxisTitles"]
+    assert "Observed ratio (x-fold)" in panel_state["yAxisTitles"]
     assert panel_state["typeMUpper"] <= 10
     assert panel_state["observedUpper"] <= 10
+    assert panel_state["typeMTickText"] == ["0", "1x", "2x", "5x", "10x"]
+    assert panel_state["observedTickText"] == ["0", "1x", "2x", "5x", "10x"]
+    assert panel_state["twoXGuideCount"] == 2
     assert panel_state["firstOmittedTypeM"] >= 0
     assert panel_state["firstOmittedObserved"] >= 0
 
@@ -141,8 +153,9 @@ def test_design_panels_show_all_metrics_and_cap_ratio_curves(app_url: str, page:
     type_m_text = custom_row.locator("td").nth(5).inner_text().replace("x", "")
     assert float(type_m_text) > 10
     expect(page.locator("#warnings-list")).to_contain_text(
-        "Ratio design curves omit values above 10x near the null"
+        "1x means no exaggeration and 2x means a two-fold magnitude overestimate"
     )
+    expect(page.locator("#warnings-list")).to_contain_text("values above 10x are omitted")
     expect(page.locator("#warnings-list")).to_contain_text("Type M is computed on the log")
 
 
@@ -277,6 +290,27 @@ def test_design_panel_labels_do_not_overlap_desktop(app_url: str, page: Page) ->
         """
     )
     assert overlaps == []
+
+    ratio_title_overlap = page.locator("#curve-plot").evaluate(
+        """
+        (plot) => {
+          const typeMTitle = plot.querySelector(".g-y5title text");
+          const observedTitle = plot.querySelector(".g-y6title text");
+          if (!typeMTitle || !observedTitle) {
+            return true;
+          }
+          const a = typeMTitle.getBoundingClientRect();
+          const b = observedTitle.getBoundingClientRect();
+          return !(
+            a.right <= b.left
+            || a.left >= b.right
+            || a.bottom <= b.top
+            || a.top >= b.bottom
+          );
+        }
+        """
+    )
+    assert ratio_title_overlap is False
 
 
 def test_threshold_rule_requires_threshold(app_url: str, page: Page) -> None:

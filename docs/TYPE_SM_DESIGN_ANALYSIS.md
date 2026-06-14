@@ -14,6 +14,8 @@ power, Type S, Type M, and observed exaggeration.
 
 Type S and Type M complement the observed confidence and likelihood displays by showing how reliable selected claims would be under assumed true effects. They are not posterior probabilities that the observed estimate is wrong.
 
+The primary methodology reference is Gelman and Carlin (2014), who describe Type S sign error, Type M magnitude error/exaggeration ratio, and prospective or retrospective design calculations for noisy studies.
+
 ## Model
 
 The design layer uses the same one-parameter normal/Wald model as the observed reconstruction:
@@ -84,6 +86,10 @@ without bound near the null, so the plot omits ratio-curve values above `10x` to
 scale readable. This is display-only; scenario tables, CSV exports, and the JSON contract retain the
 uncapped values.
 
+The two ratio-valued design panels use x-fold axis labels. A value of `1x` means no magnitude
+exaggeration, and the `2x` guide marks a two-fold magnitude overestimate. This guide is visual only;
+it is not a selected-claim threshold, precision target, or exported metric.
+
 ## Precision Targets
 
 Precision targets solve for the approximate Wald SE, 95% CI width, and information multiplier required to meet requested design criteria at a selected assumed true effect:
@@ -130,6 +136,10 @@ The JSON contract returns `null` for undefined Type S, Type M, observed exaggera
 - Information multipliers are approximate one-parameter Wald precision scaling, not a replacement for a study-specific sample-size or power analysis.
 - User thresholds and assumed true effects are reference values supplied by the user.
 - The feature is educational/research interpretation software, not clinical decision support.
+
+## Source
+
+Gelman A., Carlin J. (2014). Beyond Power Calculations: Assessing Type S (Sign) and Type M (Magnitude) Errors. *Perspectives on Psychological Science*, 9(6), 641-651. https://doi.org/10.1177/1745691614551642. Retrieved 2026-06-14.
 
 ## Future Work
 
