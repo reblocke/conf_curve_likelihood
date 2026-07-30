@@ -155,6 +155,7 @@ def test_manifest_covers_all_matrix_cases_and_required_subcases() -> None:
         "B08b-s-minus-2-clipping",
         "B08c-log-likelihood-fallback",
         "B08d-ratio-natural-clipping",
+        "B08e-unrepresentable-design-distance",
     } <= case_ids
     assert manifest["default_tolerance"] == {"rtol": RTOL, "atol": ATOL}
     assert manifest["comparison"]["exact_float_paths"] == list(EXACT_FLOAT_PATHS)
@@ -545,6 +546,13 @@ def test_b08_extreme_summaries_remain_finite_and_warn_when_clipped() -> None:
     ratio = _response("B08d-ratio-natural-clipping")
     assert ratio["grid"]["effect_display"]["last"] == sys.float_info.max
     assert any("Natural-axis x-values were clipped" in item for item in ratio["warnings"])
+
+    rejected = _expected("B08e-unrepresentable-design-distance")
+    assert rejected["status"] == "error"
+    assert rejected["error_type"] == "ValidationError"
+    assert rejected["message"] == (
+        "Design standardized distance exceeds the finite floating-point range."
+    )
 
 
 def test_export_schema_fixtures_match_browser_sources() -> None:

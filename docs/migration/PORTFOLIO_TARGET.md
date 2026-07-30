@@ -149,5 +149,6 @@ non-Wald intervals, multiparameter likelihoods, validated MCIDs, study-specific 
 models, clinical decision support, accounts, persistence, analytics, telemetry, databases,
 or server-side computation.
 
-Canonical author and copyright-holder metadata remain approval boundaries documented in
-`METADATA_AUDIT.md`.
+Canonical portfolio metadata was resolved on 2026-07-29: public author/maintainer and MIT
+copyright-holder text use `Brian Locke`. The evidence and propagation rule are recorded in
+`METADATA_AUDIT.md` and `docs/DECISIONS.md`.

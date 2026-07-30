@@ -2,8 +2,8 @@
 
 ## Status and authority
 
-This inventory records the package-level compatibility surface at behavior source commit
-`f77cd13f0286e933a66c0997af288a0dfa167bd5`. It is descriptive, not a proposed API for
+This inventory records the package-level compatibility surface at final behavior source commit
+`830756ecb11b4e8161f8dfe1fc75afc346ef4467`. It is descriptive, not a proposed API for
 `wald-inference-core`.
 
 The authority for membership and order is `src/confcurve/__init__.py`. Signatures and
@@ -428,12 +428,11 @@ compute_curves(
 
 - **Owner / class:** `confcurve.web_contract`; browser contract.
 - **Contract:** validates a partial request mapping, computes the observed response and
-  optional design block, and is intended to return a strict-JSON-serializable nested
-  mapping. The frozen source has one accepted extreme-design counterexample, documented in
-  `docs/migration/CURRENT_BEHAVIOR.md`; resolving it is a release gate, not behavior to
-  silently normalize in this inventory. This function is the integrated browser adapter,
-  not a pure numerical-core API. Its full field, scale, nullability, conditioning, and
-  ordering contract is recorded in `docs/migration/CONTRACT_SCHEMA.md`.
+  optional design block, and returns a strict-JSON-serializable nested mapping. An
+  unrepresentable standardized design distance raises `ValidationError`; representable
+  opposite-sign boundary arithmetic is retained. This function is the integrated browser
+  adapter, not a pure numerical-core API. Its full field, scale, nullability, conditioning,
+  and ordering contract is recorded in `docs/migration/CONTRACT_SCHEMA.md`.
 - **Current verification:** `tests/integration/test_contract_response.py`,
   `tests/integration/test_design_contract.py`, strict-JSON tests in `tests/test_core.py`,
   and the Playwright suites under `tests/e2e/`.

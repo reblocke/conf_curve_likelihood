@@ -20,43 +20,48 @@
 | Date opened | 2026-07-29 |
 | Source repository | `reblocke/conf_curve_likelihood` |
 | Target repository | `reblocke/conf_curve_likelihood` |
-| Source branch/SHA | `main` at `f77cd13f0286e933a66c0997af288a0dfa167bd5` |
+| Source branch/SHA | `main` at `830756ecb11b4e8161f8dfe1fc75afc346ef4467` |
 | Working branch | `codex/mig-00-freeze-baseline` |
-| Audited-versus-actual comparison | Identical; no commits after the audited SHA at inspection |
+| Audited-versus-actual comparison | Initially identical; final source adds only approved PRs #13 and #14 |
 | Pull request | [#11](https://github.com/reblocke/conf_curve_likelihood/pull/11) (draft) |
 | Baseline tag | Pending; intended `pre-split-baseline-2026-07-29` after verification and merge |
 | Core version | Not applicable; numerical code is still integrated in `confcurve` |
-| Validation status | Draft harness verified; release blocked by the known strict-JSON extreme-design defect |
-| Intended production behavior changes | None |
-| Fixture manifest/hash | Draft manifest `116dcdea29a592b60a26e478a5a0f40e2ad1e88e71b99a8a5c0beb6f2ed466df`; fixture set `4ecf8afa100941cf76be847703429409c4b739d9a6012a5e4757328a012bb943` |
+| Validation status | Final local suite passed; GitHub CI/merge/tag pending |
+| Intended production behavior changes | One separately approved finite-range safety correction in PR #14; ordinary behavior unchanged |
+| Fixture manifest/hash | Manifest `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc`; fixture set `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d` |
 | Release notes/release URL | Pending |
 
 ### Work recorded
 
-- Selected the exact audited source commit as the behavior-freeze source.
+- Selected the audited source, then advanced the behavior-freeze source only for the
+  explicitly approved metadata and strict-JSON corrections in PRs #13 and #14.
 - Added repository-local migration documentation and metadata inventory.
-- Recorded the target architecture without moving formulas or changing production behavior.
-- Generated 21 B01–B08 cases, machine-readable contract/export schemas, an exact effect
+- Recorded the target architecture without moving formulas; the only production change is
+  the separately approved finite-range safety correction.
+- Defined 22 B01–B08 cases, including B08e for the rejected unrepresentable design distance,
+  plus machine-readable contract/export schemas, an exact effect
   registry snapshot, and deterministic comparison tooling.
 - Added exact downloaded CSV-header and PNG-dimension browser gates.
 
-### Draft validation evidence
+### Validation evidence
 
 - `make verify` passed after the initial hardened corpus and browser export checks.
 - The current post-review corpus passed its 22-test focused integration suite, generator
   check, comparator, Ruff format/lint checks, and `git diff --check`.
-- A final full run remains required after the approved behavior source is known.
+- PR #14 passed its full local suite, focused Chromium/WebKit regression, independent
+  numerical review, and all GitHub CI jobs.
+- Final corpus generation/check and comparison passed for 22 cases at `rtol=1e-12`,
+  `atol=1e-14`.
+- Final `make verify` passed with 157 non-E2E and 43 Chromium E2E tests; `uv sync --locked`,
+  Chromium/WebKit installation, Ruff, and `git diff --check` also passed.
 
-### Unresolved decisions
+### Resolved decisions and pending release actions
 
-- Canonical public identity: package/citation metadata say `Reed Blocke`; README says
-  `Brian W. Locke`; the audited Git commit says `Brian Locke`.
-- The MIT license contains the unresolved copyright placeholder `Your Name`.
-- [Issue #12](https://github.com/reblocke/conf_curve_likelihood/issues/12) records an
-  accepted extreme design request that emits nonfinite standardized distances. The
-  proposed isolated fix is to reject an unrepresentable distance with `ValidationError`;
-  it requires explicit approval before production code changes.
-- Final tag target, post-fix fixture hashes, final full verification, PR, and release remain
+- Canonical public identity is `Brian Locke`; the MIT copyright line is
+  `Copyright (c) 2026 Brian Locke` (PR #13).
+- [Issue #12](https://github.com/reblocke/conf_curve_likelihood/issues/12) was explicitly
+  approved and implemented in PR #14. The B08e fixture is the remaining issue-close gate.
+- GitHub CI for the final baseline branch, merge, tag target, issue close, and release remain
   pending.
 
 ### Completion evidence to append

@@ -1391,11 +1391,11 @@
     "separate_order_fixture": "browser_key_order.json"
   },
   "schema_version": 1,
-  "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+  "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
   "strict_json": {
     "allow_nan": false,
-    "known_defect": "An accepted extreme design request can emit nonfinite standardized distances; see docs/migration/CURRENT_BEHAVIOR.md.",
-    "status": "intended contract; known frozen-source defect blocks release",
+    "known_defect": null,
+    "status": "enforced for every successful response",
     "undefined_value": null
   }
 }

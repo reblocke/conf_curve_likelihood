@@ -2,9 +2,10 @@
 
 ## Status
 
-This document records the source selected for the pre-split behavior freeze and the current
-draft golden corpus. It does not claim that the strict-JSON release gate, merge, tagging, or
-release have completed.
+This document records the approved source selected for the pre-split behavior freeze and
+the release-candidate golden corpus. The strict-JSON release gate and canonical metadata
+decision are resolved; merge, tagging, and release evidence are recorded only after those
+actions complete.
 
 | Item | Recorded value |
 |---|---|
@@ -12,21 +13,33 @@ release have completed.
 | Remote | `https://github.com/reblocke/conf_curve_likelihood.git` |
 | Source branch | `main` |
 | Audited SHA | `f77cd13f0286e933a66c0997af288a0dfa167bd5` |
-| Actual behavior-freeze source SHA | `f77cd13f0286e933a66c0997af288a0dfa167bd5` |
+| Actual behavior-freeze source SHA | `830756ecb11b4e8161f8dfe1fc75afc346ef4467` |
 | Migration working branch | `codex/mig-00-freeze-baseline` |
 | Inspection date | 2026-07-29 |
 | Intended tag | `pre-split-baseline-2026-07-29` |
-| Tag status | Pending full verification, merge, and confirmation of the tagged commit |
-| Golden generation status | Draft generated: 21 cases and 48 deterministic JSON artifacts |
-| Successful generation date | 2026-07-29 (draft; the global strict-JSON gate remains blocked) |
-| Draft manifest SHA-256 | `116dcdea29a592b60a26e478a5a0f40e2ad1e88e71b99a8a5c0beb6f2ed466df` |
-| Draft fixture-set SHA-256 | `4ecf8afa100941cf76be847703429409c4b739d9a6012a5e4757328a012bb943` |
+| Tag status | Pending GitHub CI, merge, and confirmation of the tagged commit |
+| Golden generation status | Final corpus generated: 22 cases and 50 deterministic JSON artifacts |
+| Successful generation date | 2026-07-29 |
+| Manifest SHA-256 | `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc` |
+| Fixture-set SHA-256 | `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d` |
 
-At inspection, local `main`, `origin/main`, and `origin/HEAD` all resolved to the audited
-SHA, the working tree was clean, and `git log
-f77cd13f0286e933a66c0997af288a0dfa167bd5..HEAD` was empty. There are therefore no
-post-audit commits to reconcile for the behavior freeze. The migration branch was created
-from that same SHA.
+At initial inspection, local `main`, `origin/main`, and `origin/HEAD` all resolved to the
+audited SHA, the working tree was clean, and `git log
+f77cd13f0286e933a66c0997af288a0dfa167bd5..HEAD` was empty. The migration branch was
+created from that SHA.
+
+Two explicitly authorized changes were then merged before final fixture generation:
+
+- `9d59fd9e17900ef177e695ba3a34ccc0a08e374b` (PR #13) canonicalized public metadata as
+  `Brian Locke` and retained the MIT License.
+- `830756ecb11b4e8161f8dfe1fc75afc346ef4467` (PR #14) fixed the strict-JSON
+  floating-point boundary defect recorded in issue #12.
+
+The second commit is the final behavior source. Its only intentional production difference
+from the audited SHA is the approved finite-range safety behavior: representable
+opposite-sign standardized distances are recovered, unrepresentable derived values raise
+`ValidationError`, and every successful response contains only finite JSON numbers.
+Ordinary representable arithmetic and all protected formulas remain unchanged.
 
 The behavior source SHA and eventual tag target serve different purposes:
 
@@ -36,7 +49,7 @@ The behavior source SHA and eventual tag target serve different purposes:
   tests, and migration documentation, provided production behavior remains unchanged and
   all gates pass.
 
-The draft fixture manifest stamps the behavior source SHA above. Fixtures are generated
+The final fixture manifest stamps the behavior source SHA above. Fixtures are generated
 outputs from that recorded source, not independently authored expected values.
 
 ## Recorded environment
@@ -105,17 +118,26 @@ No command above is recorded as passing merely by appearing here. The migration 
 updated with commands, results, fixture manifest hash, verified commit, and tag only after
 they are actually observed.
 
-## Draft verification evidence and open gate
+## Verification evidence
 
-On 2026-07-29, `make verify` passed after the golden harness and exact browser-export
-assertions were added. After the final manifest portability and effect-registry hardening,
-the focused golden integration suite (22 tests), generator check, comparator, Ruff checks,
-and `git diff --check` passed. The full suite will be rerun after the pending strict-JSON
-safety decision because that approved fix, if accepted, changes the behavior source SHA and
-requires fixture regeneration.
+On 2026-07-29, the draft harness passed `make verify`, the focused golden integration suite
+(22 tests), generator check, comparator, Ruff checks, and `git diff --check`. PR #14 then
+passed its complete local `make verify`, focused Chromium and WebKit boundary regressions,
+100,000 ordinary bit-for-bit arithmetic comparisons, a 972-payload boundary sweep, and all
+GitHub CI jobs.
 
-The exact accepted request and failure mode are documented in `CURRENT_BEHAVIOR.md`.
-Milestone 00 cannot be tagged while that request can emit nonfinite browser payload values.
+The final 22-case corpus was regenerated from the approved source SHA. The completion
+sequence then passed:
+
+- `uv sync --locked`;
+- `uv run playwright install chromium webkit`;
+- `make verify`, including 157 non-E2E tests and 43 Chromium E2E tests;
+- the 22-case generator check and recursive comparator at `rtol=1e-12`, `atol=1e-14`;
+- Ruff format and lint checks; and
+- `git diff --check`.
+
+GitHub CI, merge, tag, and release remain separate gates and are not claimed by this local
+evidence.
 
 ## Tagging rule
 

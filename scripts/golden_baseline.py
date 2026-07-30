@@ -26,7 +26,7 @@ MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
 
 SOURCE_REPOSITORY = "reblocke/conf_curve_likelihood"
 SOURCE_BRANCH = "main"
-SOURCE_COMMIT = "f77cd13f0286e933a66c0997af288a0dfa167bd5"
+SOURCE_COMMIT = "830756ecb11b4e8161f8dfe1fc75afc346ef4467"
 BASELINE_DATE = "2026-07-29"
 FIXTURE_SCHEMA_VERSION = 1
 RTOL = 1e-12
@@ -365,6 +365,20 @@ def _cases() -> tuple[GoldenCase, ...]:
                 "grid_points": 401,
             },
             "edge_summary",
+        ),
+        GoldenCase(
+            "B08e-unrepresentable-design-distance",
+            "B08",
+            "Unrepresentable finite design distance is rejected before JSON serialization",
+            {
+                "effect_type": "mean_difference",
+                "lower": -1e-320,
+                "upper": 1e-320,
+                "null_value": 1e308,
+                "design_enabled": True,
+                "grid_points": 401,
+            },
+            "expected_error",
         ),
     )
     return ordinary + undefined_and_invalid + extremes
@@ -1852,11 +1866,8 @@ def _browser_contract_schema() -> dict[str, Any]:
         "strict_json": {
             "allow_nan": False,
             "undefined_value": None,
-            "status": "intended contract; known frozen-source defect blocks release",
-            "known_defect": (
-                "An accepted extreme design request can emit nonfinite standardized "
-                "distances; see docs/migration/CURRENT_BEHAVIOR.md."
-            ),
+            "status": "enforced for every successful response",
+            "known_defect": None,
         },
         "objects": objects,
         "ordering": {

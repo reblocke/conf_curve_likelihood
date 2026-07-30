@@ -1,5 +1,5 @@
 {
-  "case_count": 21,
+  "case_count": 22,
   "cases": [
     {
       "description": "Additive observed reconstruction",
@@ -15,7 +15,7 @@
       "matrix_case": "B01",
       "request_file": "requests/B01.json",
       "request_sha256": "30ab2c2fa2ac43cc9d1806494215627be938e6fe1b7d26cb6d393979e359a0ce",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -48,7 +48,7 @@
       "matrix_case": "B02",
       "request_file": "requests/B02.json",
       "request_sha256": "13ebdd5ddee1989d2c469afa3e68ec608505e5b74f8c28ce7f1947cf5e656af4",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -81,7 +81,7 @@
       "matrix_case": "B03",
       "request_file": "requests/B03.json",
       "request_sha256": "208781ef5ada4d0495bbfedc9034a8bb7436fce0e7666dfe33b8cc8d40e01c4d",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -114,7 +114,7 @@
       "matrix_case": "B04",
       "request_file": "requests/B04.json",
       "request_sha256": "fd4007d78c05df3478b494db109d1532f69014abc265b3d3ca354c79580d110d",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -147,7 +147,7 @@
       "matrix_case": "B05",
       "request_file": "requests/B05.json",
       "request_sha256": "867950da611ee95c91c79021d5e42eb3464411aa96fcffb1f04cde3e8455e8de",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -180,7 +180,7 @@
       "matrix_case": "B06",
       "request_file": "requests/B06.json",
       "request_sha256": "f1df6d4c866aa098064e24449760dc3420bee549c8f000d588981757db2f4cbb",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -213,7 +213,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07a-null.json",
       "request_sha256": "328af5b8dc02011fb920e1d24f6d48fc100c1b560103a890fdce5dd201a77c26",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -246,7 +246,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07b-near-null.json",
       "request_sha256": "42daf73f8c92f0a35e9ae9a927c3fb67a9ecac1a3f9b967f3b8aa7090582c4d0",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -279,7 +279,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07c-threshold-infeasible.json",
       "request_sha256": "a1f211ff8ad567c1718e45efa79820369b4cbc190e1143aeff6c3788ebe3972b",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -312,7 +312,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07d-alpha-zero.json",
       "request_sha256": "50635b8024a4a21467a67a8326f3a33897f387ec67897512cd3caead064fb754",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -345,7 +345,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07e-alpha-one.json",
       "request_sha256": "776cecb2a574e6e7fd01f2660e85bd9d72796aa6c96963b170dd81fdae924620",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -378,7 +378,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07f-alpha-nonnumeric.json",
       "request_sha256": "2b6fba1cff20ceb4059855d6dec6f11bcb057b23fa2b72d58c87c85937f18293",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -411,7 +411,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07g-alpha-underflow.json",
       "request_sha256": "c01c7e82638e185a4e9cf09f2f53c6de408dc04e0517ec31cee4c71c00e8d8b6",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -444,7 +444,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07h-display-range-pair.json",
       "request_sha256": "64271aef6863d99ecffdecbe4ea1eb327c27a025e915d3442e8d791f8cdedcfd",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -477,7 +477,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07i-design-range-pair.json",
       "request_sha256": "0e92b650733869b794692f4e7825abffb3976d9872c957844665e29684327d8b",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -510,7 +510,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07j-ratio-positive.json",
       "request_sha256": "cff6ea01bf8f5b94f5e9ff4caeabf18bfdbb4c89ddc96acb11f626cf40bce7cc",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -543,7 +543,7 @@
       "matrix_case": "B07",
       "request_file": "requests/B07k-disabled-design-ignored.json",
       "request_sha256": "2415a593ad755c62f74ead93086ecb587cb2ddabf47715e9b6c21dd19b13e05a",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -576,7 +576,7 @@
       "matrix_case": "B08",
       "request_file": "requests/B08a-additive-midpoint.json",
       "request_sha256": "7adc7276f4ac0cf7bdf5da2bf7b7947941b937ae0ab0a1413a99e96d125754ad",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -609,7 +609,7 @@
       "matrix_case": "B08",
       "request_file": "requests/B08b-s-minus-2-clipping.json",
       "request_sha256": "0680d87079a27ae14316c9a37ce344c3cb344b74d8c418f511f9ecea9564f24e",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -642,7 +642,7 @@
       "matrix_case": "B08",
       "request_file": "requests/B08c-log-likelihood-fallback.json",
       "request_sha256": "750ecfe6e42f268a35724c9d2572d480c40222244f1ee170604d45e62f50a18c",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -675,7 +675,40 @@
       "matrix_case": "B08",
       "request_file": "requests/B08d-ratio-natural-clipping.json",
       "request_sha256": "1153f593c84cece2384c16f134537659cc128c2cfba8b9e98d703adc2d021b7e",
-      "source_commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
+      "tolerance": {
+        "atol": 1e-14,
+        "rtol": 1e-12
+      },
+      "versions": {
+        "confcurve": "0.1.0",
+        "hypothesis": "6.151.9",
+        "numpy": "2.2.6",
+        "playwright": "1.58.0",
+        "plotly": "3.1.0",
+        "pyodide": "0.29.3",
+        "pytest": "9.0.2",
+        "pytest-playwright": "0.7.2",
+        "python_declared": "3.11",
+        "python_runtime": "3.11.10",
+        "scipy": "1.14.1"
+      }
+    },
+    {
+      "description": "Unrepresentable finite design distance is rejected before JSON serialization",
+      "exact_float_paths": [
+        "$.response.meta.effect_spec.default_null"
+      ],
+      "expected_file": "responses/B08e-unrepresentable-design-distance.json",
+      "expected_sha256": "e7fae9ad9a6b278f065471174ea5a11074b05a6a792efa5959f50bb349bac30f",
+      "expected_status": "error",
+      "fixture_kind": "expected_error",
+      "fixture_sha256": "188858274427fe79a7686e2176e94b28c6d2430da46e6462f28e402f1bd31d77",
+      "id": "B08e-unrepresentable-design-distance",
+      "matrix_case": "B08",
+      "request_file": "requests/B08e-unrepresentable-design-distance.json",
+      "request_sha256": "5980b4d27d5ac989455f63d50bc59626745884823f209df949bd9113a3d923d4",
+      "source_commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
       "tolerance": {
         "atol": 1e-14,
         "rtol": 1e-12
@@ -713,7 +746,7 @@
   "export_schemas": [
     {
       "path": "export_schemas/browser_contract.json",
-      "sha256": "577706ed1ffdfa777566eb5240ef0fa8a99c28bb28d749d5380f195847f0359d"
+      "sha256": "3acae71a7cc41f28bcd47cdc6dc3d8eeba06dd7939d4fe06287c7135692589e6"
     },
     {
       "path": "export_schemas/browser_key_order.json",
@@ -721,7 +754,7 @@
     },
     {
       "path": "export_schemas/effect_registry.json",
-      "sha256": "7bd6f15ea098106f87c7eea2341b92640f5ae49431e1181d5d8a703f63c8ac18"
+      "sha256": "c495efa2cff266ebbee600de472d42dd279bc7d6439d8ca046857accd22f54f6"
     },
     {
       "path": "export_schemas/csv_columns.json",
@@ -732,7 +765,7 @@
       "sha256": "ce801557e8c6e22007cf7114dbc6b55eaba4480a27a22ecddcc22e20f109a054"
     }
   ],
-  "fixture_set_sha256": "4ecf8afa100941cf76be847703429409c4b739d9a6012a5e4757328a012bb943",
+  "fixture_set_sha256": "81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d",
   "generated_on": "2026-07-29",
   "schema_version": 1,
   "serialization": {
@@ -744,7 +777,7 @@
   },
   "source": {
     "branch": "main",
-    "commit": "f77cd13f0286e933a66c0997af288a0dfa167bd5",
+    "commit": "830756ecb11b4e8161f8dfe1fc75afc346ef4467",
     "repository": "reblocke/conf_curve_likelihood"
   },
   "versions": {

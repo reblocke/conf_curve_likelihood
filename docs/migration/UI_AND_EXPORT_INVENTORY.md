@@ -1,7 +1,7 @@
 # UI and Export Inventory
 
-This document records the integrated browser UI and export contract at source commit
-`f77cd13f0286e933a66c0997af288a0dfa167bd5`. Defaults come from
+This document records the integrated browser UI and export contract at final behavior source
+commit `830756ecb11b4e8161f8dfe1fc75afc346ef4467`. Defaults come from
 `web/assets/config.js`; dynamic behavior comes from `web/assets/app.js`, `renderers.js`, `plot.js`,
 and the Python browser contract.
 
@@ -94,10 +94,9 @@ Additive effects hide and disable axis spacing and always display a linear ident
   recompute path, but spacing is presentation-only and the scientific response values do not change.
 - Missing CI limits show an instruction to enter a 95% CI. Invalid inputs clear the current plot,
   summaries, design tables, caption/reviewer text, and disable exports.
-- A known accepted extreme design request can overflow `design.grid.delta` to `-Infinity`. The
-  Python bridge then emits nonstandard JSON and JavaScript parsing fails; the UI follows its error
-  path, clears current output, and disables exports. This is a baseline defect, not a supported
-  rendering convention.
+- An extreme finite design request whose standardized distance is not representable raises a
+  finite-range validation error. The UI follows its ordinary error path, clears current output, and
+  disables exports; non-standard `Infinity` tokens do not reach JavaScript parsing.
 - The status card uses `aria-live="polite"`. Controls use associated labels, the view switch is a
   fieldset, and collapse controls expose their state through ARIA attributes.
 

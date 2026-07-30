@@ -1,8 +1,9 @@
 # Current Behavior Inventory
 
-This document freezes the integrated application's behavior at source commit
-`f77cd13f0286e933a66c0997af288a0dfa167bd5`. It is an inventory of the live Python and browser
-contracts, not a proposal to change them. `src/confcurve/` remains the numerical source of truth.
+This document freezes the integrated application's behavior at final behavior source commit
+`830756ecb11b4e8161f8dfe1fc75afc346ef4467`. It is an inventory of the live Python and
+browser contracts, not a proposal to change them. `src/confcurve/` remains the numerical
+source of truth.
 
 ## Product boundary
 
@@ -205,17 +206,16 @@ grid
 design
 ```
 
-`design` is `null` when calibration is disabled. In ordinary and currently tested response paths,
-nonfinite inferential quantities are represented with `null`, zero where zero is the actual limiting
-value, or a finite clipped display value accompanied by a warning. The intended browser contract
-therefore excludes `NaN`, `Infinity`, and `-Infinity`.
+`design` is `null` when calibration is disabled. Nonfinite inferential quantities are represented
+with `null`, zero where zero is the actual limiting value, or a finite clipped display value
+accompanied by a warning. Every successful browser response excludes `NaN`, `Infinity`, and
+`-Infinity`.
 
-That strict-JSON contract has a known baseline defect for an accepted extreme design request. For
-example, `lower=-1e-320`, `upper=1e-320`, `null_value=1e308`, design enabled, and 101 grid points
-overflow every `design.grid.delta` value to `-Infinity`. The current bridge uses Python's permissive
-`json.dumps`, emits those tokens, and then fails at JavaScript `JSON.parse`; strict serialization with
-`allow_nan=False` rejects the response earlier. This is an observed release-blocking compatibility
-gap, not a supported undefined-value representation.
+For finite inputs whose required standardized design distance is not representable in binary64,
+`compute_curves()` raises `ValidationError` before operating characteristics or browser JSON are
+returned. The approved boundary fix in PR #14 recovers representable opposite-sign subtraction
+overflow with power-of-two scaling while preserving the original direct arithmetic path for
+ordinary representable inputs.
 
 `null` is used for:
 
@@ -254,8 +254,8 @@ exports. Blocking cases include missing or unordered CI limits, nonfinite values
 inputs, a mismatched point estimate, incomplete or unordered ranges, fewer than 101 grid points,
 invalid alpha/target values, nonpositive information, unsupported rules or directions, and missing
 or misdirected claim thresholds. Many observed-curve and display ranges that are too extreme for
-safe finite evaluation are also blocked. The extreme design-grid overflow documented above is not
-currently caught by that validation.
+safe finite evaluation are also blocked. This includes unrepresentable finite standardized design
+distances, which raise `ValidationError` before a browser response is serialized.
 
 ## Privacy and data path
 

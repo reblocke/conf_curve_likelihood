@@ -2,7 +2,7 @@
 
 This directory is the machine-readable behavior record for
 `reblocke/conf_curve_likelihood` at source commit
-`f77cd13f0286e933a66c0997af288a0dfa167bd5`.
+`830756ecb11b4e8161f8dfe1fc75afc346ef4467`.
 
 The corpus represents validation-matrix case families B01–B08. B01–B06 store complete
 browser responses at 401 grid points. B07 and B08 are split into focused
@@ -10,10 +10,10 @@ subcases and store either exact validation errors or compact edge summaries;
 large arrays are represented by their length, endpoints, null counts, and
 finite-value status when full arrays add no migration signal.
 
-The frozen source still has the strict-JSON extreme-design defect documented in
-`docs/migration/CURRENT_BEHAVIOR.md`. Until an explicitly approved production
-safety fix and its B08 regression fixture are added, this corpus is a strong
-baseline draft but does not satisfy the global B08 strict-JSON release gate.
+The corpus includes B08e, which freezes the approved finite-range safety behavior:
+an unrepresentable standardized design distance raises `ValidationError` before
+the browser response is serialized. Every successful stored response is strict
+JSON, and expected-error fixtures contain no non-standard numeric tokens.
 
 Files under `requests/`, `responses/`, and `export_schemas/` are generated
 artifacts. `manifest.json` records their source commit, dependency versions,

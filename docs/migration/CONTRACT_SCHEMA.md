@@ -2,8 +2,8 @@
 
 ## Status and authority
 
-This document records the `compute_curves()` request and response contract at behavior
-source commit `f77cd13f0286e933a66c0997af288a0dfa167bd5`. The static type authority is
+This document records the `compute_curves()` request and response contract at the final
+behavior source commit `830756ecb11b4e8161f8dfe1fc75afc346ef4467`. The static type authority is
 `src/confcurve/models.py`; runtime defaults, conversion, construction, and insertion order
 come from `src/confcurve/web_contract.py`.
 
@@ -17,10 +17,10 @@ Undefined or unavailable inferential quantities use `None`/JSON `null`, never Na
 Infinity. An empty list means an applicable collection has no rows; `null` means an
 optional block or value is unavailable or disabled.
 
-This is the intended contract. The frozen source has one accepted extreme-design request
-that instead emits nonfinite standardized distances, as reproduced in
-`CURRENT_BEHAVIOR.md`. That contradiction is an explicit release blocker pending an
-approved production safety fix; it is not a supported exception to the schema.
+This contract is enforced for every successful response. As reproduced by B08e, a finite
+request whose required standardized design distance is not representable raises
+`ValidationError` before a response is returned; it is not a supported exception to the
+schema.
 
 ## Scale and ownership vocabulary
 
