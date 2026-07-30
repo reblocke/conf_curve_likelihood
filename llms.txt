@@ -1,37 +1,54 @@
 # Wald Confidence Curve Explorer
 
 Repository: https://github.com/reblocke/conf_curve_likelihood
-Purpose: Visualizing confidence curves and Wald/profile likelihood
+Deployed app: https://reblocke.github.io/conf_curve_likelihood/
+Purpose: Backward-compatible integrated browser workbench for documented one-parameter Wald
+reconstruction, compatibility, normalized relative support, and repeated-study design calibration
 Status: No manuscript version is expected. Code and teaching examples are repository-authored unless otherwise noted.
+App version: 0.1.1
+Numerical core: wald-inference 0.1.1
+Core release: https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1
+Core wheel SHA-256: 95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457
 
 ## Human-Readable Entry Points
 - `README.md` is the primary human-facing overview.
-- `llms.txt` is a compact machine-readable index and should not replace the README.
+- Core numerical scope:
+  https://github.com/reblocke/wald-inference-core/blob/v0.1.1/docs/SCIENTIFIC_SCOPE.md
+- `docs/adr/0002-released-core-and-generated-browser-stage.md` records dependency ownership,
+  staging, upgrade, and rollback.
+- `docs/migration/` preserves the frozen pre-split API, browser contract, and validation authority.
+- `CHANGELOG.md` records app release notes and exact core provenance.
 
 ## Repository Layout
-- `.editorconfig`
-- `.pre-commit-config.yaml`
-- `.python-version`
-- `AGENTS.md`
-- `CITATION.cff`
-- `CONTRIBUTING.md`
-- `LICENSE`
-- `Makefile`
-- `README.md`
-- `docs/AI_ASSISTED_CODING.md`
-- `docs/CODEX_WORKFLOW.md`
-- `docs/DATA_MANAGEMENT.md`
-- `docs/DECISIONS.md`
-- `docs/PRINCIPLES.md`
+- `src/confcurve/`: legacy compatibility API, browser payload models, app orchestration, staging
+- `web/`: static GitHub Pages app
+- `web/assets/py/`: ignored generated `wald_inference` + `confcurve` browser bundle and manifest
+- `scripts/stage_web_python.py`: deterministic staging entrypoint called by `make stage-web`
+- `tests/golden/`: frozen 22-case B01-B08 behavior corpus
+- `tests/e2e/`: semantic Chromium/WebKit browser checks
+- `docs/`: decisions, migration records, workflow notes, and scientific interpretation guardrails
 
 ## Data and Reuse Boundaries
 No clinical data expected
 
 ## Workflow
-Run Python smoke checks
+```text
+uv sync --locked
+make stage-web
+make verify
+make serve
+```
+
+`make serve`, local tests, CI, Pages, and releases all use `make stage-web`. Generated Python is
+never hand-edited or committed. A clean clone resolves the exact core release through `uv.lock`; it
+does not require a sibling repository.
 
 ## Dependencies
-Python dependency metadata
+`pyproject.toml` and `uv.lock` are authoritative. Numerical formulas belong to released
+`wald-inference`; `confcurve` must contain only compatibility and app-specific orchestration.
+`web/assets/py/manifest.json` records app/core versions, source commit, file sizes and SHA-256
+digests, and an aggregate bundle digest. Browser startup verifies the complete manifest before
+imports.
 
 ## Citation
 No publication DOI is assigned to this repository. Cite the GitHub repository URL and the commit or release used.
@@ -40,6 +57,10 @@ No publication DOI is assigned to this repository. Cite the GitHub repository UR
 MIT License for repository code; see `LICENSE`. Third-party and publisher materials remain under their original terms.
 
 ## Agent Cautions
+- Never implement, copy, or modify a core-owned formula in `confcurve`; release it upstream first.
+- Preserve the frozen `confcurve.__all__`, `compute_curves()` schema/order/types, warnings,
+  strict-JSON behavior, UI defaults, exports, and explanatory copy.
+- Pin only exact released core artifacts with reviewed checksums.
 - Do not re-add a README appendix aimed primarily at LLMs; integrate user-facing details into normal README sections.
 - Keep restricted clinical data, private drafts, publisher PDFs, local paths, and generated outputs out of public documentation unless explicitly reviewed.
 - Prefer concise summaries plus links to citable records over copied manuscript or publisher text.

@@ -128,11 +128,12 @@ wheels = [
 
 [[package]]
 name = "confcurve"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "scipy" },
+    { name = "wald-inference" },
 ]
 
 [package.dev-dependencies]
@@ -149,6 +150,7 @@ dev = [
 requires-dist = [
     { name = "numpy", specifier = ">=2.2.5,<2.3" },
     { name = "scipy", specifier = ">=1.14.1,<1.15" },
+    { name = "wald-inference", url = "https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl" },
 ]
 
 [package.metadata.requires-dev]
@@ -658,4 +660,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/aa/92/58199fe10049f9703c2666e809c4f686c54ef0a68b0f6afccf518c0b1eb9/virtualenv-21.2.0.tar.gz", hash = "sha256:1720dc3a62ef5b443092e3f499228599045d7fea4c79199770499df8becf9098", size = 5840618, upload-time = "2026-03-09T17:24:38.013Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c6/59/7d02447a55b2e55755011a647479041bc92a82e143f96a8195cb33bd0a1c/virtualenv-21.2.0-py3-none-any.whl", hash = "sha256:1bd755b504931164a5a496d217c014d098426cddc79363ad66ac78125f9d908f", size = 5825084, upload-time = "2026-03-09T17:24:35.378Z" },
+]
+
+[[package]]
+name = "wald-inference"
+version = "0.1.1"
+source = { url = "https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+wheels = [
+    { url = "https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl", hash = "sha256:95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numpy", specifier = ">=2.2.5,<2.3" },
+    { name = "scipy", specifier = ">=1.14.1,<1.15" },
 ]

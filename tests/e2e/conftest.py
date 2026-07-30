@@ -50,9 +50,8 @@ def app_url() -> str:
             str(WEB_ROOT),
         ],
         cwd=PROJECT_ROOT,
-        stdout=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
-        text=True,
     )
 
     url = f"http://127.0.0.1:{port}"

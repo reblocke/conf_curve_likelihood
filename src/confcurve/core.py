@@ -5,26 +5,65 @@ from dataclasses import dataclass
 from math import isfinite
 
 import numpy as np
-from scipy.stats import norm
+from wald_inference import (
+    ValidationError as ValidationError,
+)
+from wald_inference import (
+    estimate_se_details as _core_estimate_se_details,
+)
+from wald_inference import legacy as _legacy
+from wald_inference import (
+    legacy_critical_effect_distance as _core_critical_effect_distance,
+)
+from wald_inference import (
+    legacy_critical_effect_markers as _core_critical_effect_markers,
+)
+from wald_inference import (
+    max_safe_grid_span as _core_max_safe_grid_span,
+)
+from wald_inference import (
+    reconstruct_wald_from_95_ci,
+)
+from wald_inference import (
+    standardized_distance as _core_standardized_distance,
+)
+from wald_inference.legacy import (
+    ASYMMETRY_RELATIVE_TOLERANCE as ASYMMETRY_RELATIVE_TOLERANCE,
+)
+from wald_inference.legacy import (
+    DEFAULT_GRID_POINTS,
+    DEFAULT_SPAN_MULTIPLIER,
+)
+from wald_inference.legacy import (
+    ESTIMATE_MATCH_ABSOLUTE_TOLERANCE as ESTIMATE_MATCH_ABSOLUTE_TOLERANCE,
+)
+from wald_inference.legacy import (
+    ESTIMATE_MATCH_RELATIVE_TOLERANCE as ESTIMATE_MATCH_RELATIVE_TOLERANCE,
+)
+from wald_inference.legacy import (
+    GRID_EXPANSION_PADDING_MULTIPLIER as GRID_EXPANSION_PADDING_MULTIPLIER,
+)
+from wald_inference.legacy import (
+    LOG_MAX_FLOAT as LOG_MAX_FLOAT,
+)
+from wald_inference.legacy import (
+    MAX_FINITE_ABS_Z as MAX_FINITE_ABS_Z,
+)
+from wald_inference.legacy import (
+    MAX_FINITE_SPAN as MAX_FINITE_SPAN,
+)
+from wald_inference.legacy import (
+    MAX_FLOAT as MAX_FLOAT,
+)
+from wald_inference.legacy import Z80 as Z80
+from wald_inference.legacy import (
+    Z975 as Z975,
+)
+from wald_inference.legacy import (
+    asymmetry_warning as _core_asymmetry_warning,
+)
 
 from .models import DEFAULT_EFFECT_TYPE, EFFECT_SPECS, EffectSpec, EstimateSource
-
-Z975 = float(norm.ppf(0.975))
-Z80 = float(norm.ppf(0.80))
-DEFAULT_GRID_POINTS = 801
-DEFAULT_SPAN_MULTIPLIER = 4.5
-GRID_EXPANSION_PADDING_MULTIPLIER = 0.25
-ASYMMETRY_RELATIVE_TOLERANCE = 0.02
-ESTIMATE_MATCH_RELATIVE_TOLERANCE = 0.02
-ESTIMATE_MATCH_ABSOLUTE_TOLERANCE = 1e-12
-MAX_FLOAT = float(np.finfo(float).max)
-LOG_MAX_FLOAT = float(np.log(np.finfo(float).max))
-MAX_FINITE_SPAN = float(np.finfo(float).max / 4.0)
-MAX_FINITE_ABS_Z = float(np.sqrt(np.finfo(float).max))
-
-
-class ValidationError(ValueError):
-    """Raised when curve inputs cannot support a Wald reconstruction."""
 
 
 @dataclass(frozen=True)
@@ -65,57 +104,22 @@ def get_effect_spec(effect_type: str) -> EffectSpec:
         ) from exc
 
 
-def _to_array(values: float | Sequence[float] | np.ndarray) -> np.ndarray:
-    return np.asarray(values, dtype=float)
-
-
-def _maybe_scalar(
-    original: float | Sequence[float] | np.ndarray, values: np.ndarray
-) -> float | np.ndarray:
-    if np.isscalar(original):
-        return float(values.reshape(-1)[0])
-    return values
-
-
-def _require_finite(values: np.ndarray, label: str) -> None:
-    if not np.isfinite(values).all():
-        raise ValidationError(f"{label} must be finite.")
-
-
 def to_working_scale(
     effect_type: str,
     values: float | Sequence[float] | np.ndarray,
 ) -> float | np.ndarray:
-    """Convert values to the Wald working scale for the requested effect type."""
+    """Preserve the frozen natural-to-working-scale direct-call contract."""
 
-    spec = get_effect_spec(effect_type)
-    array = _to_array(values)
-    _require_finite(array, "Values")
-
-    if spec.working_scale == "log":
-        if np.any(array <= 0):
-            raise ValidationError(
-                f"{spec.label} values must be strictly positive on the natural scale."
-            )
-        array = np.log(array)
-
-    return _maybe_scalar(values, array)
+    return _legacy.to_working_scale(effect_type, values)
 
 
 def from_working_scale(
     effect_type: str,
     values: float | Sequence[float] | np.ndarray,
 ) -> float | np.ndarray:
-    """Transform working-scale values back to the display scale for the effect type."""
+    """Preserve the frozen working-to-natural-scale direct-call contract."""
 
-    spec = get_effect_spec(effect_type)
-    array = _to_array(values)
-    _require_finite(array, "Working-scale values")
-
-    if spec.working_scale == "log":
-        array = np.exp(array)
-
-    return _maybe_scalar(values, array)
+    return _legacy.from_working_scale(effect_type, values)
 
 
 def _coerce_thresholds(thresholds: Sequence[float] | None) -> tuple[float, ...]:
@@ -170,40 +174,16 @@ def _coerce_display_range(
             "on the working scale."
         )
     try:
-        _working_scale_difference(
+        _core_standardized_distance(
             upper_working,
             lower_working,
-            label="Plausible display range width",
+            1.0,
         )
     except ValidationError as exc:
         raise ValidationError(
             "Plausible display range is too wide to plot with finite floating-point precision."
         ) from exc
-
     return lower_working, upper_working
-
-
-def _working_scale_midpoint_and_half_width(lower: float, upper: float) -> tuple[float, float]:
-    """Return finite midpoint and half-width for a working-scale interval."""
-
-    midpoint = (lower * 0.5) + (upper * 0.5)
-    half_width = (upper * 0.5) - (lower * 0.5)
-    if not isfinite(midpoint):
-        raise ValidationError("The inferred CI midpoint must be finite on the working scale.")
-    if not isfinite(half_width) or half_width <= 0:
-        raise ValidationError(
-            "The supplied 95% confidence interval must have positive width on the working scale."
-        )
-    return midpoint, half_width
-
-
-def _working_scale_difference(minuend: float, subtrahend: float, *, label: str) -> float:
-    """Return a finite working-scale difference without overflowing on opposite signs."""
-
-    difference = 2.0 * ((minuend * 0.5) - (subtrahend * 0.5))
-    if not isfinite(difference):
-        raise ValidationError(f"{label} must be finite on the working scale.")
-    return difference
 
 
 def validate_inputs(
@@ -219,7 +199,7 @@ def validate_inputs(
     grid_points: int = DEFAULT_GRID_POINTS,
     show_cutoffs: bool = True,
 ) -> ValidatedInputs:
-    """Validate and normalize user inputs for the Wald reconstruction."""
+    """Validate app inputs while delegating Wald reconstruction to the released core."""
 
     spec = get_effect_spec(effect_type)
     if lower is None or upper is None:
@@ -228,7 +208,6 @@ def validate_inputs(
     estimate_value = None if estimate is None else float(estimate)
     lower_value = float(lower)
     upper_value = float(upper)
-
     for label, value in (
         ("Lower confidence limit", lower_value),
         ("Upper confidence limit", upper_value),
@@ -237,13 +216,11 @@ def validate_inputs(
             raise ValidationError(f"{label} must be finite.")
     if estimate_value is not None and not isfinite(estimate_value):
         raise ValidationError("Estimate must be finite.")
-
     if lower_value >= upper_value:
         raise ValidationError(
             "The lower confidence limit must be less than the upper confidence limit."
         )
 
-    default_null_applied = null_value is None
     normalized_null = float(spec.default_null if null_value is None else null_value)
     if not isfinite(normalized_null):
         raise ValidationError("Null value must be finite.")
@@ -255,8 +232,6 @@ def validate_inputs(
         display_range_lower,
         display_range_upper,
     )
-    warnings: list[str] = []
-
     if spec.positive_only:
         positive_values = [
             lower_value,
@@ -271,29 +246,13 @@ def validate_inputs(
                 f"{spec.label} inputs must be strictly positive on the natural scale."
             )
 
-    lower_working = float(to_working_scale(effect_type, lower_value))
-    upper_working = float(to_working_scale(effect_type, upper_value))
-    estimate_working, ci_half_width_working = _working_scale_midpoint_and_half_width(
-        lower_working,
-        upper_working,
+    reconstruction = reconstruct_wald_from_95_ci(
+        effect_type=effect_type,
+        estimate=estimate_value,
+        lower=lower_value,
+        upper=upper_value,
+        null_value=None if null_value is None else normalized_null,
     )
-    estimate_display = float(from_working_scale(effect_type, estimate_working))
-    estimate_match_tolerance = max(
-        ESTIMATE_MATCH_ABSOLUTE_TOLERANCE,
-        ESTIMATE_MATCH_RELATIVE_TOLERANCE * ci_half_width_working,
-    )
-
-    estimate_source: EstimateSource
-    if estimate_value is None:
-        estimate_source = "inferred_from_ci"
-    else:
-        provided_estimate_working = float(to_working_scale(effect_type, estimate_value))
-        if abs(provided_estimate_working - estimate_working) > estimate_match_tolerance:
-            raise ValidationError(
-                "Provided estimate is inconsistent with the supplied 95% confidence "
-                "interval on the working scale beyond the rounding tolerance."
-            )
-        estimate_source = "provided_validated"
 
     points = int(grid_points)
     if points < 101:
@@ -303,85 +262,52 @@ def validate_inputs(
 
     return ValidatedInputs(
         effect_spec=spec,
-        estimate=estimate_display,
-        estimate_source=estimate_source,
-        provided_estimate=estimate_value,
-        lower=lower_value,
-        upper=upper_value,
-        null_value=normalized_null,
+        estimate=reconstruction.estimate_display,
+        estimate_source=reconstruction.estimate_source,
+        provided_estimate=reconstruction.provided_estimate_display,
+        lower=reconstruction.lower_display,
+        upper=reconstruction.upper_display,
+        null_value=reconstruction.null_display,
         thresholds=normalized_thresholds,
         display_range_working=display_range,
         display_natural_axis=bool(display_natural_axis and spec.family == "ratio"),
         grid_points=points,
         show_cutoffs=bool(show_cutoffs),
-        default_null_applied=default_null_applied,
-        warnings=tuple(warnings),
+        default_null_applied=reconstruction.default_null_applied,
+        warnings=(),
     )
 
 
 def critical_effect_distance(se: float) -> float:
-    """Return the working-scale critical effect distance for alpha=.05 and power=.80."""
+    """Return the preserved alpha=.05/power=.80 legacy benchmark distance."""
 
-    if se <= 0:
-        raise ValidationError("Standard error must be positive.")
-    return float((Z975 + Z80) * se)
+    return _core_critical_effect_distance(se)
 
 
 def critical_effect_markers(null_value: float, se: float) -> tuple[float, float]:
-    """Return symmetric critical-effect markers around the null on the working scale."""
+    """Return the preserved symmetric legacy benchmark markers."""
 
-    distance = critical_effect_distance(se)
-    return (null_value - distance, null_value + distance)
+    return _core_critical_effect_markers(null_value, se)
 
 
 def estimate_se_details(theta_hat: float, lower: float, upper: float) -> StandardErrorEstimate:
-    """Reconstruct the working-scale standard error from a symmetric Wald CI."""
+    """Adapt the released core SE result to the frozen local dataclass."""
 
-    _, ci_half_width = _working_scale_midpoint_and_half_width(lower, upper)
-    se_width = ci_half_width / Z975
-    se_lower = (
-        _working_scale_difference(
-            theta_hat,
-            lower,
-            label="Lower-side CI width",
-        )
-        / Z975
-    )
-    se_upper = (
-        _working_scale_difference(
-            upper,
-            theta_hat,
-            label="Upper-side CI width",
-        )
-        / Z975
-    )
-    mean_side_se = float(np.mean([se_lower, se_upper]))
-
-    relative_asymmetry = abs(se_upper - se_lower) / max(abs(mean_side_se), np.finfo(float).eps)
-    if relative_asymmetry > ASYMMETRY_RELATIVE_TOLERANCE:
-        return StandardErrorEstimate(
-            se=mean_side_se,
-            method="mean_side_se",
-            se_lower=se_lower,
-            se_upper=se_upper,
-            se_width=se_width,
-            relative_asymmetry=relative_asymmetry,
-        )
-
+    result = _core_estimate_se_details(theta_hat, lower, upper)
     return StandardErrorEstimate(
-        se=se_width,
-        method="ci_width",
-        se_lower=se_lower,
-        se_upper=se_upper,
-        se_width=se_width,
-        relative_asymmetry=relative_asymmetry,
+        se=result.se,
+        method=result.method,
+        se_lower=result.se_lower,
+        se_upper=result.se_upper,
+        se_width=result.se_width,
+        relative_asymmetry=result.relative_asymmetry,
     )
 
 
 def estimate_se(theta_hat: float, lower: float, upper: float) -> float:
-    """Return the reconstructed working-scale standard error."""
+    """Preserve the frozen direct-call standard-error contract."""
 
-    return estimate_se_details(theta_hat, lower, upper).se
+    return _legacy.estimate_se(theta_hat, lower, upper)
 
 
 def build_grid(
@@ -392,35 +318,16 @@ def build_grid(
     include_values: Sequence[float] | None = None,
     max_span: float | None = None,
 ) -> np.ndarray:
-    """Build a symmetric working-scale grid around the point estimate."""
+    """Preserve the frozen direct-call grid contract."""
 
-    if se <= 0:
-        raise ValidationError("Standard error must be positive.")
-    if span_multiplier <= 0:
-        raise ValidationError("Span multiplier must be positive.")
-    points = int(n)
-    if points < 5:
-        raise ValidationError("Grid must contain at least 5 points.")
-    if points % 2 == 0:
-        points += 1
-
-    span = span_multiplier * se
-    if include_values is not None:
-        values = _to_array(include_values)
-        if values.size:
-            _require_finite(values, "Included grid values")
-            with np.errstate(over="ignore"):
-                required_span = float(np.max(np.abs(values - theta_hat)))
-            if required_span > span:
-                span = required_span + (GRID_EXPANSION_PADDING_MULTIPLIER * se)
-    if max_span is not None:
-        if max_span < 0:
-            raise ValidationError("Maximum span must not be negative.")
-        span = min(span, max_span)
-    if span == 0:
-        return np.full(points, theta_hat, dtype=float)
-
-    return np.linspace(theta_hat - span, theta_hat + span, num=points, dtype=float)
+    return _legacy.build_grid(
+        theta_hat,
+        se,
+        span_multiplier,
+        n,
+        include_values,
+        max_span,
+    )
 
 
 def standardized_distance(
@@ -428,22 +335,9 @@ def standardized_distance(
     theta_hat: float,
     se: float,
 ) -> np.ndarray:
-    """Compute the Wald standardized distance from the estimate."""
+    """Delegate finite standardized-distance calculation to the released core."""
 
-    values = _to_array(theta)
-    if se <= 0:
-        raise ValidationError("Standard error must be positive.")
-    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-        differences = values - theta_hat
-        z_values = differences / se
-        overflowed_differences = ~np.isfinite(differences)
-        if np.any(overflowed_differences):
-            scaled_z_values = ((0.5 * values) - (0.5 * theta_hat)) / (0.5 * se)
-            z_values = np.where(overflowed_differences, scaled_z_values, z_values)
-
-    if not np.isfinite(z_values).all():
-        raise ValidationError("Standardized distance exceeds the finite floating-point range.")
-    return z_values
+    return _core_standardized_distance(theta, theta_hat, se)
 
 
 def confidence_curve(
@@ -451,10 +345,9 @@ def confidence_curve(
     theta_hat: float,
     se: float,
 ) -> np.ndarray:
-    """Map the standardized distance to the two-sided compatibility scale."""
+    """Preserve the frozen direct-call compatibility-curve contract."""
 
-    z_values = standardized_distance(theta, theta_hat=theta_hat, se=se)
-    return 2.0 * norm.sf(np.abs(z_values))
+    return _legacy.confidence_curve(theta, theta_hat, se)
 
 
 def relative_likelihood(
@@ -462,10 +355,9 @@ def relative_likelihood(
     theta_hat: float,
     se: float,
 ) -> np.ndarray:
-    """Map the standardized distance to a normalized Wald relative likelihood."""
+    """Preserve the frozen direct-call normalized-likelihood contract."""
 
-    z_values = standardized_distance(theta, theta_hat=theta_hat, se=se)
-    return np.exp(-0.5 * np.square(z_values))
+    return _legacy.relative_likelihood(theta, theta_hat, se)
 
 
 def log_relative_likelihood(
@@ -473,10 +365,9 @@ def log_relative_likelihood(
     theta_hat: float,
     se: float,
 ) -> np.ndarray:
-    """Return the log relative likelihood on the Wald working scale."""
+    """Preserve the frozen direct-call log-likelihood contract."""
 
-    z_values = standardized_distance(theta, theta_hat=theta_hat, se=se)
-    return -0.5 * np.square(z_values)
+    return _legacy.log_relative_likelihood(theta, theta_hat, se)
 
 
 def max_safe_grid_span(
@@ -485,69 +376,22 @@ def max_safe_grid_span(
     *,
     natural_axis_upper_bound: float | None = None,
 ) -> float:
-    """Return the largest span that keeps grid endpoints and z values finite."""
+    """Delegate finite grid-span selection to the released core."""
 
-    z_safe_span = float(MAX_FINITE_ABS_Z * se)
-    endpoint_headroom = max(MAX_FLOAT - abs(theta_hat), 0.0)
-    span_limit = min(MAX_FINITE_SPAN, z_safe_span, endpoint_headroom)
-    if natural_axis_upper_bound is not None and natural_axis_upper_bound > theta_hat:
-        span_limit = min(span_limit, natural_axis_upper_bound - theta_hat)
-    return max(span_limit, 0.0)
+    return _core_max_safe_grid_span(
+        theta_hat,
+        se,
+        natural_axis_upper_bound=natural_axis_upper_bound,
+    )
 
 
 def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float | None]:
-    """Return summary statistics for the null value versus the MLE."""
+    """Preserve the frozen direct-call null-summary mapping."""
 
-    try:
-        null_z_value = float(
-            standardized_distance(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
-        )
-    except ValidationError:
-        null_z_value = None
-    if null_z_value is None or abs(null_z_value) > MAX_FINITE_ABS_Z:
-        return {
-            "null_relative_likelihood": 0.0,
-            "log_null_relative_likelihood": None,
-            "likelihood_ratio_mle_to_null": None,
-            "log_likelihood_ratio_mle_to_null": None,
-            "two_sided_wald_p_value": 0.0,
-            "null_z_value": None,
-        }
-
-    log_null_relative_likelihood = float(
-        log_relative_likelihood(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
-    )
-    null_relative_likelihood = float(np.exp(log_null_relative_likelihood))
-    log_likelihood_ratio_mle_to_null = -log_null_relative_likelihood
-    likelihood_ratio_mle_to_null = (
-        None
-        if log_likelihood_ratio_mle_to_null > LOG_MAX_FLOAT
-        else float(np.exp(log_likelihood_ratio_mle_to_null))
-    )
-    two_sided_wald_p_value = float(2.0 * norm.sf(abs(null_z_value)))
-
-    return {
-        "null_relative_likelihood": null_relative_likelihood,
-        "log_null_relative_likelihood": log_null_relative_likelihood,
-        "likelihood_ratio_mle_to_null": likelihood_ratio_mle_to_null,
-        "log_likelihood_ratio_mle_to_null": log_likelihood_ratio_mle_to_null,
-        "two_sided_wald_p_value": two_sided_wald_p_value,
-        "null_z_value": null_z_value,
-    }
+    return _legacy.summaries(theta_hat, se, null_value)
 
 
 def asymmetry_warning(spec: EffectSpec, relative_asymmetry: float) -> str | None:
-    if relative_asymmetry <= ASYMMETRY_RELATIVE_TOLERANCE:
-        return None
+    """Delegate the frozen reconstruction warning threshold and wording."""
 
-    if spec.family == "ratio":
-        return (
-            "CI is not symmetric on the log scale; "
-            "this may reflect rounding or a non-Wald interval. "
-            "The plotted curves are a Wald approximation."
-        )
-    return (
-        "CI is not symmetric on the working scale; "
-        "this may reflect rounding or a non-Wald interval. "
-        "The plotted curves are a Wald approximation."
-    )
+    return _core_asymmetry_warning(spec, relative_asymmetry)

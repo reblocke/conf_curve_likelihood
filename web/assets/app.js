@@ -94,6 +94,8 @@ const runtimeState = {
   readyPromise: null,
   pyodide: null,
   computeCurvesJson: null,
+  packageManifest: null,
+  versions: null,
   currentResponse: null,
   currentDisplayOptions: null,
   debounceId: null,

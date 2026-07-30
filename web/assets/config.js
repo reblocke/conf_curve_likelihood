@@ -1,13 +1,6 @@
 export const PYODIDE_VERSION = "0.29.3";
 export const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
-export const PYTHON_PACKAGE_FILES = [
-  "__init__.py",
-  "core.py",
-  "design.py",
-  "models.py",
-  "stage.py",
-  "web_contract.py",
-];
+export const PYTHON_MANIFEST_URL = "./assets/py/manifest.json";
 export const DEFAULT_VIEW_MODE = "both";
 
 export const DESIGN_SELECTION_RULE_OPTIONS = [
