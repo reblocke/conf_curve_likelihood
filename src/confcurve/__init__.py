@@ -1,6 +1,6 @@
 """Wald confidence-curve application package."""
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 from .core import (
     Z975,

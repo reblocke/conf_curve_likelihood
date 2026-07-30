@@ -191,8 +191,10 @@ record:
 
 ### Unresolved decisions and remaining risks
 
-- Core and app releases intentionally remain GitHub prereleases until the independent
-  portfolio-validation milestone decides whether to promote them.
+- At this milestone, Core and app releases intentionally remained GitHub prereleases until the
+  independent portfolio-validation milestone decided whether to promote them.
+- Core v0.4.1 was subsequently promoted to a stable GitHub release on 2026-07-30. Focused and
+  integrated apps remain explicitly experimental prereleases.
 - Invalid-input display retains the frozen pre-split behavior, including Pyodide traceback text.
   The worker recovers when corrected. Safe-message presentation is deferred to the integrated
   workbench finalization milestone rather than being introduced as an unapproved migration
@@ -395,3 +397,13 @@ These corrections supersede the affected wording above:
 - Version 0.2.4 reconciles these release facts and version surfaces only. It does not change
   scientific behavior, browser contracts, privacy, accessibility, or exports, and it makes no
   self-certifying claim about the portfolio verdict.
+
+### Stable-Core publication correction — 2026-07-30
+
+- The exact Core v0.4.1 release at
+  `f4613177b6dc81d194aa70762152de2bfa86663b` is now a stable, non-draft GitHub release.
+- Integrated releases remain experimental GitHub prereleases; stable Core status does not promote
+  or clinically validate this application.
+- Version 0.2.5 corrects this lifecycle wording and version-policy surfaces only. It does not alter
+  formulas, golden responses, tolerances, Python/browser contracts, defaults, privacy,
+  accessibility, UI behavior, or exports.

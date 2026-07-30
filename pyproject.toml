@@ -1,6 +1,6 @@
 [project]
 name = "confcurve"
-version = "0.2.4"
+version = "0.2.5"
 description = "Static GitHub Pages app and compatibility adapter for Wald inference"
 readme = "README.md"
 requires-python = ">=3.11"

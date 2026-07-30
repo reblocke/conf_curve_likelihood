@@ -25,7 +25,7 @@ browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
 
-The v0.2.4 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
+The v0.2.5 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
 legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
 Core release.
 
@@ -129,7 +129,7 @@ checkout, an editable path, or an unpinned Git reference.
 |---|---|
 | Core version | `wald-inference` v0.4.1 |
 | Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1> |
-| Release status observed 2026-07-30 | GitHub prerelease |
+| Release status observed 2026-07-30 | GitHub stable release |
 | Release commit | `f4613177b6dc81d194aa70762152de2bfa86663b` |
 | Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/wald_inference-0.4.1-py3-none-any.whl> |
 | Wheel SHA-256 | `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b` |

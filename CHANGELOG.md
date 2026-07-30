@@ -4,6 +4,30 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-07-30
+
+### Changed
+
+- Correct the current
+  [`wald-inference` v0.4.1](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1)
+  publication state from GitHub prerelease to stable release after its explicit promotion.
+- Reconcile `README.md` and `docs/migration/MIGRATION_LOG.md` with that stable-Core boundary while
+  retaining this integrated app's experimental GitHub-prerelease status.
+- Preserve all 22 frozen B01-B08 responses, the `docs/SCIENTIFIC_SCOPE.md` and
+  `docs/VALIDATION.md` records, and the v0.2.4 numerical, Python, browser-payload, privacy,
+  accessibility, UI, and export contracts unchanged.
+- Keep the repository, Pages URL, `confcurve` imports, `compute_curves()` contract, default inputs,
+  view modes, warnings/errors, plots, and CSV/PNG/caption/reviewer exports backward compatible.
+- Continue to route single questions to
+  [compatibility-curve](https://reblocke.github.io/compatibility-curve/),
+  [wald-likelihood-support](https://reblocke.github.io/wald-likelihood-support/),
+  [critical-effect-size](https://reblocke.github.io/critical-effect-size/),
+  [type-s-m-calibrator](https://reblocke.github.io/type-s-m-calibrator/), and
+  [precision-guardrail-planner](https://reblocke.github.io/precision-guardrail-planner/), under the
+  supported-change policy in `docs/MAINTENANCE.md`.
+- Treat this as lifecycle-metadata correction only, not clinical validation or scientific revalidation
+  beyond the documented frozen tests and independent review.
+
 ## [0.2.4] - 2026-07-30
 
 ### Changed
@@ -219,7 +243,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...v0.2.2
