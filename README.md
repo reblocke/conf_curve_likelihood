@@ -187,10 +187,17 @@ fields. Any unexplained difference is a release blocker.
 - `make fmt-check` checks Ruff formatting
 - `make lint` runs Ruff checks
 - `make golden-check` verifies the frozen B01–B08 contract and numerical baseline
+- `make portfolio-links` verifies checked-in catalog/focused/Core navigation
 - `make test` runs non-E2E tests
 - `make e2e` runs Playwright browser tests
 - `make verify` runs staging, format check, lint, frozen parity, non-E2E tests, and E2E checks
 - `make serve` regenerates the browser Python bundle before starting the local server
+
+After every portfolio release or URL change, run the public check:
+
+```bash
+uv run python scripts/check_portfolio_links.py --live
+```
 
 ## Worked examples
 

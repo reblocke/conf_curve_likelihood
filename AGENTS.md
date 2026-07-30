@@ -22,6 +22,7 @@
 - Lint: `make lint`
 - Unit/integration/property tests: `make test`
 - Browser E2E tests: `make e2e`
+- Portfolio navigation: `make portfolio-links`
 - Full verification: `make verify`
 - Local web app: `make serve`
 
@@ -35,6 +36,8 @@ If implementation and documentation disagree, preserve behavior unless the task 
 ## Working Rules
 - Before non-trivial edits, state assumptions, ambiguities, tradeoffs, a brief plan, risks, and verification commands.
 - Keep changes small and directly tied to the request; do not make drive-by refactors.
+- Treat the workbench as feature-frozen under `docs/MAINTENANCE.md`; route focused-app features to
+  their owning repositories.
 - Never implement or copy a Wald formula in `confcurve`; add a missing numerical primitive and release it in `wald-inference-core` first.
 - Pin core upgrades to an exact released artifact and checksum. Review the upstream changelog, then rerun legacy API, frozen contract, strict-JSON, staging, and browser validation before adoption.
 - Keep `confcurve` wrappers thin and behavior-preserving. Browser payload assembly, display choices, warnings, and exports remain local app concerns.
@@ -54,6 +57,7 @@ If implementation and documentation disagree, preserve behavior unless the task 
 
 ## Done Criteria
 - Relevant tests pass locally.
+- B01-B08 and `scripts/check_portfolio_links.py` pass for Core/version/navigation changes.
 - Browser-facing package changes are staged and verified.
 - Decisions, assumptions, and public-copy implications are documented when they change.
 - The final report names changed files, verification commands, and any remaining risks.

@@ -8,6 +8,7 @@ help:
 	@echo "  fmt       Format code (ruff)"
 	@echo "  lint      Lint code (ruff)"
 	@echo "  golden-check Verify frozen numerical and browser-contract fixtures"
+	@echo "  portfolio-links Validate catalog/focused/Core navigation"
 	@echo "  test      Run non-E2E tests (pytest)"
 	@echo "  e2e       Run Playwright browser tests"
 	@echo "  serve     Serve the web app locally"
@@ -39,6 +40,10 @@ golden-check:
 	uv run python scripts/generate_golden_baseline.py --check
 	uv run python scripts/compare_golden_baseline.py
 
+.PHONY: portfolio-links
+portfolio-links:
+	uv run python scripts/check_portfolio_links.py
+
 .PHONY: test
 test: stage-web golden-check
 	uv run pytest -q -m "not e2e"
@@ -57,7 +62,7 @@ serve: stage-web
 	uv run python -m http.server --directory web 8000
 
 .PHONY: verify
-verify: fmt-check lint test e2e
+verify: fmt-check lint portfolio-links test e2e
 
 .PHONY: clean
 clean:

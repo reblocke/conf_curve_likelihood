@@ -88,6 +88,31 @@ textarea {
   line-height: 1.6;
 }
 
+.portfolio-callout {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(176, 74, 47, 0.28);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.portfolio-callout span {
+  color: var(--muted);
+}
+
+.portfolio-callout a,
+.portfolio-footer a {
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration-color: rgba(176, 74, 47, 0.58);
+  text-underline-offset: 3px;
+}
+
 .control-form {
   display: grid;
   gap: 16px;
@@ -192,7 +217,8 @@ select {
 
 input:focus,
 select:focus,
-button:focus {
+button:focus,
+a:focus-visible {
   outline: 2px solid rgba(176, 74, 47, 0.38);
   outline-offset: 2px;
 }
@@ -701,6 +727,30 @@ button:hover {
 
 .sources-footer a:hover {
   color: var(--accent);
+}
+
+.portfolio-footer {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  box-shadow: var(--shadow);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.portfolio-footer > p:not(.eyebrow) {
+  margin: 0 0 12px;
+}
+
+.portfolio-footer ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .technical-version {

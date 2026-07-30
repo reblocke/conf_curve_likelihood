@@ -30,6 +30,10 @@ def test_makefile_owns_the_single_stage_entrypoint_and_serve_stages_first() -> N
     for target in ("test", "e2e", "serve"):
         assert re.search(rf"(?m)^{target}:.*\bstage-web\b", makefile)
     assert re.search(r"(?m)^verify:.*\btest\b.*\be2e\b", makefile)
+    assert re.search(
+        r"(?m)^portfolio-links:\n\tuv run python scripts/check_portfolio_links.py$", makefile
+    )
+    assert re.search(r"(?m)^verify:.*\bportfolio-links\b.*\btest\b.*\be2e\b", makefile)
     assert "web/assets/py" in makefile
 
 
@@ -44,8 +48,14 @@ def test_ci_pages_and_release_call_make_stage_web_only() -> None:
     for path, workflow in workflows.items():
         assert "run: make stage-web" in workflow, path
         assert STAGE_SCRIPT_COMMAND not in workflow, path
+        assert "actions/checkout@v7" in workflow, path
+        assert "actions/setup-python@v7" in workflow, path
+        assert "astral-sh/setup-uv@v9.0.0" in workflow, path
 
     assert "path: ./web" in workflows[".github/workflows/pages.yml"]
+    assert "actions/configure-pages@v6" in workflows[".github/workflows/pages.yml"]
+    assert "actions/upload-pages-artifact@v5" in workflows[".github/workflows/pages.yml"]
+    assert "actions/deploy-pages@v5" in workflows[".github/workflows/pages.yml"]
     assert (
         "git status --porcelain --untracked-files=all" in workflows[".github/workflows/pages.yml"]
     )
@@ -74,6 +84,7 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
         "make lint",
         "make stage-web",
         "make golden-check",
+        "scripts/check_portfolio_links.py --live",
         'pytest -q -m "not e2e"',
         "playwright install --with-deps chromium webkit",
         "Run full Chromium browser suite",
@@ -90,6 +101,7 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
         "--verify-tag",
         "--prerelease",
         "--notes-file",
+        "actions/download-artifact@v8",
         r"capture && /^\[[^]]+\]:/ { exit }",
     )
     for value in required:
@@ -139,3 +151,40 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     assert f"Numerical core: wald-inference {CORE_VERSION}" in llms
     for surface in (migration_log, llms):
         assert CORE_WHEEL_SHA256 in surface
+
+
+def test_integrated_role_maintenance_and_request_routing_are_explicit() -> None:
+    readme = _read("README.md")
+    maintenance = _read("docs/MAINTENANCE.md")
+    core_checklist = _read("docs/CORE_UPGRADE_CHECKLIST.md")
+    feature_template = _read(".github/ISSUE_TEMPLATE/feature_request.md")
+    pull_request_template = _read(".github/PULL_REQUEST_TEMPLATE.md")
+    html = _read("web/index.html")
+
+    for surface in (readme, maintenance, html):
+        assert "https://reblocke.github.io/wald-inference-tools/" in surface
+    for focused_repository in (
+        "compatibility-curve",
+        "wald-likelihood-support",
+        "critical-effect-size",
+        "type-s-m-calibrator",
+        "precision-guardrail-planner",
+    ):
+        assert focused_repository in readme
+        assert focused_repository in feature_template
+        assert focused_repository in html
+    for heading in (
+        "## Supported changes",
+        "## Normally out of scope",
+        "## Compatibility policy",
+        "## Future archival criteria",
+    ):
+        assert heading in maintenance
+    assert "feature-frozen" in maintenance
+    assert "Archival is a human decision" in maintenance
+    assert "make golden-check" in core_checklist
+    assert "make portfolio-links" in pull_request_template
+    assert "Integrated Wald Inference Workbench" in html
+    assert "not an exact profile-likelihood tool" in html
+    assert "posterior calculator" in html
+    assert "clinical" in html

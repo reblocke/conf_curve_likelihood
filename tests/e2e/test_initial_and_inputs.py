@@ -19,11 +19,14 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     page.goto(app_url)
     wait_for_ready(page)
 
+    expect(page).to_have_title("Integrated Wald Inference Workbench")
+    expect(page.locator("h1")).to_have_text("Integrated Wald Inference Workbench")
     expect(page.locator("label[for='estimate']")).to_have_text("Point Estimate (optional)")
     expect(page.locator(".sidebar .intro")).to_contain_text(
         "Enter a reported 95% confidence interval and optional point estimate"
     )
-    expect(page.locator(".sidebar .intro")).to_contain_text("relative-likelihood views")
+    expect(page.locator(".sidebar .intro")).to_contain_text("observed-data compatibility")
+    expect(page.locator(".sidebar .intro")).to_contain_text("assumed true effects")
     expect(page.locator(".sidebar .intro")).not_to_contain_text("static")
     expect(page.locator(".sidebar .intro")).not_to_contain_text("GitHub Pages")
     expect(page.locator(".sidebar .intro")).not_to_contain_text("applet")
@@ -39,6 +42,11 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(page.locator("#read-guide")).to_contain_text("relative likelihood at least exp(−2)")
     expect(page.locator("#read-guide")).to_contain_text(
         "does not reconstruct the exact fitted-model profile likelihood"
+    )
+    expect(page.locator("#read-guide")).to_contain_text("legacy closed-form benchmark")
+    expect(page.locator(".portfolio-callout")).to_contain_text("one specific question")
+    expect(page.locator(".portfolio-callout a")).to_have_attribute(
+        "href", "https://reblocke.github.io/wald-inference-tools/"
     )
     expect(page.locator("#summary-grid")).to_contain_text("Estimate source")
     expect(page.locator("#summary-grid")).to_contain_text("Main comparison")
@@ -84,6 +92,30 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(page.locator("#technical-version")).to_have_text(
         "confcurve app 0.2.0 · wald-inference core 0.4.0"
     )
+    footer = page.locator("footer.portfolio-footer")
+    expect(footer).to_contain_text("Related Wald tools")
+    expected_portfolio_links = {
+        "https://reblocke.github.io/wald-inference-tools/",
+        "https://reblocke.github.io/compatibility-curve/",
+        "https://reblocke.github.io/wald-likelihood-support/",
+        "https://reblocke.github.io/critical-effect-size/",
+        "https://reblocke.github.io/type-s-m-calibrator/",
+        "https://reblocke.github.io/precision-guardrail-planner/",
+        "https://reblocke.github.io/conf_curve_likelihood/",
+        "https://github.com/reblocke/conf_curve_likelihood",
+        "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0",
+        (
+            "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/"
+            "CURRENT_BEHAVIOR.md#privacy-and-data-path"
+        ),
+    }
+    assert set(footer.locator("a").evaluate_all("(links) => links.map((link) => link.href)")) == (
+        expected_portfolio_links
+    )
+    assert page.url.rstrip("/") == app_url.rstrip("/")
+    assert page.evaluate("localStorage.length") == 0
+    assert page.evaluate("sessionStorage.length") == 0
+    assert page.evaluate("document.cookie") == ""
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 
 
@@ -258,6 +290,9 @@ def test_estimate_mismatch_surfaces_validation_error(app_url: str, page: Page) -
     expect(page.locator("#status-card")).to_contain_text(
         "inconsistent with the supplied 95% confidence interval", timeout=120000
     )
+    expect(page.locator("#status-card")).to_contain_text("The calculation could not be completed.")
+    expect(page.locator("#status-card")).not_to_contain_text("Traceback")
+    expect(page.locator("#status-card")).not_to_contain_text('File "')
     expect(page.locator("#export-csv")).to_be_disabled()
     expect(page.locator("#export-png")).to_be_disabled()
     expect(page.locator("#summary-grid")).to_be_empty()
@@ -272,6 +307,8 @@ def test_invalid_ratio_input_surfaces_validation_error(app_url: str, page: Page)
     page.locator("#ci-lower").blur()
 
     expect(page.locator("#status-card")).to_contain_text("strictly positive", timeout=120000)
+    expect(page.locator("#status-card")).to_contain_text("The calculation could not be completed.")
+    expect(page.locator("#status-card")).not_to_contain_text("Traceback")
     expect(page.locator("#export-csv")).to_be_disabled()
     expect(page.locator("#export-png")).to_be_disabled()
     expect(page.locator("#summary-grid")).to_be_empty()

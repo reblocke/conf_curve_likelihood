@@ -107,6 +107,21 @@ function setStatus(state, message) {
   statusCard.textContent = message;
 }
 
+function authoredErrorMessage(error) {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  if (!rawMessage.includes("PythonError") && !rawMessage.includes("Traceback")) {
+    return rawMessage;
+  }
+
+  const exceptionLine = rawMessage
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .reverse()
+    .find((line) => /^[A-Za-z_][A-Za-z0-9_.]*(?:Error|Exception):\s*\S/.test(line));
+  const detail = exceptionLine ?? "Review the inputs and try again.";
+  return `The calculation could not be completed. ${detail}`;
+}
+
 function setExportEnabled(enabled) {
   exportCsvButton.disabled = !enabled;
   exportPngButton.disabled = !enabled;
@@ -430,8 +445,7 @@ async function rerenderCurrentResponse() {
     await renderResponse(runtimeState.currentResponse, displayOptions);
   } catch (error) {
     clearRenderedState();
-    const message = error instanceof Error ? error.message : String(error);
-    setStatus("error", message);
+    setStatus("error", authoredErrorMessage(error));
   }
 }
 
@@ -471,8 +485,7 @@ async function computeAndRender() {
     await renderResponse(response, displayOptions);
   } catch (error) {
     clearRenderedState();
-    const message = error instanceof Error ? error.message : String(error);
-    setStatus("error", message);
+    setStatus("error", authoredErrorMessage(error));
   }
 }
 
