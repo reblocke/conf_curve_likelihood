@@ -13,7 +13,8 @@ Use this checklist for every `wald-inference` upgrade.
 - [ ] Run `make golden-check`; B01-B08 must remain within `rtol=1e-12`, `atol=1e-14`, with declared
       identity fields exact.
 - [ ] Run public-API, strict-JSON, staging-integrity, non-browser, full Chromium, and WebKit checks.
-- [ ] Run `scripts/check_portfolio_links.py` and inspect the deployed input-free URL/privacy path.
+- [ ] Run `uv run python scripts/check_portfolio_links.py --live` and inspect the deployed
+      input-free URL/privacy path.
 - [ ] Verify `git diff --check` and that generated staging leaves tracked state clean.
 - [ ] Record any intentional contract change under semantic versioning; unexplained differences
       block release.

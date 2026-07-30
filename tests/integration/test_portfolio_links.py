@@ -5,6 +5,7 @@ import pytest
 from check_portfolio_links import (
     CATALOG_URL,
     FOOTER_URLS,
+    LIVE_URLS,
     PROJECT_ROOT,
     PortfolioLinkError,
     validate_checked_in_files,
@@ -16,6 +17,7 @@ def test_checked_in_portfolio_navigation_is_exact() -> None:
     checked = validate_checked_in_files()
     assert CATALOG_URL in checked
     assert set(FOOTER_URLS) <= set(checked)
+    assert LIVE_URLS == FOOTER_URLS
 
 
 def test_missing_readme_catalog_link_is_rejected() -> None:

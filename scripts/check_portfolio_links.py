@@ -32,6 +32,7 @@ FOOTER_URLS = (
     CORE_RELEASE_URL,
     PRIVACY_URL,
 )
+LIVE_URLS = FOOTER_URLS
 
 
 class PortfolioLinkError(RuntimeError):
@@ -127,7 +128,8 @@ def main() -> int:
         "--live",
         action="store_true",
         help=(
-            "also require the catalog, focused apps, integrated site, repository, and Core release"
+            "also require the catalog, focused apps, integrated site, repository, Core release, "
+            "and privacy documentation"
         ),
     )
     args = parser.parse_args()
@@ -135,15 +137,9 @@ def main() -> int:
     checked = validate_checked_in_files()
     print(f"Validated {len(checked)} checked-in portfolio link requirements.")
     if args.live:
-        for url in (
-            CATALOG_URL,
-            *FOCUSED_URLS,
-            INTEGRATED_URL,
-            APP_REPOSITORY_URL,
-            CORE_RELEASE_URL,
-        ):
+        for url in LIVE_URLS:
             _check_live(url)
-        print("Validated 9 public portfolio targets.")
+        print(f"Validated {len(LIVE_URLS)} public portfolio targets.")
     return 0
 
 
