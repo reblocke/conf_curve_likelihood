@@ -36,7 +36,7 @@ placeholder `Your Name`.
 | License identifier | MIT | Consistent across README, `CITATION.cff`, and `LICENSE` |
 | License copyright line | `Copyright (c) 2026 Brian Locke` | Approved MIT attribution applied by PR #13 |
 | Hosted app | `https://reblocke.github.io/conf_curve_likelihood/` | Documented in README; GitHub homepage field is blank |
-| Release tags | None | Confirmed by local tag inventory on 2026-07-29 |
+| Release tags | `pre-split-baseline-2026-07-29` | Annotated tag and public baseline release verified on 2026-07-29 |
 
 The audited Git commit also records `Brian Locke` as its Git author/committer, but that
 provenance was not treated as authority; the explicit owner instruction is the controlling
@@ -74,4 +74,4 @@ migration documents.
 ## Remaining follow-up
 
 1. Propagate the approved form to new repositories.
-2. Record release tags and release URLs as they are created.
+2. Record downstream portfolio release tags and URLs as they are created.

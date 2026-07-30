@@ -17,19 +17,20 @@
 
 | Field | Status |
 |---|---|
-| Date opened | 2026-07-29 |
+| Date opened/completed | 2026-07-29 |
 | Source repository | `reblocke/conf_curve_likelihood` |
 | Target repository | `reblocke/conf_curve_likelihood` |
 | Source branch/SHA | `main` at `830756ecb11b4e8161f8dfe1fc75afc346ef4467` |
 | Working branch | `codex/mig-00-freeze-baseline` |
 | Audited-versus-actual comparison | Initially identical; final source adds only approved PRs #13 and #14 |
-| Pull request | [#11](https://github.com/reblocke/conf_curve_likelihood/pull/11) (draft) |
-| Baseline tag | Pending; intended `pre-split-baseline-2026-07-29` after verification and merge |
+| Pull request | [#11](https://github.com/reblocke/conf_curve_likelihood/pull/11), merged with expected head `d6c709d9f7bcf09a156295e09025c8f8bfd3d923` |
+| Baseline merge SHA | `5fd501dd947d9b951d736014cfc2b310efa5e7b0` |
+| Baseline tag | [`pre-split-baseline-2026-07-29`](https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29), annotated target verified as the baseline merge SHA |
 | Core version | Not applicable; numerical code is still integrated in `confcurve` |
-| Validation status | Final local suite passed; GitHub CI/merge/tag pending |
+| Validation status | Complete; local suite and all six final GitHub CI jobs passed |
 | Intended production behavior changes | One separately approved finite-range safety correction in PR #14; ordinary behavior unchanged |
 | Fixture manifest/hash | Manifest `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc`; fixture set `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d` |
-| Release notes/release URL | Pending |
+| Release notes/release URL | [Pre-split integrated baseline (2026-07-29)](https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29) |
 
 ### Work recorded
 
@@ -54,27 +55,36 @@
   `atol=1e-14`.
 - Final `make verify` passed with 157 non-E2E and 43 Chromium E2E tests; `uv sync --locked`,
   Chromium/WebKit installation, Ruff, and `git diff --check` also passed.
+- Final PR head passed two unit jobs, two 43-test Chromium jobs, and two WebKit smoke jobs
+  before expected-head squash merge.
 
-### Resolved decisions and pending release actions
+### Resolved decisions and remaining risks
 
 - Canonical public identity is `Brian Locke`; the MIT copyright line is
   `Copyright (c) 2026 Brian Locke` (PR #13).
 - [Issue #12](https://github.com/reblocke/conf_curve_likelihood/issues/12) was explicitly
-  approved and implemented in PR #14. The B08e fixture is the remaining issue-close gate.
-- GitHub CI for the final baseline branch, merge, tag target, issue close, and release remain
-  pending.
+  approved and implemented in PR #14. B08e merged in PR #11, after which issue #12 was
+  closed.
+- The fixtures are generated characterization outputs rather than independent scientific
+  reference truth. Extraction and downstream repositories must retain independent unit,
+  property, boundary, and clean-artifact validation in addition to parity.
 
-### Completion evidence to append
+### Completion evidence
 
-When completed, record:
-
-1. merged commit and expected-head confirmation;
-2. fixture case inventory and manifest SHA-256;
-3. exact comparator tolerances;
-4. commands run and their results;
-5. confirmation that production files and behavior did not intentionally change;
-6. CI results, tag target, tag URL, and release URL; and
-7. remaining risks or approved deviations.
+- Reviewed PR head: `d6c709d9f7bcf09a156295e09025c8f8bfd3d923`.
+- Merged commit: `5fd501dd947d9b951d736014cfc2b310efa5e7b0`.
+- Corpus: 22 cases and 50 deterministic JSON artifacts.
+- Comparator: `rtol=1e-12`, `atol=1e-14`, plus declared exact paths.
+- Manifest SHA-256:
+  `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc`.
+- Fixture-set SHA-256:
+  `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d`.
+- Annotated tag object: `58855d85227864efb30b7e66a79c28cb13103608`; peeled target:
+  `5fd501dd947d9b951d736014cfc2b310efa5e7b0`.
+- Release:
+  `https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29`.
+- No production formula change was introduced by PR #11. The only intentional difference
+  from the audited source remains the separately approved PR #14 boundary correction.
 
 ## Entry template
 
