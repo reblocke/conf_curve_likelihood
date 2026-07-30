@@ -286,17 +286,17 @@ These corrections supersede the affected wording above:
 
 | Field | Status |
 |---|---|
-| Date opened/completed | Opened 2026-07-30; release candidate pending review |
+| Date opened/completed | Completed 2026-07-30 |
 | Source repository/SHA | `reblocke/conf_curve_likelihood` / `5fbf609df072100905d2a86ecbd55b286b5fa090` |
-| Target repository/SHA | Candidate recorded by the focused fix PR |
+| Target repository/SHA | `reblocke/conf_curve_likelihood` / `daae30681d1ac8c7c13a7afc085b13e0b56d23d2` |
 | Branch | `codex/mig-11-core-v041` |
-| Pull request | Pending |
-| Tag/release | Planned annotated `v0.2.1` prerelease |
+| Pull request | [#21](https://github.com/reblocke/conf_curve_likelihood/pull/21) |
+| Tag/release | Annotated `v0.2.1`; its failed release workflow was superseded by v0.2.2 |
 | Core version | Exact `wald-inference` v0.4.1 release |
 | Core artifact | [`wald_inference-0.4.1-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/wald_inference-0.4.1-py3-none-any.whl) |
-| Validation status | Corrective release candidate pending independent portfolio-validation rerun |
+| Validation status | Superseded by v0.2.2 before the independent portfolio-validation rerun |
 | Intended behavior changes | Replace invalid Core v0.4.0 edge behavior while retaining the feature-frozen integrated contract |
-| Artifact/manifest hashes | Core wheel `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`; app release hashes pending the tag workflow |
+| Artifact/manifest hashes | Core wheel `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`; no v0.2.1 release assets were published after its release workflow failed |
 
 ### Work recorded
 
@@ -307,12 +307,82 @@ These corrections supersede the affected wording above:
 ### Validation evidence
 
 - Core v0.4.1 release checksums and a clean wheel install passed before adoption.
-- Full local and hosted app evidence is recorded after the exact candidate is verified.
+- Full local verification and main CI/Pages passed. The v0.2.1 release workflow failed during
+  browser transport setup; v0.2.2 corrected the test transport without changing production
+  numerical behavior and became the audited artifact.
 
 ### Unresolved decisions and remaining risks
 
-- Portfolio validation remains blocked until the corrective app release is tagged, deployed, and
-  independently rerun.
+- None specific to this superseded release.
+
+## Milestone 11 corrective release — responsive browser evidence
+
+| Field | Status |
+|---|---|
+| Date opened/completed | Completed 2026-07-30 |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `daae30681d1ac8c7c13a7afc085b13e0b56d23d2` |
+| Target repository/SHA | `reblocke/conf_curve_likelihood` / `78d189ac03ec223a69778843497d27c70a8720c2` |
+| Branch | `codex/mig-11-mobile-plot-readability` |
+| Pull request | [#22](https://github.com/reblocke/conf_curve_likelihood/pull/22) |
+| Tag/release | [v0.2.2 prerelease](https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.2) |
+| Core version | Exact `wald-inference` v0.4.1 release |
+| Validation status | Independently audited release candidate |
+| Intended behavior changes | Keep observed-panel annotations inside compact plots and make isolated Chromium dependency loading deterministic |
+| Artifact/manifest hashes | Source archive `2b3c752dd1c6e25fb81bb2c495fdec23c8d724a7db219575e28a5ce78e07f5f1`; stage manifest `b81f7b5781d77ae0ed1f95b513d6f7f3f27ac853ae2b552d2ea5aebb4210e073`; checksum file `4c64b4ad316fa58842a8a790b229251ea429bfb51ff5efca38ef7b7bb9bb5dd3` |
+
+### Work recorded
+
+- Wrap compact observed-panel annotations and rerender when the layout crosses the compact
+  breakpoint.
+- Add numerical rendered-SVG containment regressions at a 390-pixel viewport.
+- Keep production CDN/runtime behavior unchanged while forcing isolated Chromium test requests
+  onto the reliable transport path.
+
+### Validation evidence
+
+- Main CI [run 30555099468](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30555099468),
+  Pages [run 30555099460](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30555099460),
+  and release [run 30555863567](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30555863567)
+  passed at the release commit.
+- The published checksum file verifies all three release assets.
+
+### Unresolved decisions and remaining risks
+
+- Portfolio validation remained evidence-limited pending completion of Milestone 11.
+
+## Milestone 11 corrective release — documentation matrix
+
+| Field | Status |
+|---|---|
+| Date opened/completed | Opened 2026-07-30; completion requires the tagged release |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `78d189ac03ec223a69778843497d27c70a8720c2` |
+| Target repository/SHA | Candidate established by the reviewed fix PR; the final annotated tag will resolve the immutable release commit |
+| Branch | `codex/mig-10-validation-matrix-docs` |
+| Pull request | Pending at candidate source time |
+| Tag/release | Planned annotated `v0.2.3` prerelease |
+| Core version | Exact `wald-inference` v0.4.1 release |
+| Validation status | Corrective release candidate for independent portfolio-validation rerun |
+| Intended behavior changes | Add required scientific-scope and validation records; no numerical or browser-contract change |
+| Artifact/manifest hashes | To be published by the v0.2.3 release workflow in `SHA256SUMS` |
+
+### Work recorded
+
+- Add `docs/SCIENTIFIC_SCOPE.md` with the integrated question, conditioning distinction, formula
+  authority, assumptions, limitations, and clinical-use boundary.
+- Add `docs/VALIDATION.md` with frozen-baseline authority, exact tolerances, scientific ownership,
+  browser/privacy/accessibility gates, commands, and evidence requirements.
+- Reconcile this log and `METADATA_AUDIT.md` with the completed v0.2.1/v0.2.2 history.
+
+### Validation evidence
+
+- The release must pass the locked full verification command, frozen B01-B08 comparator,
+  Chromium suite, WebKit smoke, exact Pages artifact, and annotated-tag release workflow.
+- The independent portfolio audit must rerun Lane F and bind its result to the exact v0.2.3 tag.
+
+### Unresolved decisions and remaining risks
+
+- The v0.2.3 tag, release assets, Pages deployment, and independent rerun remain pending at this
+  candidate source commit.
 
 ## Entry template
 

@@ -5,7 +5,7 @@ Deployed app: https://reblocke.github.io/conf_curve_likelihood/
 Purpose: Backward-compatible integrated browser workbench for documented one-parameter Wald
 reconstruction, compatibility, normalized relative support, and repeated-study design calibration
 Status: No manuscript version is expected. Code and teaching examples are repository-authored unless otherwise noted.
-App version: 0.2.2
+App version: 0.2.3
 Numerical core: wald-inference 0.4.1
 Core release: https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1
 Core wheel SHA-256: d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b
@@ -14,6 +14,10 @@ Core wheel SHA-256: d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557
 - `README.md` is the primary human-facing overview.
 - Core numerical scope:
   https://github.com/reblocke/wald-inference-core/blob/v0.4.1/docs/SCIENTIFIC_SCOPE.md
+- `docs/SCIENTIFIC_SCOPE.md` defines this integrated workbench's two conditioning paradigms,
+  assumptions, outputs, and non-goals.
+- `docs/VALIDATION.md` defines frozen parity, formula ownership, browser/privacy/accessibility,
+  release, and evidence gates.
 - Focused-tool chooser:
   https://reblocke.github.io/wald-inference-tools/
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records dependency ownership,

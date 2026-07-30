@@ -189,7 +189,7 @@ def test_manifest_static_structure_rejects_tampered_expected_status() -> None:
 def test_manifest_preserves_historical_adapter_version_as_fixture_provenance() -> None:
     manifest = json.loads((GOLDEN_ROOT / "manifest.json").read_text())
 
-    assert baseline._dependency_versions()["confcurve"] == "0.2.2"
+    assert baseline._dependency_versions()["confcurve"] == "0.2.3"
     assert baseline._fixture_versions()["confcurve"] == "0.1.0"
     assert manifest["versions"]["confcurve"] == "0.1.0"
     assert all(case["versions"]["confcurve"] == "0.1.0" for case in manifest["cases"])

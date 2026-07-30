@@ -5,6 +5,9 @@
 > workbench keeps compatibility, normalized likelihood, and repeated-study design-calibration
 > views together for advanced side-by-side comparison.
 
+**Task question:** How do observed-data compatibility and normalized Wald likelihood compare with
+repeated-study design calibration when those distinct questions must be examined together?
+
 This repository builds a static web app and Python package that reconstruct:
 
 - a compatibility / confidence curve,
@@ -22,7 +25,7 @@ browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
 
-The v0.2.2 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
+The v0.2.3 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
 legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
 Core release.
 
@@ -200,6 +203,10 @@ uv run python scripts/check_portfolio_links.py --live
 ## Documentation and citation
 
 - `AGENTS.md` defines repo-specific engineering rules.
+- `docs/SCIENTIFIC_SCOPE.md` defines the integrated question, conditioning distinction, formula
+  authority, assumptions, limitations, and non-goals.
+- `docs/VALIDATION.md` defines the frozen numerical, browser, privacy, accessibility, and release
+  evidence gates.
 - `docs/DECISIONS.md` records architectural choices.
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records the core dependency,
   staging, upgrade, and rollback decision.

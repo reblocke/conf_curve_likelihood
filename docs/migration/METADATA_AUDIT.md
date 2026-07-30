@@ -8,9 +8,9 @@ This inventory records both the conflicting metadata visible at audited commit
 name and approved retaining the MIT License. PR #13 applied that decision at
 `9d59fd9e17900ef177e695ba3a34ccc0a08e374b`.
 
-Ticket 10 refreshed the product/version surfaces on 2026-07-30 while preserving that identity
-decision. The table below reports the release-candidate state after that refresh; the original
-conflicts remain described as provenance.
+Ticket 10 and its Milestone 11 corrective releases refreshed the product/version surfaces on
+2026-07-30 while preserving that identity decision. The table below reports the v0.2.3
+release-candidate state; the original conflicts remain described as provenance.
 
 The historical conflict remains recorded here as provenance: the README used `Brian W.
 Locke`, package and citation metadata used `Reed Blocke`, and the license used the
@@ -23,24 +23,24 @@ placeholder `Your Name`.
 | GitHub repository | `reblocke/conf_curve_likelihood` | Confirmed by `origin` |
 | Git remote | `https://github.com/reblocke/conf_curve_likelihood.git` | Confirmed locally |
 | GitHub visibility/license | Public; MIT detected | Verified through GitHub on 2026-07-29 |
-| GitHub description | `Visualizing confidence curves and wald profile likelihood` | Verified through GitHub; wording predates this audit |
-| GitHub homepage field | Blank | Verified through GitHub; README still documents the Pages URL |
+| GitHub description | `Integrated Wald inference workbench for compatibility, normalized relative likelihood, and design calibration` | Verified through GitHub on 2026-07-30 |
+| GitHub homepage field | `https://reblocke.github.io/conf_curve_likelihood/` | Verified through GitHub on 2026-07-30 |
 | README title | `Integrated Wald Inference Workbench` | Consistent with `CITATION.cff` and HTML title |
 | Package description | `Static GitHub Pages app and compatibility adapter for Wald inference` | From `pyproject.toml`; distinct from the verified live GitHub description above |
 | Distribution name | `confcurve` | From `pyproject.toml` |
 | Import package | `confcurve` | From `src/confcurve/` |
-| Package version | `0.2.0` | From `pyproject.toml` |
+| Package version | `0.2.3` | From `pyproject.toml` |
 | README maintainer | `Brian Locke` (`@reblocke`) | Canonical form applied by PR #13 |
 | `pyproject.toml` author | `Brian Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` author | Given name `Brian`; family name `Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` title | `Integrated Wald Inference Workbench` | Consistent with README/HTML |
-| `CITATION.cff` version | `0.2.0` | Consistent with package version |
+| `CITATION.cff` version | `0.2.3` | Consistent with package version |
 | `CITATION.cff` release date | `2026-07-30` | Consistent with changelog release heading |
 | `CITATION.cff` repository | `https://github.com/reblocke/conf_curve_likelihood` | Consistent with `origin` |
 | License identifier | MIT | Consistent across README, `CITATION.cff`, and `LICENSE` |
 | License copyright line | `Copyright (c) 2026 Brian Locke` | Approved MIT attribution applied by PR #13 |
-| Hosted app | `https://reblocke.github.io/conf_curve_likelihood/` | Documented in README; GitHub homepage field is blank |
-| Release tags | `pre-split-baseline-2026-07-29`, `v0.1.1`; `v0.2.0` planned | Historical tags verified; Ticket 10 tag is gated on CI/review |
+| Hosted app | `https://reblocke.github.io/conf_curve_likelihood/` | Consistent across README, GitHub homepage, and deployment policy |
+| Release tags | `pre-split-baseline-2026-07-29`, `v0.1.1`, `v0.2.0`, `v0.2.1`, `v0.2.2`; `v0.2.3` release candidate | Historical tags verified; v0.2.3 is gated on CI/review and an annotated tag |
 
 The audited Git commit also records `Brian Locke` as its Git author/committer, but that
 provenance was not treated as authority; the explicit owner instruction is the controlling
@@ -77,6 +77,6 @@ migration documents.
 
 ## Remaining follow-up
 
-1. Record the Ticket 10 merge/tag/release evidence in the migration log.
-2. Reconcile the GitHub description/homepage with the integrated role when the release candidate
-   is merged.
+After publication, the independent portfolio report in `reblocke/wald-inference-tools` will record
+the exact v0.2.3 tag, release assets, deployment commit, and validation verdict. No unresolved
+authorship or license decision remains.
