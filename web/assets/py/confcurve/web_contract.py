@@ -51,6 +51,19 @@ def _float_list(values: float | np.ndarray) -> list[float]:
     return [float(value) for value in np.asarray(values, dtype=float).tolist()]
 
 
+def _require_strict_json_numbers(value: object, *, path: str = "$") -> None:
+    if isinstance(value, dict):
+        for key, nested_value in value.items():
+            _require_strict_json_numbers(nested_value, path=f"{path}.{key}")
+    elif isinstance(value, (list, tuple)):
+        for index, nested_value in enumerate(value):
+            _require_strict_json_numbers(nested_value, path=f"{path}[{index}]")
+    elif isinstance(value, (float, np.floating)) and not np.isfinite(value):
+        raise ValidationError(
+            f"Computed response value at {path} exceeds the finite floating-point range."
+        )
+
+
 def _exp_or_none(log_value: float | None) -> float | None:
     if log_value is None or log_value > LOG_MAX_FLOAT:
         return None
@@ -471,6 +484,12 @@ def _design_payload(
         default=1.0,
     )
     design_se = se / float(np.sqrt(information_multiplier))
+    current_ci_width = 2.0 * Z975 * se
+    design_ci_width = 2.0 * Z975 * design_se
+    if not np.isfinite(current_ci_width) or not np.isfinite(design_ci_width):
+        raise ValidationError(
+            "Design confidence-interval width exceeds the finite floating-point range."
+        )
     claim_threshold_display, claim_threshold_working = _coerce_design_claim_threshold(
         effect_type=effect_type,
         value=payload.get("design_claim_threshold"),
@@ -633,8 +652,8 @@ def _design_payload(
             "current_se_working": se,
             "design_se_working": design_se,
             "information_multiplier": information_multiplier,
-            "current_ci_width_working": 2.0 * Z975 * se,
-            "approx_design_ci_width_working": 2.0 * Z975 * design_se,
+            "current_ci_width_working": current_ci_width,
+            "approx_design_ci_width_working": design_ci_width,
             "null_working": null_working,
             "estimate_working": theta_hat,
             "near_null_delta": DEFAULT_NEAR_NULL_DELTA,
@@ -850,7 +869,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         else None
     )
 
-    return {
+    response: CurveResponse = {
         "meta": {
             "effect_spec": {
                 "key": validated.effect_spec.key,
@@ -912,3 +931,5 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         },
         "design": design_payload,
     }
+    _require_strict_json_numbers(response)
+    return response

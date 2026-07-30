@@ -34,7 +34,7 @@ import json
 from confcurve import compute_curves
 
 def compute_curves_json(payload_json):
-    return json.dumps(compute_curves(json.loads(payload_json)))
+    return json.dumps(compute_curves(json.loads(payload_json)), allow_nan=False)
 `);
     runtimeState.pyodide = pyodide;
     runtimeState.computeCurvesJson = pyodide.globals.get("compute_curves_json");

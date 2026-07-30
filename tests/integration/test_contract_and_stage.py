@@ -30,6 +30,12 @@ def test_committed_staged_python_package_matches_source() -> None:
         ).read_text(encoding="utf-8")
 
 
+def test_browser_runtime_rejects_nonstandard_json_numbers() -> None:
+    runtime_source = (Path("web") / "assets" / "runtime.js").read_text(encoding="utf-8")
+
+    assert "json.dumps(compute_curves(json.loads(payload_json)), allow_nan=False)" in runtime_source
+
+
 def test_staged_package_supports_top_level_import(tmp_path: Path) -> None:
     package_dir = tmp_path / "confcurve"
     stage_web_python_package(package_dir)

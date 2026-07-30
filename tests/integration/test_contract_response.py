@@ -5,7 +5,8 @@ import math
 
 import pytest
 
-from confcurve.core import MAX_FLOAT
+import confcurve.web_contract as web_contract
+from confcurve.core import MAX_FLOAT, ValidationError
 from confcurve.web_contract import compute_curves
 
 
@@ -45,6 +46,32 @@ def test_compute_curves_response_is_json_serializable() -> None:
         "log_relative_likelihood",
     ]
     assert len(payload["grid"]["effect_display"]) == 401
+
+
+def test_completed_response_rejects_nonfinite_numbers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_summaries = web_contract.summaries
+
+    def summaries_with_nonfinite_value(**kwargs: float) -> dict[str, float | None]:
+        result = original_summaries(**kwargs)
+        result["null_z_value"] = float("inf")
+        return result
+
+    monkeypatch.setattr(web_contract, "summaries", summaries_with_nonfinite_value)
+
+    with pytest.raises(
+        ValidationError,
+        match=r"response value at \$\.summary\.null_z_value.*finite",
+    ):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": 0.11,
+                "upper": 0.73,
+                "grid_points": 401,
+            }
+        )
 
 
 def test_active_display_range_response_metadata_is_json_serializable() -> None:

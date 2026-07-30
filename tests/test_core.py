@@ -567,6 +567,25 @@ def test_extreme_additive_null_keeps_the_grid_payload_finite() -> None:
     json.dumps(response, allow_nan=False)
 
 
+def test_opposite_sign_null_summary_uses_overflow_safe_standardization() -> None:
+    response = compute_curves(
+        {
+            "effect_type": "mean_difference",
+            "lower": -MAX_FLOAT,
+            "upper": -0.75 * MAX_FLOAT,
+            "null_value": 1e308,
+            "grid_points": 401,
+        }
+    )
+
+    assert response["summary"]["null_z_value"] == pytest.approx(22.441877143011755)
+    assert response["summary"]["log_null_relative_likelihood"] == pytest.approx(-251.81892485101673)
+    assert response["summary"]["log_likelihood_ratio_mle_to_null"] == pytest.approx(
+        251.81892485101673
+    )
+    json.dumps(response, allow_nan=False)
+
+
 def test_extreme_ratio_null_keeps_the_natural_axis_payload_finite() -> None:
     response = compute_curves(
         {
