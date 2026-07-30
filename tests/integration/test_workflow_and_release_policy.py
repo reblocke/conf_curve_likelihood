@@ -123,15 +123,15 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.4"
+    assert pyproject["project"]["version"] == "0.2.5"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.4" in citation
+    assert "version: 0.2.5" in citation
     assert 'date-released: "2026-07-30"' in citation
-    assert "## [0.2.4] - 2026-07-30" in changelog
-    release_notes = changelog.split("## [0.2.4] - 2026-07-30", 1)[1].split(
-        "## [0.2.3] - 2026-07-30", 1
+    assert "## [0.2.5] - 2026-07-30" in changelog
+    release_notes = changelog.split("## [0.2.5] - 2026-07-30", 1)[1].split(
+        "## [0.2.4] - 2026-07-30", 1
     )[0]
     for required_release_detail in (
         "docs/SCIENTIFIC_SCOPE.md",
@@ -184,6 +184,7 @@ def test_migration_records_do_not_retain_superseded_v023_release_claims() -> Non
         "Planned annotated `v0.2.3` prerelease",
         "To be published by the v0.2.3 release workflow",
         "v0.2.3 tag, release assets, Pages deployment, and independent rerun remain pending",
+        "Core and app releases intentionally remain GitHub prereleases until",
     ):
         assert stale_claim not in combined
 
@@ -197,6 +198,24 @@ def test_migration_records_do_not_retain_superseded_v023_release_claims() -> Non
         "d3844f4d39cfca845ec6452d2d7a6df640e40acaa49fbe8d2a5e8ea42f89f2b1",
     ):
         assert release_evidence in migration_log
+
+
+def test_current_core_publication_state_is_stable_and_app_state_is_distinct() -> None:
+    readme = _read("README.md")
+    migration_log = _read("docs/migration/MIGRATION_LOG.md")
+    changelog = _read("CHANGELOG.md")
+    normalized_migration_log = " ".join(migration_log.split())
+
+    assert "| Release status observed 2026-07-30 | GitHub stable release |" in readme
+    assert (
+        "Core v0.4.1 was subsequently promoted to a stable GitHub release"
+        in normalized_migration_log
+    )
+    assert (
+        "Focused and integrated apps remain explicitly experimental prereleases"
+        in normalized_migration_log
+    )
+    assert "retaining this integrated app's experimental GitHub-prerelease status" in changelog
 
 
 def test_scientific_repository_documentation_matrix_is_complete() -> None:

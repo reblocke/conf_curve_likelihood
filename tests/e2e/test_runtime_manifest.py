@@ -21,7 +21,7 @@ def _manifest() -> dict[str, object]:
 
 def _synthetic_manifest() -> tuple[dict[str, object], dict[str, str]]:
     contents_by_path = {
-        "confcurve/__init__.py": 'APP_VERSION = "0.2.4"\n',
+        "confcurve/__init__.py": 'APP_VERSION = "0.2.5"\n',
         "wald_inference/__init__.py": 'CORE_VERSION = "0.4.1"\n',
     }
     records = {
@@ -46,7 +46,7 @@ def _synthetic_manifest() -> tuple[dict[str, object], dict[str, str]]:
                 "role": "app",
                 "distribution": "confcurve",
                 "import_name": "confcurve",
-                "version": "0.2.4",
+                "version": "0.2.5",
                 "files": [records["confcurve/__init__.py"]],
             },
             {
@@ -100,7 +100,7 @@ def test_manifest_validation_rejects_incomplete_unsafe_and_invalid_records(
                 "role": "app",
                 "distribution": "confcurve",
                 "import_name": "confcurve",
-                "version": "0.2.4",
+                "version": "0.2.5",
                 "files": [
                     {
                         "path": "confcurve/__init__.py",
@@ -268,7 +268,7 @@ def test_runtime_requests_every_manifest_file_by_digest_and_shows_verified_versi
         assert requested_files[file_record["path"]] == [file_record["sha256"]]
 
     expect(page.locator("#technical-version")).to_have_text(
-        "confcurve app 0.2.4 · wald-inference core 0.4.1"
+        "confcurve app 0.2.5 · wald-inference core 0.4.1"
     )
 
 
