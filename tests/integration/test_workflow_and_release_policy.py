@@ -7,13 +7,13 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 STAGE_SCRIPT_COMMAND = "uv run python scripts/stage_web_python.py"
-CORE_VERSION = "0.1.1"
-CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1"
+CORE_VERSION = "0.4.0"
+CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0"
 CORE_WHEEL_URL = (
-    "https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/"
-    "wald_inference-0.1.1-py3-none-any.whl"
+    "https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/"
+    "wald_inference-0.4.0-py3-none-any.whl"
 )
-CORE_WHEEL_SHA256 = "95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457"
+CORE_WHEEL_SHA256 = "401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6"
 
 
 def _read(relative_path: str) -> str:
@@ -111,13 +111,13 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.1.1"
+    assert pyproject["project"]["version"] == "0.2.0"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.1.1" in citation
-    assert 'date-released: "2026-07-29"' in citation
-    assert "## [0.1.1] - 2026-07-29" in changelog
+    assert "version: 0.2.0" in citation
+    assert 'date-released: "2026-07-30"' in citation
+    assert "## [0.2.0] - 2026-07-30" in changelog
 
     provenance_surfaces = (
         _read("pyproject.toml"),

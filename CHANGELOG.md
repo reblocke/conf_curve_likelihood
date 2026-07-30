@@ -4,6 +4,51 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-30
+
+### Changed
+
+- Positioned the existing application as the backward-compatible integrated Wald inference
+  workbench and linked the question-based catalog and all five focused tools.
+- Upgraded the exact numerical dependency from `wald-inference` v0.1.1 to v0.4.0 without exposing
+  new Core fields or changing the legacy `confcurve` request/response contract.
+- Replaced raw Pyodide traceback presentation with an authored calculation-error message that
+  retains the final exception type and text.
+- Added the long-term maintenance policy, routed feature requests to the appropriate focused
+  repository, and documented the Core-upgrade review checklist.
+- Updated GitHub Actions to current Node 24-compatible action majors.
+
+### Compatibility
+
+- The repository, Pages URL, `confcurve` imports, `compute_curves()` contract, default inputs,
+  view modes, warnings/errors, plots, CSV/PNG/caption/reviewer exports, and all 22 B01-B08 frozen
+  responses remain protected.
+- Core v0.4.0 adds downstream APIs, but this workbench continues to expose only its existing
+  adapter contract.
+
+### Dependency provenance
+
+- Core release:
+  <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0>
+- Core release status observed 2026-07-30:
+  GitHub prerelease
+- Core wheel:
+  `wald_inference-0.4.0-py3-none-any.whl`
+- Core wheel SHA-256:
+  `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`
+- Core sdist SHA-256:
+  `87b862bc30446695a82e1cb574a98c061a7356069ea2fd1bd5854365c77dc4db`
+- Core parity report SHA-256:
+  `7619090d95b0767112039c9deec53d284101582692ccd2d8975ace63fb0547bc`
+- Core release commit:
+  `fd7b24740122bed7ae07769674732c5e56c91277`
+
+### Scientific impact
+
+- No formula, selection rule, numerical tolerance, undefined-value convention, benchmark
+  semantics, or scientific interpretation changed. The integrated adapter remains a presentation
+  and compatibility layer over the released Core.
+
 ## [0.1.1] - 2026-07-29
 
 ### Changed
@@ -56,5 +101,6 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.0
 [0.1.1]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.1.1

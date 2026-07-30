@@ -177,6 +177,50 @@
   workbench finalization milestone rather than being introduced as an unapproved migration
   difference.
 
+## Milestone 10 — Finalize the integrated workbench role
+
+| Field | Status |
+|---|---|
+| Date opened/completed | 2026-07-30 |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `8f980aa61832483b8d98f3705411bef9f1d16663` |
+| Target repository/SHA | Same repository; release candidate recorded by the Ticket 10 PR |
+| Branch | `codex/mig-10-finalize-workbench` |
+| Pull request | Recorded at merge |
+| Tag/release | Planned annotated `v0.2.0` prerelease |
+| Core version | Exact `wald-inference` v0.4.0 release |
+| Core artifact | [`wald_inference-0.4.0-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl) |
+| Validation status | Release candidate pending independent portfolio validation |
+| Intended behavior changes | Integrated-workbench positioning, portfolio navigation, authored browser-error presentation, maintenance/routing policy, and workflow runtimes; no formula or contract change |
+| Artifact/manifest hashes | Core wheel `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`; app release hashes recorded by the tag workflow |
+
+### Work recorded
+
+- Preserve the repository/package/Pages identity and every protected Python, browser, default,
+  view, warning/error, and export contract.
+- Recommend the focused catalog for a single question while retaining every advanced integrated
+  panel.
+- Adopt Core v0.4.0 only through its exact released wheel and keep all newly added Core APIs
+  outside the legacy browser response.
+- Add the feature-freeze, compatibility, deprecation, request-routing, upgrade, and future archival
+  policies.
+- Replace raw Pyodide traceback display with a stable authored error while retaining the final
+  exception type/text and recovery behavior.
+- Move CI, Pages, and release workflows to current Node 24-compatible action majors.
+
+### Validation authority
+
+- The unchanged 22-case B01-B08 corpus remains authoritative at `rtol=1e-12`, `atol=1e-14`, with
+  declared identity fields exact.
+- The release candidate must pass the legacy public API, strict JSON, deterministic staging,
+  complete non-browser suite, full Chromium suite, WebKit smoke, portfolio-link check, clean
+  checkout, and hosted input-free/privacy smoke before the annotated tag is released.
+
+### Unresolved decisions and remaining risks
+
+- Scientific and portfolio validation status remains `release-candidate` until Milestone 11.
+- Future archival remains an explicit human decision; this milestone does not archive or redirect
+  the repository.
+
 ## Entry template
 
 Copy this section for each later milestone:

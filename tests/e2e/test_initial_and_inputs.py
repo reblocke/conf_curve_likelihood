@@ -82,7 +82,7 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(gelman_carlin_link).to_have_attribute("target", "_blank")
     expect(gelman_carlin_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#technical-version")).to_have_text(
-        "confcurve app 0.1.1 · wald-inference core 0.1.1"
+        "confcurve app 0.2.0 · wald-inference core 0.4.0"
     )
     expect(page.locator("#curve-plot .main-svg").first).to_be_visible()
 

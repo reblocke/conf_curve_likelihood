@@ -1,19 +1,21 @@
-# Wald Confidence Curve Explorer
+# Integrated Wald Inference Workbench
 
 Repository: https://github.com/reblocke/conf_curve_likelihood
 Deployed app: https://reblocke.github.io/conf_curve_likelihood/
 Purpose: Backward-compatible integrated browser workbench for documented one-parameter Wald
 reconstruction, compatibility, normalized relative support, and repeated-study design calibration
 Status: No manuscript version is expected. Code and teaching examples are repository-authored unless otherwise noted.
-App version: 0.1.1
-Numerical core: wald-inference 0.1.1
-Core release: https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1
-Core wheel SHA-256: 95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457
+App version: 0.2.0
+Numerical core: wald-inference 0.4.0
+Core release: https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0
+Core wheel SHA-256: 401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6
 
 ## Human-Readable Entry Points
 - `README.md` is the primary human-facing overview.
 - Core numerical scope:
-  https://github.com/reblocke/wald-inference-core/blob/v0.1.1/docs/SCIENTIFIC_SCOPE.md
+  https://github.com/reblocke/wald-inference-core/blob/v0.4.0/docs/SCIENTIFIC_SCOPE.md
+- Focused-tool chooser:
+  https://reblocke.github.io/wald-inference-tools/
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records dependency ownership,
   staging, upgrade, and rollback.
 - `docs/migration/` preserves the frozen pre-split API, browser contract, and validation authority.
