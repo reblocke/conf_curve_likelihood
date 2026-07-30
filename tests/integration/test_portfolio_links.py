@@ -7,6 +7,8 @@ from check_portfolio_links import (
     FOOTER_URLS,
     LIVE_URLS,
     PROJECT_ROOT,
+    RELATED_TOOLS_HEADING,
+    STALE_README_MARKERS,
     PortfolioLinkError,
     validate_checked_in_files,
     validate_portfolio_links,
@@ -25,6 +27,21 @@ def test_missing_readme_catalog_link_is_rejected() -> None:
     html = (PROJECT_ROOT / "web" / "index.html").read_text(encoding="utf-8")
     with pytest.raises(PortfolioLinkError, match="README is missing"):
         validate_portfolio_links(readme, html)
+
+
+def test_duplicate_readme_related_tools_block_is_rejected() -> None:
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    html = (PROJECT_ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    with pytest.raises(PortfolioLinkError, match="exactly one"):
+        validate_portfolio_links(f"{readme}\n{RELATED_TOOLS_HEADING}\n", html)
+
+
+@pytest.mark.parametrize("stale_marker", STALE_README_MARKERS)
+def test_stale_readme_portfolio_marker_is_rejected(stale_marker: str) -> None:
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    html = (PROJECT_ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    with pytest.raises(PortfolioLinkError, match="stale portfolio markers"):
+        validate_portfolio_links(f"{readme}\n{stale_marker}\n", html)
 
 
 def test_reordered_or_missing_footer_link_is_rejected() -> None:

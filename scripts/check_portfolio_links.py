@@ -30,6 +30,11 @@ FOOTER_URLS = (
     PRIVACY_URL,
 )
 LIVE_URLS = FOOTER_URLS
+RELATED_TOOLS_HEADING = "## Related Wald tools"
+STALE_README_MARKERS = (
+    "https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1",
+    "docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path",
+)
 
 
 class PortfolioLinkError(RuntimeError):
@@ -70,8 +75,13 @@ def validate_portfolio_links(readme: str, html: str) -> list[str]:
         "docs/MAINTENANCE.md",
     )
     missing_readme = [value for value in required_readme if value not in readme]
-    if "## Related Wald tools" not in readme:
-        missing_readme.append("Related Wald tools heading")
+    if readme.count(RELATED_TOOLS_HEADING) != 1:
+        missing_readme.append("exactly one Related Wald tools heading")
+    stale_readme = [value for value in STALE_README_MARKERS if value in readme]
+    if stale_readme:
+        raise PortfolioLinkError(
+            f"README retains stale portfolio markers: {', '.join(stale_readme)}"
+        )
     if missing_readme:
         raise PortfolioLinkError(f"README is missing: {', '.join(missing_readme)}")
 
