@@ -3,9 +3,8 @@
 ## Status
 
 This document records the approved source selected for the pre-split behavior freeze and
-the release-candidate golden corpus. The strict-JSON release gate and canonical metadata
-decision are resolved; merge, tagging, and release evidence are recorded only after those
-actions complete.
+the released golden corpus. The strict-JSON release gate, canonical metadata decision,
+expected-head merge, annotated tag, and GitHub release are complete.
 
 | Item | Recorded value |
 |---|---|
@@ -16,8 +15,11 @@ actions complete.
 | Actual behavior-freeze source SHA | `830756ecb11b4e8161f8dfe1fc75afc346ef4467` |
 | Migration working branch | `codex/mig-00-freeze-baseline` |
 | Inspection date | 2026-07-29 |
-| Intended tag | `pre-split-baseline-2026-07-29` |
-| Tag status | Pending GitHub CI, merge, and confirmation of the tagged commit |
+| Pull request | [#11](https://github.com/reblocke/conf_curve_likelihood/pull/11) |
+| Baseline merge SHA | `5fd501dd947d9b951d736014cfc2b310efa5e7b0` |
+| Tag | [`pre-split-baseline-2026-07-29`](https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29) |
+| Tag status | Annotated tag verified to resolve to the baseline merge SHA |
+| Release | [Pre-split integrated baseline (2026-07-29)](https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29) |
 | Golden generation status | Final corpus generated: 22 cases and 50 deterministic JSON artifacts |
 | Successful generation date | 2026-07-29 |
 | Manifest SHA-256 | `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc` |
@@ -136,18 +138,21 @@ sequence then passed:
 - Ruff format and lint checks; and
 - `git diff --check`.
 
-GitHub CI, merge, tag, and release remain separate gates and are not claimed by this local
-evidence.
+PR #11's exact reviewed head
+`d6c709d9f7bcf09a156295e09025c8f8bfd3d923` passed both GitHub unit jobs, both full
+Chromium jobs, and both WebKit smoke jobs. It was then squash-merged with expected-head
+protection as `5fd501dd947d9b951d736014cfc2b310efa5e7b0`. The annotated tag and public
+release were verified to resolve to that merge commit.
 
 ## Tagging rule
 
-The intended tag is `pre-split-baseline-2026-07-29`; no existing tags were present at
-inspection. Do not create or report that tag until:
+The tag is `pre-split-baseline-2026-07-29`; no existing tags were present at inspection.
+It was created only after:
 
 1. the fixture corpus and comparator are committed;
 2. the full local and CI gates pass;
 3. the milestone branch is merged at the expected reviewed head; and
 4. the exact tag target and fixture manifest hash are recorded.
 
-If the preferred tag appears before completion, use a clearly versioned variant and record
-the reason in `MIGRATION_LOG.md`.
+The final annotated tag object is `58855d85227864efb30b7e66a79c28cb13103608`; its
+peeled commit is `5fd501dd947d9b951d736014cfc2b310efa5e7b0`.
