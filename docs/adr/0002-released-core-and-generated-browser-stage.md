@@ -132,3 +132,21 @@ release without changing the legacy adapter contract:
 The newer Core APIs remain available to focused downstream tools but are not automatically exposed
 through `confcurve`. B01-B08, the public Python surface, strict JSON, browser contract, and exports
 remain the compatibility gate.
+
+## 2026-07-30 corrective upgrade record
+
+App v0.2.1 follows the same procedure and replaces Core v0.4.0 with the exact corrective
+`wald-inference` v0.4.1 release:
+
+- release:
+  <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1>;
+- release commit: `f4613177b6dc81d194aa70762152de2bfa86663b`;
+- wheel:
+  <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/wald_inference-0.4.1-py3-none-any.whl>;
+- wheel SHA-256:
+  `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`;
+- license: MIT.
+
+Core v0.4.1 repairs invalid precision-bracketing, pairwise-support, and ratio-underflow edge
+behavior. It does not change the decision to keep new Core fields outside the feature-frozen
+`confcurve` contract; all compatibility gates above remain required.

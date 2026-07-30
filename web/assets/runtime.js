@@ -22,13 +22,13 @@ const EXPECTED_PACKAGES = [
     role: "app",
     distribution: "confcurve",
     importName: "confcurve",
-    version: "0.2.0",
+    version: "0.2.1",
   },
   {
     role: "core",
     distribution: "wald-inference",
     importName: "wald_inference",
-    version: "0.4.0",
+    version: "0.4.1",
   },
 ];
 

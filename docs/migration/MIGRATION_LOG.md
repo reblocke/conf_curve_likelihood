@@ -282,6 +282,38 @@ These corrections supersede the affected wording above:
 - Future archival remains an explicit human decision; this milestone does not archive or redirect
   the repository.
 
+## Milestone 11 corrective release — Core v0.4.1 adoption
+
+| Field | Status |
+|---|---|
+| Date opened/completed | Opened 2026-07-30; release candidate pending review |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `5fbf609df072100905d2a86ecbd55b286b5fa090` |
+| Target repository/SHA | Candidate recorded by the focused fix PR |
+| Branch | `codex/mig-11-core-v041` |
+| Pull request | Pending |
+| Tag/release | Planned annotated `v0.2.1` prerelease |
+| Core version | Exact `wald-inference` v0.4.1 release |
+| Core artifact | [`wald_inference-0.4.1-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/wald_inference-0.4.1-py3-none-any.whl) |
+| Validation status | Corrective release candidate pending independent portfolio-validation rerun |
+| Intended behavior changes | Replace invalid Core v0.4.0 edge behavior while retaining the feature-frozen integrated contract |
+| Artifact/manifest hashes | Core wheel `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`; app release hashes pending the tag workflow |
+
+### Work recorded
+
+- Pin the exact Core v0.4.1 release in Python, browser staging, documentation, and public markers.
+- Keep all numerical formulas in Core and expose no new response fields.
+- Preserve the 22-case B01-B08 baseline and every public compatibility gate.
+
+### Validation evidence
+
+- Core v0.4.1 release checksums and a clean wheel install passed before adoption.
+- Full local and hosted app evidence is recorded after the exact candidate is verified.
+
+### Unresolved decisions and remaining risks
+
+- Portfolio validation remains blocked until the corrective app release is tagged, deployed, and
+  independently rerun.
+
 ## Entry template
 
 Copy this section for each later milestone:
