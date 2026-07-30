@@ -89,6 +89,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - `src/confcurve/` – Python numerical core, payload contract, and staging helpers
 - `scripts/` – thin automation such as staging the Python package for the web app
 - `tests/` – unit, property, integration, and Playwright end-to-end tests
+- `tests/golden/` – source-stamped pre-split request/response and export-schema fixtures
 - `tests/e2e/` – behavior-focused browser tests with shared Playwright helpers
 - `web/` – static GitHub Pages site
 - `web/assets/app.js` – browser entrypoint for DOM state, event wiring, compute, and rerender orchestration
@@ -101,6 +102,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - `make fmt` formats Python code with Ruff
 - `make fmt-check` checks Ruff formatting
 - `make lint` runs Ruff checks
+- `make golden-check` verifies the frozen B01–B08 contract and numerical baseline
 - `make test` runs non-E2E tests
 - `make e2e` runs Playwright browser tests
 - `make verify` runs staging, format check, lint, tests, and E2E checks
@@ -116,6 +118,7 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 - `AGENTS.md` defines repo-specific engineering rules.
 - `docs/DECISIONS.md` records architectural choices.
+- `docs/migration/` records the frozen pre-split behavior and portfolio migration contract.
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
 - Source links used for app terminology and presentation notes:

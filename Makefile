@@ -7,6 +7,7 @@ help:
 	@echo "  stage-web Copy src/confcurve into web/assets/py/confcurve"
 	@echo "  fmt       Format code (ruff)"
 	@echo "  lint      Lint code (ruff)"
+	@echo "  golden-check Verify frozen numerical and browser-contract fixtures"
 	@echo "  test      Run non-E2E tests (pytest)"
 	@echo "  e2e       Run Playwright browser tests"
 	@echo "  serve     Serve the web app locally"
@@ -33,8 +34,13 @@ fmt-check:
 lint:
 	uv run ruff check .
 
+.PHONY: golden-check
+golden-check:
+	uv run python scripts/generate_golden_baseline.py --check
+	uv run python scripts/compare_golden_baseline.py
+
 .PHONY: test
-test: stage-web
+test: stage-web golden-check
 	uv run pytest -q -m "not e2e"
 
 .PHONY: e2e

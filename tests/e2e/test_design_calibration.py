@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
-from helpers import plot_annotation_texts, wait_for_ready, x_axis_titles
+from helpers import plot_annotation_texts, png_dimensions, wait_for_ready, x_axis_titles
 from playwright.sync_api import Page, expect
 
 pytestmark = pytest.mark.e2e
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _design_csv_columns() -> list[str]:
+    schema_path = PROJECT_ROOT / "tests" / "golden" / "export_schemas" / "csv_columns.json"
+    return json.loads(schema_path.read_text(encoding="utf-8"))["design_enabled"]
+
 
 DESIGN_PANEL_LABELS = [
     "C. Design calibration: selected-claim probability if x is true",
@@ -389,7 +398,8 @@ def test_design_csv_and_png_exports_include_design_panel(
     csv_download = csv_download_info.value
     csv_path = tmp_path / csv_download.suggested_filename
     csv_download.save_as(csv_path)
-    assert "design_power_if_true" in csv_path.read_text(encoding="utf-8").splitlines()[0]
+    header = csv_path.read_text(encoding="utf-8").splitlines()[0].split(",")
+    assert header == _design_csv_columns()
 
     with page.expect_download() as png_download_info:
         page.locator("#export-png").click()
@@ -397,3 +407,12 @@ def test_design_csv_and_png_exports_include_design_panel(
     png_path = tmp_path / png_download.suggested_filename
     png_download.save_as(png_path)
     assert png_path.stat().st_size > 0
+    assert png_dimensions(png_path) == (2800, 3200)
+
+    with page.expect_download() as manuscript_download_info:
+        page.locator("#export-manuscript-png").click()
+    manuscript_download = manuscript_download_info.value
+    manuscript_path = tmp_path / manuscript_download.suggested_filename
+    manuscript_download.save_as(manuscript_path)
+    assert manuscript_path.stat().st_size > 0
+    assert png_dimensions(manuscript_path) == (2800, 3000)
