@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-07-30: Replace Core v0.4.0 with corrective release v0.4.1
+
+The independent portfolio review identified invalid edge behavior in Core v0.4.0: non-monotone
+threshold precision bracketing, cancellation in pairwise support ratios, and unrepresentable
+ratio-scale exponential underflow. Adopt the exact released `wald-inference` v0.4.1 wheel, commit
+`f4613177b6dc81d194aa70762152de2bfa86663b`, SHA-256
+`d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`.
+
+The integrated workbench remains feature-frozen. The upgrade does not authorize new Core fields,
+an app-local solver, tolerance widening, or changes to the frozen B01–B08 contract.
+
 Use this file to record decisions that are hard to infer from the code alone.
 
 ## 2026-03-23: Static GitHub Pages app with Python source of truth

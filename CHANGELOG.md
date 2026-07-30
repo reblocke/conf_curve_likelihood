@@ -4,6 +4,36 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-30
+
+### Changed
+
+- Upgraded the exact numerical dependency from `wald-inference` v0.4.0 to v0.4.1.
+- Retained the feature-frozen `confcurve` Python, browser, and export contracts and did not expose
+  additional Core fields or add an app-local formula.
+
+### Dependency provenance
+
+- Core release:
+  <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1>
+- Core release commit:
+  `f4613177b6dc81d194aa70762152de2bfa86663b`
+- Core wheel:
+  `wald_inference-0.4.1-py3-none-any.whl`
+- Core wheel SHA-256:
+  `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`
+- Core sdist SHA-256:
+  `5b30fbc22c416cc724b75d9920157f42886ba185d34b628b4ad4c66691376bbf`
+- Core parity report SHA-256:
+  `18d020e6a00746646ffed913eb88f1e4b148aa2725872db647823019f1e65dba`
+
+### Scientific impact
+
+- Core v0.4.1 corrects non-monotone threshold precision bracketing, exact pairwise support ratios,
+  and strict ratio-scale underflow validation.
+- The integrated app's frozen B01–B08 response contract, defaults, views, warnings, plots, and
+  exports remain verification gates; no tolerance or scientific definition was widened.
+
 ## [0.2.0] - 2026-07-30
 
 ### Changed
@@ -101,6 +131,7 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.0
 [0.1.1]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.1.1

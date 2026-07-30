@@ -22,7 +22,7 @@ browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
 
-The v0.2.0 integrated-workbench release is pinned to `wald-inference` v0.4.0. It preserves the
+The v0.2.1 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
 legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
 Core release.
 
@@ -124,12 +124,12 @@ checkout, an editable path, or an unpinned Git reference.
 
 | Item | Authority |
 |---|---|
-| Core version | `wald-inference` v0.4.0 |
-| Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0> |
+| Core version | `wald-inference` v0.4.1 |
+| Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1> |
 | Release status observed 2026-07-30 | GitHub prerelease |
-| Release commit | `fd7b24740122bed7ae07769674732c5e56c91277` |
-| Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl> |
-| Wheel SHA-256 | `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6` |
+| Release commit | `f4613177b6dc81d194aa70762152de2bfa86663b` |
+| Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/wald_inference-0.4.1-py3-none-any.whl> |
+| Wheel SHA-256 | `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b` |
 | License | MIT |
 
 `make stage-web` deterministically replaces the ignored `web/assets/py/` directory from the
@@ -244,7 +244,7 @@ Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for re
   [this hosted application](https://reblocke.github.io/conf_curve_likelihood/)
 - App repository: [reblocke/conf_curve_likelihood](https://github.com/reblocke/conf_curve_likelihood)
 - Numerical dependency:
-  [wald-inference Core v0.4.0](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0)
+  [wald-inference Core v0.4.1](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1)
 - Privacy: calculations run locally in the browser; entered numerical values are not placed in URLs
   or sent to an application server. See
   [Privacy](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md).
