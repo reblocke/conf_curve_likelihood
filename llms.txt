@@ -18,6 +18,7 @@ Core wheel SHA-256: 401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c
   https://reblocke.github.io/wald-inference-tools/
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records dependency ownership,
   staging, upgrade, and rollback.
+- `docs/MAINTENANCE.md` and `docs/PRIVACY.md` record the feature-freeze and browser data boundary.
 - `docs/migration/` preserves the frozen pre-split API, browser contract, and validation authority.
 - `CHANGELOG.md` records app release notes and exact core provenance.
 

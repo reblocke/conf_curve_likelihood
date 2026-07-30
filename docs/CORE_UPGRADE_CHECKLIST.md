@@ -9,7 +9,8 @@ Use this checklist for every `wald-inference` upgrade.
 - [ ] Update `pyproject.toml`, `uv.lock`, staging constants, runtime expectations, README, `llms.txt`,
       `CITATION.cff`, changelog, decisions/ADR, and migration log.
 - [ ] Run `uv sync --locked` and confirm the expected installed Core version and artifact origin.
-- [ ] Run `make stage-web`; inspect the package manifest and confirm the exact artifact URL/hash.
+- [ ] Confirm the artifact URL/SHA in `pyproject.toml`, `uv.lock`, and staging constants; run
+      `make stage-web` and inspect the generated manifest versions and file hashes.
 - [ ] Run `make golden-check`; B01-B08 must remain within `rtol=1e-12`, `atol=1e-14`, with declared
       identity fields exact.
 - [ ] Run public-API, strict-JSON, staging-integrity, non-browser, full Chromium, and WebKit checks.

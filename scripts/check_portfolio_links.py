@@ -13,10 +13,7 @@ CATALOG_URL = "https://reblocke.github.io/wald-inference-tools/"
 INTEGRATED_URL = "https://reblocke.github.io/conf_curve_likelihood/"
 APP_REPOSITORY_URL = "https://github.com/reblocke/conf_curve_likelihood"
 CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0"
-PRIVACY_URL = (
-    "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/"
-    "CURRENT_BEHAVIOR.md#privacy-and-data-path"
-)
+PRIVACY_URL = "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md"
 FOCUSED_URLS = (
     "https://reblocke.github.io/compatibility-curve/",
     "https://reblocke.github.io/wald-likelihood-support/",

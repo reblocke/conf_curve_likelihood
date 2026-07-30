@@ -213,6 +213,7 @@ uv run python scripts/check_portfolio_links.py --live
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records the core dependency,
   staging, upgrade, and rollback decision.
 - `docs/MAINTENANCE.md` defines the feature-freeze, compatibility, and future archival criteria.
+- `docs/PRIVACY.md` records the browser-memory, storage, network, and export boundaries.
 - `docs/migration/` records the frozen pre-split behavior and portfolio migration contract.
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
@@ -254,4 +255,4 @@ Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for re
 - Numerical dependency:
   [wald-inference Core v0.4.0](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0)
 - Privacy: calculations run locally in the browser; entered numerical values are not placed in URLs
-  or sent to an application server.
+  or sent to an application server. See [Privacy](docs/PRIVACY.md).

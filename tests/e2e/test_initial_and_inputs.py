@@ -104,10 +104,7 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
         "https://reblocke.github.io/conf_curve_likelihood/",
         "https://github.com/reblocke/conf_curve_likelihood",
         "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0",
-        (
-            "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/"
-            "CURRENT_BEHAVIOR.md#privacy-and-data-path"
-        ),
+        "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md",
     }
     assert set(footer.locator("a").evaluate_all("(links) => links.map((link) => link.href)")) == (
         expected_portfolio_links

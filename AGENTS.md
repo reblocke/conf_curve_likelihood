@@ -11,7 +11,8 @@
 - `web/` - static browser app and browser ES modules; generated Python lives under ignored `web/assets/py/`.
 - `scripts/stage_web_python.py` - stages the locked installed core and local adapter and generates `web/assets/py/manifest.json`.
 - `tests/` - unit, integration, property, and Playwright E2E tests.
-- `docs/` - decisions, workflow notes, and scientific/data-management documentation.
+- `docs/` - decisions, maintenance/privacy, workflow notes, and scientific/data-management
+  documentation.
 - `.agents/skills/` - focused local workflows for recurring agent tasks.
 
 ## Commands

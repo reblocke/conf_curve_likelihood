@@ -156,6 +156,7 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
 def test_integrated_role_maintenance_and_request_routing_are_explicit() -> None:
     readme = _read("README.md")
     maintenance = _read("docs/MAINTENANCE.md")
+    privacy = _read("docs/PRIVACY.md")
     core_checklist = _read("docs/CORE_UPGRADE_CHECKLIST.md")
     feature_template = _read(".github/ISSUE_TEMPLATE/feature_request.md")
     pull_request_template = _read(".github/PULL_REQUEST_TEMPLATE.md")
@@ -182,6 +183,9 @@ def test_integrated_role_maintenance_and_request_routing_are_explicit() -> None:
         assert heading in maintenance
     assert "feature-frozen" in maintenance
     assert "Archival is a human decision" in maintenance
+    for boundary in ("local storage", "session storage", "IndexedDB", "cookies", "telemetry"):
+        assert boundary in privacy
+    assert "not included in those requests or transmitted" in privacy
     assert "make golden-check" in core_checklist
     assert "make portfolio-links" in pull_request_template
     assert "Integrated Wald Inference Workbench" in html
