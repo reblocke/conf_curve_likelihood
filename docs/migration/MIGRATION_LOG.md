@@ -15,6 +15,9 @@
 
 ## Milestone 00 — Freeze and characterize the integrated baseline
 
+> Historical entry retained as recorded; the dated evidence corrections at the end of this
+> milestone supersede the qualified statements they identify.
+
 | Field | Status |
 |---|---|
 | Date opened/completed | 2026-07-29 |
@@ -86,7 +89,25 @@
 - No production formula change was introduced by PR #11. The only intentional difference
   from the audited source remains the separately approved PR #14 boundary correction.
 
+### Evidence corrections — 2026-07-30
+
+These corrections supersede the affected wording above without erasing the original milestone
+record:
+
+- Issue #12 explicitly said its creation was not approval. Authorization was later supplied in the
+  migration task outside GitHub; PR #14 then implemented the strict-JSON boundary correction.
+- The PR #13 metadata choice was likewise not publicly approved on GitHub. The migration task
+  owner later confirmed the exact author identity as `Brian Locke` and the license as MIT.
+- PR #14 is the only intentional production-behavior difference. PR #13 metadata and PR #11
+  documentation/testing surfaces were also intentional non-production differences.
+- GitHub Actions independently evidences the passing CI jobs. The local-suite and numerical-review
+  statements are implementation observations that are not independently recoverable from the
+  public Actions record.
+
 ## Milestone 02 — Rewire the integrated workbench to the released core
+
+> Historical entry retained as recorded; the dated evidence corrections at the end of this
+> milestone supersede the qualified statements they identify.
 
 | Field | Status |
 |---|---|
@@ -177,21 +198,46 @@
   workbench finalization milestone rather than being introduced as an unapproved migration
   difference.
 
+### Evidence corrections — 2026-07-30
+
+These corrections supersede the affected wording above:
+
+- GitHub reports the v0.1.1 release as annotated and prerelease, but not immutable
+  (`immutable=false`).
+- The exact release-workflow `awk` at candidate `d83d066411d2baf0281fa5c68e25b958d10fefd2`
+  produces 51 lines; the live release body has 52 lines including its trailing blank.
+- Push run 30514211604 tested exact candidate
+  `d83d066411d2baf0281fa5c68e25b958d10fefd2`. Pull-request run 30514221666 tested GitHub's
+  synthetic merge `639847847a2099a3ab384c0ee23aa4e596798cb0`, which merged that candidate into
+  then-current base `45c29e8f57ef793f40688e5352249c73f1001295`.
+- The local-suite, disposable-clone, and hosted-smoke execution claims are implementation
+  observations that are not independently recoverable from the public GitHub record. Publicly
+  recoverable evidence covers the cited CI, Pages, and release runs plus published artifacts and
+  checksums.
+- “After exact-head review” refers to candidate-head verification and expected-head merge
+  protection; no separate GitHub review or comment independently substantiates that review claim.
+- The verified version footer was an intentional presentation change. No numerical, Python API,
+  browser-payload, or export-contract change was intended.
+- The historical no-difference assurance is limited to the named, tested scientific, golden,
+  strict-JSON, Python-API, browser-payload, and export contracts. It does not exclude the recorded
+  presentation, staging, dependency, or workflow changes.
+- The v0.1.1 app had no Web Worker; the browser runtime recovered after corrected input.
+
 ## Milestone 10 — Finalize the integrated workbench role
 
 | Field | Status |
 |---|---|
-| Date opened/completed | 2026-07-30 |
-| Source repository/SHA | `reblocke/conf_curve_likelihood` / `8f980aa61832483b8d98f3705411bef9f1d16663` |
-| Target repository/SHA | Same repository; release candidate recorded by the Ticket 10 PR |
+| Date opened/completed | Opened 2026-07-30; implementation merged, prerelease pending at this evidence commit |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `92db9ad6d68300f029c9a099286b7414a53dc32b` |
+| Target repository/SHA | Candidate `2f4f8aae9285e59daf545c12d9c035432c084e87`; merged `5d0ac9ff7b35df2388614a5d9ff2bec513c957fe` |
 | Branch | `codex/mig-10-finalize-workbench` |
-| Pull request | Recorded at merge |
-| Tag/release | Planned annotated `v0.2.0` prerelease |
+| Pull request | [#19](https://github.com/reblocke/conf_curve_likelihood/pull/19), merged at the exact candidate head |
+| Tag/release | Planned annotated `v0.2.0` prerelease; no tag or release exists at this pre-tag evidence commit |
 | Core version | Exact `wald-inference` v0.4.0 release |
 | Core artifact | [`wald_inference-0.4.0-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl) |
 | Validation status | Release candidate pending independent portfolio validation |
-| Intended behavior changes | Integrated-workbench positioning, portfolio navigation, authored browser-error presentation, maintenance/routing policy, and workflow runtimes; no formula or contract change |
-| Artifact/manifest hashes | Core wheel `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`; app release hashes recorded by the tag workflow |
+| Intended behavior changes | Integrated-workbench positioning, portfolio navigation, authored browser-error presentation, maintenance/routing policy, and workflow runtimes; no formula, Python API, browser-payload, or export-contract change |
+| Artifact/manifest hashes | Core wheel `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`; deployed browser bundle `13af1bef8091181753ad1c018283435c10d8b9801b3ecb049db1014c38678df5`; source/release checksums pending the tag workflow |
 
 ### Work recorded
 
@@ -206,14 +252,29 @@
 - Replace raw Pyodide traceback display with a stable authored error while retaining the final
   exception type/text and recovery behavior.
 - Move CI, Pages, and release workflows to current Node 24-compatible action majors.
+- Update the public repository description/homepage and close
+  [issue #5](https://github.com/reblocke/conf_curve_likelihood/issues/5) after the upgraded
+  workflows passed on `main`.
 
 ### Validation authority
 
 - The unchanged 22-case B01-B08 corpus remains authoritative at `rtol=1e-12`, `atol=1e-14`, with
   declared identity fields exact.
-- The release candidate must pass the legacy public API, strict JSON, deterministic staging,
-  complete non-browser suite, full Chromium suite, WebKit smoke, portfolio-link check, clean
-  checkout, and hosted input-free/privacy smoke before the annotated tag is released.
+- Local final verification passed the 22 B01-B08 cases, 205 non-browser tests, all 48 Chromium
+  tests, WebKit initial-render smoke, strict JSON, public API, deterministic staging,
+  portfolio-link, duplicate/stale-link, clean-tree, and export/error-recovery gates.
+- Push CI tested exact candidate `2f4f8aae9285e59daf545c12d9c035432c084e87`; pull-request
+  CI tested GitHub's synthetic merge `67466f09e6eafac5f0154e58a5c016246d3a9b91`, which merged
+  that candidate into then-current base `92db9ad6d68300f029c9a099286b7414a53dc32b`. Both passed:
+  [run 30536727262](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30536727262)
+  and
+  [run 30536744401](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30536744401).
+- Post-merge [main CI](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30537447640)
+  and [Pages](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30537447689)
+  passed at merge commit `5d0ac9ff7b35df2388614a5d9ff2bec513c957fe`.
+- Hosted Chromium verified app/Core versions, the exact ten-link footer, a rendered plot, input-free
+  URLs, zero input-triggered network requests, and no cookies, local/session storage, IndexedDB,
+  service worker, or mobile overflow. The live-link check reached all ten public targets.
 
 ### Unresolved decisions and remaining risks
 
