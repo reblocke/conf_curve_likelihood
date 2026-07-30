@@ -4,6 +4,18 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-30
+
+### Changed
+
+- Wrap compact observed-panel annotations into bounded lines at mobile widths and rerender them
+  when the responsive layout crosses the compact breakpoint.
+- Add a rendered-SVG bounding-box regression requiring both observed-panel labels to remain
+  inside the plot and 390-pixel viewport.
+- Force Chromium E2E dependency loads onto TCP/HTTP2 so isolated test contexts do not inherit
+  jsDelivr QUIC transport failures; WebKit and the production browser runtime are unchanged.
+- Preserve the feature-frozen numerical, Python, browser-payload, privacy, and export contracts.
+
 ## [0.2.1] - 2026-07-30
 
 ### Changed
@@ -131,7 +143,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.0
 [0.1.1]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.1.1

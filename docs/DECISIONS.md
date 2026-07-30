@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-07-30 — Bound compact panel-label rendering
+
+The integrated plot wraps observed-panel annotations only below the existing compact breakpoint
+and rerenders when the responsive layout crosses that breakpoint. Rendered SVG bounding boxes,
+not document scroll width alone, are the mobile acceptance criterion. This is a presentation-only
+correction: numerical responses, frozen B01–B08 behavior, textual alternatives, and exports retain
+their existing contracts.
+
+The Chromium E2E fixture also disables QUIC. A failed release run showed repeated jsDelivr
+`ERR_QUIC_PROTOCOL_ERROR` failures while isolated test contexts loaded SciPy; forcing Chromium's
+test-only dependency traffic onto TCP/HTTP2 removes that external transport failure mode without
+changing the deployed app or WebKit smoke test.
+
 ## 2026-07-30: Replace Core v0.4.0 with corrective release v0.4.1
 
 The independent portfolio review identified invalid edge behavior in Core v0.4.0: non-monotone

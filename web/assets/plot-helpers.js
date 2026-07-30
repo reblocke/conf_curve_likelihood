@@ -516,9 +516,10 @@ export function makePanelAnnotations(
   viewMode,
   manuscript,
   designEnabled = false,
+  compact = false,
 ) {
   const font = {
-    size: manuscript ? 16 : 13,
+    size: manuscript ? 16 : compact ? 11 : 13,
     color: "#132a3a",
   };
   const compatibilityLabel =
@@ -534,15 +535,17 @@ export function makePanelAnnotations(
   const domains = panelDomains(viewMode, designEnabled);
   const annotations = [];
   const addPanelLabel = (text, y) => {
+    const renderedText = compact ? wrapAnnotationText(text, 31) : text;
     annotations.push({
       x: 0,
       y,
       xref: "paper",
       yref: "paper",
-      text,
+      text: renderedText,
       showarrow: false,
       xanchor: "left",
       yanchor: "bottom",
+      align: "left",
       font,
     });
   };
@@ -571,6 +574,24 @@ export function makePanelAnnotations(
     addDesignLabels();
   }
   return annotations;
+}
+
+function wrapAnnotationText(text, maxLineLength) {
+  const lines = [];
+  let currentLine = "";
+  for (const word of text.split(/\s+/)) {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (currentLine && candidate.length > maxLineLength) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = candidate;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines.join("<br>");
 }
 
 function roundToSignificantDigits(value, digits) {

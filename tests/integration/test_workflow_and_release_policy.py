@@ -123,13 +123,13 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.1"
+    assert pyproject["project"]["version"] == "0.2.2"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.1" in citation
+    assert "version: 0.2.2" in citation
     assert 'date-released: "2026-07-30"' in citation
-    assert "## [0.2.1] - 2026-07-30" in changelog
+    assert "## [0.2.2] - 2026-07-30" in changelog
 
     provenance_surfaces = (
         _read("pyproject.toml"),

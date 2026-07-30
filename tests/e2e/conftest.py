@@ -36,6 +36,22 @@ def browser_context_args(browser_context_args: dict[str, object]) -> dict[str, o
 
 
 @pytest.fixture(scope="session")
+def browser_type_launch_args(
+    browser_type_launch_args: dict[str, object],
+    browser_name: str | None,
+) -> dict[str, object]:
+    if browser_name != "chromium":
+        return browser_type_launch_args
+
+    existing_args = browser_type_launch_args.get("args", [])
+    assert isinstance(existing_args, list)
+    return {
+        **browser_type_launch_args,
+        "args": [*existing_args, "--disable-quic"],
+    }
+
+
+@pytest.fixture(scope="session")
 def app_url() -> str:
     port = _free_port()
     process = subprocess.Popen(
