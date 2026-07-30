@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Reed Blocke"},
+  {name = "Brian Locke"},
 ]
 dependencies = [
   "numpy>=2.2.5,<2.3",
