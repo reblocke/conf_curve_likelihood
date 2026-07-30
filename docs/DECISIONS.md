@@ -307,3 +307,29 @@ to `Copyright (c) 2026 Brian Locke`.
 - The existing `@reblocke` GitHub account and repository URLs remain unchanged.
 - This metadata correction does not change scientific calculations, browser behavior, public APIs,
   package versions, or release dates.
+
+## 2026-07-29: Supersede the integrated numerical source with a released core
+
+**Context:**
+
+The portfolio split requires the integrated workbench and future focused applets to use one
+versioned numerical implementation while the existing Python and browser contracts remain stable.
+The earlier 2026-03-23 staging decision assumed that `src/confcurve/` owned the formulas and that
+its generated browser copy could be committed.
+
+**Decision:**
+
+Adopt the exact released `wald-inference` v0.1.1 wheel as the numerical source of truth.
+`confcurve` becomes the compatibility and browser-contract adapter. Generate and verify both
+packages under ignored `web/assets/py/` through the single `make stage-web` path used locally and by
+CI, Pages, and releases. The complete dependency, manifest, upgrade, compatibility, and rollback
+policy is [ADR 0002](adr/0002-released-core-and-generated-browser-stage.md).
+
+**Consequences:**
+
+- The 2026-03-23 formula-ownership and committed-stage assumptions are superseded; its choice of a
+  Python-first static Pyodide app remains in force.
+- New or changed numerical behavior begins in `wald-inference-core` and reaches this app only through
+  an exact reviewed release.
+- Browser payload assembly, UI behavior, copy, exports, and the existing Pages URL remain owned here.
+- Generated Python files are ignored build artifacts and must leave tracked Git state clean.

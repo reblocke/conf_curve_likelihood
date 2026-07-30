@@ -703,6 +703,14 @@ button:hover {
   color: var(--accent);
 }
 
+.technical-version {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(19, 42, 58, 0.1);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.76rem;
+}
+
 .status-card[data-state="error"] {
   border-color: rgba(176, 74, 47, 0.35);
   background: rgba(176, 74, 47, 0.08);

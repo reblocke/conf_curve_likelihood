@@ -3,6 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+from wald_inference import (
+    approximate_wald_ci_width,
+    information_scaled_standard_error,
+    support_comparison,
+    support_interval,
+)
 
 from .core import (
     LOG_MAX_FLOAT,
@@ -19,6 +25,7 @@ from .core import (
     log_relative_likelihood,
     max_safe_grid_span,
     relative_likelihood,
+    standardized_distance,
     summaries,
     to_working_scale,
     validate_inputs,
@@ -43,9 +50,6 @@ from .models import (
     ThresholdSupportPayload,
 )
 
-S_MINUS_2_SUPPORT_CUTOFF = -2.0
-S_MINUS_2_DISTANCE = 2.0
-
 
 def _float_list(values: float | np.ndarray) -> list[float]:
     return [float(value) for value in np.asarray(values, dtype=float).tolist()]
@@ -62,12 +66,6 @@ def _require_strict_json_numbers(value: object, *, path: str = "$") -> None:
         raise ValidationError(
             f"Computed response value at {path} exceeds the finite floating-point range."
         )
-
-
-def _exp_or_none(log_value: float | None) -> float | None:
-    if log_value is None or log_value > LOG_MAX_FLOAT:
-        return None
-    return float(np.exp(log_value))
 
 
 def _safe_display_values(
@@ -145,35 +143,35 @@ def _threshold_support_summaries(
     if not thresholds_working:
         return summaries_payload
 
-    log_threshold_likelihoods = _float_list(
-        log_relative_likelihood(np.asarray(thresholds_working), theta_hat=theta_hat, se=se)
-    )
-    threshold_likelihoods = _float_list(np.exp(np.asarray(log_threshold_likelihoods)))
-
-    for threshold_display, threshold_working, threshold_likelihood, log_threshold in zip(
-        thresholds_display,
-        thresholds_working,
-        threshold_likelihoods,
-        log_threshold_likelihoods,
-        strict=True,
+    for threshold_display, threshold_working in zip(
+        thresholds_display, thresholds_working, strict=True
     ):
-        log_mle_to_threshold = -log_threshold
-        if log_null_relative_likelihood is None:
-            log_threshold_to_null = None
-        else:
-            log_threshold_to_null = log_threshold - log_null_relative_likelihood
+        comparison = support_comparison(
+            threshold_working,
+            theta_hat if log_null_relative_likelihood is None else null_working,
+            theta_hat=theta_hat,
+            se=se,
+        )
 
         summaries_payload.append(
             {
                 "threshold_display": float(threshold_display),
                 "threshold_working": float(threshold_working),
-                "relative_likelihood": float(threshold_likelihood),
-                "log_relative_likelihood": float(log_threshold),
-                "likelihood_ratio_mle_to_threshold": _exp_or_none(log_mle_to_threshold),
-                "log_likelihood_ratio_mle_to_threshold": float(log_mle_to_threshold),
-                "likelihood_ratio_threshold_to_null": _exp_or_none(log_threshold_to_null),
+                "relative_likelihood": comparison.relative_likelihood,
+                "log_relative_likelihood": comparison.log_relative_likelihood,
+                "likelihood_ratio_mle_to_threshold": (comparison.likelihood_ratio_mle_to_candidate),
+                "log_likelihood_ratio_mle_to_threshold": (
+                    comparison.log_likelihood_ratio_mle_to_candidate
+                ),
+                "likelihood_ratio_threshold_to_null": (
+                    None
+                    if log_null_relative_likelihood is None
+                    else comparison.likelihood_ratio_candidate_to_reference
+                ),
                 "log_likelihood_ratio_threshold_to_null": (
-                    None if log_threshold_to_null is None else float(log_threshold_to_null)
+                    None
+                    if log_null_relative_likelihood is None
+                    else comparison.log_likelihood_ratio_candidate_to_reference
                 ),
                 "direction_from_estimate": _direction_label(
                     threshold_working, theta_hat, "estimate"
@@ -184,18 +182,6 @@ def _threshold_support_summaries(
     return summaries_payload
 
 
-def _finite_s_minus_2_endpoint(
-    theta_hat: float,
-    se: float,
-    direction: float,
-) -> tuple[float, bool]:
-    half_endpoint = (theta_hat * 0.5) + (direction * se)
-    if not np.isfinite(half_endpoint) or abs(half_endpoint) > (MAX_FLOAT * 0.5):
-        return (MAX_FLOAT if half_endpoint >= 0 else -MAX_FLOAT), True
-    endpoint = half_endpoint * 2.0
-    return float(endpoint), False
-
-
 def _s_minus_2_interval(
     *,
     effect_type: str,
@@ -204,10 +190,8 @@ def _s_minus_2_interval(
     se: float,
     display_natural_axis: bool,
 ) -> tuple[SMinus2IntervalPayload, bool, bool]:
-    lower_working, lower_working_clipped = _finite_s_minus_2_endpoint(theta_hat, se, -1.0)
-    upper_working, upper_working_clipped = _finite_s_minus_2_endpoint(theta_hat, se, 1.0)
-    working_range = np.asarray([lower_working, upper_working], dtype=float)
-    working_clipped = lower_working_clipped or upper_working_clipped
+    interval = support_interval(theta_hat, se)
+    working_range = np.asarray(interval.range_working, dtype=float)
 
     if display_natural_axis:
         display_range, display_clipped = _safe_display_values(
@@ -219,14 +203,14 @@ def _s_minus_2_interval(
 
     return (
         {
-            "support_cutoff": S_MINUS_2_SUPPORT_CUTOFF,
-            "relative_likelihood_cutoff": float(np.exp(S_MINUS_2_SUPPORT_CUTOFF)),
-            "likelihood_ratio_mle_to_bound": float(np.exp(-S_MINUS_2_SUPPORT_CUTOFF)),
+            "support_cutoff": interval.support_cutoff,
+            "relative_likelihood_cutoff": interval.relative_likelihood_cutoff,
+            "likelihood_ratio_mle_to_bound": interval.likelihood_ratio_mle_to_bound,
             "range_display": _float_list(display_range),
             "range_working": _float_list(working_range),
         },
         display_clipped,
-        working_clipped,
+        interval.working_clipped,
     )
 
 
@@ -483,13 +467,9 @@ def _design_payload(
         label="Design information multiplier",
         default=1.0,
     )
-    design_se = se / float(np.sqrt(information_multiplier))
-    current_ci_width = 2.0 * Z975 * se
-    design_ci_width = 2.0 * Z975 * design_se
-    if not np.isfinite(current_ci_width) or not np.isfinite(design_ci_width):
-        raise ValidationError(
-            "Design confidence-interval width exceeds the finite floating-point range."
-        )
+    design_se = information_scaled_standard_error(se, information_multiplier)
+    current_ci_width = approximate_wald_ci_width(se, Z975)
+    design_ci_width = approximate_wald_ci_width(design_se, Z975)
     claim_threshold_display, claim_threshold_working = _coerce_design_claim_threshold(
         effect_type=effect_type,
         value=payload.get("design_claim_threshold"),
@@ -732,7 +712,7 @@ def compute_curves(payload: CurveRequest | dict[str, Any]) -> CurveResponse:
         )
         if not np.isfinite(grid_working).all():
             raise ValidationError("Plausible display range must produce a finite x-grid.")
-    z_values = (grid_working - theta_hat) / se_info.se
+    z_values = standardized_distance(grid_working, theta_hat=theta_hat, se=se_info.se)
     compatibility = confidence_curve(grid_working, theta_hat=theta_hat, se=se_info.se)
     rel_likelihood = relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)
     log_rel_likelihood = log_relative_likelihood(grid_working, theta_hat=theta_hat, se=se_info.se)

@@ -3,8 +3,8 @@
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  uv-sync   Create/update the local env from uv.lock"
-	@echo "  stage-web Copy src/confcurve into web/assets/py/confcurve"
+	@echo "  uv-sync   Restore the local environment exactly from uv.lock"
+	@echo "  stage-web Generate the ignored Pyodide package bundle and manifest"
 	@echo "  fmt       Format code (ruff)"
 	@echo "  lint      Lint code (ruff)"
 	@echo "  golden-check Verify frozen numerical and browser-contract fixtures"
@@ -16,7 +16,7 @@ help:
 
 .PHONY: uv-sync
 uv-sync:
-	uv sync
+	uv sync --locked
 
 .PHONY: stage-web
 stage-web:
@@ -53,7 +53,7 @@ e2e: stage-web
 		--output test-results
 
 .PHONY: serve
-serve:
+serve: stage-web
 	uv run python -m http.server --directory web 8000
 
 .PHONY: verify
@@ -62,5 +62,5 @@ verify: fmt-check lint test e2e
 .PHONY: clean
 clean:
 	@rm -rf .pytest_cache .ruff_cache .playwright .playwright-artifacts test-results
-	@rm -rf dist build web/.pytest_cache
+	@rm -rf dist build web/.pytest_cache web/assets/py
 	@find src tests scripts -type d -name __pycache__ -prune -exec rm -rf {} +

@@ -8,9 +8,17 @@ This repository builds a static web app and Python package that reconstruct:
 
 from a 95% confidence interval and an optional validating point estimate.
 
-The numerical source of truth lives in `src/confcurve/`. The deployed app lives in `web/` and loads that same Python package in the browser via Pyodide.
+The numerical source of truth is the released
+[`wald-inference` package](https://github.com/reblocke/wald-inference-core).
+`src/confcurve/` is the backward-compatible Python/browser adapter: it preserves the legacy
+imports and `compute_curves()` payload contract while delegating core-owned calculations.
+The deployed app lives in `web/` and loads generated, verified copies of both packages in the
+browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
+
+The v0.1.1 release candidate is pinned to `wald-inference` v0.1.1. The migration changes the
+implementation source, not the intended public numerical, browser, or export behavior.
 
 ## What the app does
 
@@ -83,15 +91,59 @@ make serve
 ```
 
 Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+`make serve`, `make test`, `make e2e`, CI, and GitHub Pages all invoke the same
+`make stage-web` prerequisite.
+
+## Core dependency and browser staging
+
+The locked dependency is the exact GitHub release artifact below; it is not `main`, a sibling
+checkout, an editable path, or an unpinned Git reference.
+
+| Item | Authority |
+|---|---|
+| Core version | `wald-inference` v0.1.1 |
+| Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1> |
+| Release status observed 2026-07-29 | GitHub prerelease |
+| Release commit | `d1ffb0baa46eb8ad27175d58c90e4febc0ac2809` |
+| Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl> |
+| Wheel SHA-256 | `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457` |
+| License | MIT |
+
+`make stage-web` deterministically replaces the ignored `web/assets/py/` directory from the
+locked environment. It stages `wald_inference` and `confcurve` and writes
+`web/assets/py/manifest.json` with the app/core package versions, source commit, ordered file
+metadata, per-file SHA-256 digests and byte counts, and an aggregate bundle SHA-256. The browser
+validates the manifest schema, every file digest, and the aggregate digest before importing either
+package. Stale files cannot survive replacement.
+
+Generated Python is never edited or committed. A clean clone needs only this repository, `uv`, and
+network access to the pinned release URL during the initial locked dependency install; no adjacent
+`wald-inference-core` checkout is used. See
+[ADR 0002](docs/adr/0002-released-core-and-generated-browser-stage.md) for the ownership, upgrade,
+rollback, and compatibility policy.
+
+### Frozen compatibility contract
+
+The migration authority is the
+[`pre-split-baseline-2026-07-29`](https://github.com/reblocke/conf_curve_likelihood/releases/tag/pre-split-baseline-2026-07-29)
+release, with behavior source `830756ecb11b4e8161f8dfe1fc75afc346ef4467`. Its 22 B01–B08
+cases freeze the `confcurve.__all__` compatibility surface, `compute_curves()` request/response
+schema and ordering, warnings and errors, strict JSON, default UI behavior, views and overlays,
+CSV/PNG exports, caption, and reviewer text. The fixture manifest SHA-256 is
+`f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc`; the fixture-set
+SHA-256 is `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d`.
+Migration comparisons use `rtol=1e-12`, `atol=1e-14`, and exact comparison for declared identity
+fields. Any unexplained difference is a release blocker.
 
 ## Repository layout
 
-- `src/confcurve/` – Python numerical core, payload contract, and staging helpers
+- `src/confcurve/` – legacy compatibility API, browser payload contract, orchestration, and staging
+  helpers
 - `scripts/` – thin automation such as staging the Python package for the web app
 - `tests/` – unit, property, integration, and Playwright end-to-end tests
 - `tests/golden/` – source-stamped pre-split request/response and export-schema fixtures
 - `tests/e2e/` – behavior-focused browser tests with shared Playwright helpers
-- `web/` – static GitHub Pages site
+- `web/` – static GitHub Pages site; `web/assets/py/` is generated and ignored
 - `web/assets/app.js` – browser entrypoint for DOM state, event wiring, compute, and rerender orchestration
 - `web/assets/config.js`, `formatters.js`, `runtime.js`, and `renderers.js` – browser configuration, display formatting, Pyodide loading, and HTML rendering helpers
 - `web/assets/plot.js` and `plot-helpers.js` – Plotly rendering/export API and pure plotting helpers
@@ -105,7 +157,8 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 - `make golden-check` verifies the frozen B01–B08 contract and numerical baseline
 - `make test` runs non-E2E tests
 - `make e2e` runs Playwright browser tests
-- `make verify` runs staging, format check, lint, tests, and E2E checks
+- `make verify` runs staging, format check, lint, frozen parity, non-E2E tests, and E2E checks
+- `make serve` regenerates the browser Python bundle before starting the local server
 
 ## Worked examples
 
@@ -118,9 +171,12 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 - `AGENTS.md` defines repo-specific engineering rules.
 - `docs/DECISIONS.md` records architectural choices.
+- `docs/adr/0002-released-core-and-generated-browser-stage.md` records the core dependency,
+  staging, upgrade, and rollback decision.
 - `docs/migration/` records the frozen pre-split behavior and portfolio migration contract.
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
+- `CHANGELOG.md` records app release notes and exact core provenance.
 - Source links used for app terminology and presentation notes:
   - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals; retrieved 2026-04-23.
   - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale; retrieved 2026-04-23.

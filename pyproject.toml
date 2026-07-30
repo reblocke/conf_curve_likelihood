@@ -1,7 +1,7 @@
 [project]
 name = "confcurve"
-version = "0.1.0"
-description = "Static GitHub Pages app and Python core for Wald confidence-curve reconstruction"
+version = "0.1.1"
+description = "Static GitHub Pages app and compatibility adapter for Wald inference"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
@@ -11,6 +11,7 @@ authors = [
 dependencies = [
   "numpy>=2.2.5,<2.3",
   "scipy>=1.14.1,<1.15",
+  "wald-inference @ https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl#sha256=95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457",
 ]
 
 [dependency-groups]

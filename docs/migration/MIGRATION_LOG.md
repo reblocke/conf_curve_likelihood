@@ -86,6 +86,75 @@
 - No production formula change was introduced by PR #11. The only intentional difference
   from the audited source remains the separately approved PR #14 boundary correction.
 
+## Milestone 02 — Rewire the integrated workbench to the released core
+
+| Field | Status |
+|---|---|
+| Date opened/completed | Opened 2026-07-29; completion pending merge, CI, tag, and app release |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` at `45c29e8f57ef793f40688e5352249c73f1001295` |
+| Target repository/SHA | `reblocke/conf_curve_likelihood`; candidate SHA pending |
+| Branch | `codex/mig-02-rewire-core` |
+| Pull request | Pending |
+| Tag/release | App v0.1.1 prepared; tag and release not yet created |
+| Core version | Exact `wald-inference` v0.1.1 release |
+| Core artifact | [`wald_inference-0.1.1-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl) |
+| Core release commit | `d1ffb0baa46eb8ad27175d58c90e4febc0ac2809` |
+| Validation status | Local and external completion evidence pending |
+| Intended behavior changes | None; formula ownership and staging mechanism only |
+| Artifact/manifest hashes | Core wheel SHA-256 `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457`; generated stage records per-file and aggregate hashes |
+
+### Work recorded
+
+- Convert `confcurve` formula modules into compatibility adapters over the released core while
+  retaining the frozen Python exports and browser contract.
+- Pin the exact released wheel in project metadata and `uv.lock`; no branch, sibling checkout, or
+  editable path is a runtime authority.
+- Replace tracked generated Python with an ignored, atomically generated
+  `web/assets/py/` bundle containing both packages and `manifest.json`.
+- Route local tests, local serving, CI, Pages, and tagged releases through `make stage-web`.
+- Prepare app v0.1.1 metadata and release notes. No tag or release is recorded before it exists.
+
+### Validation evidence
+
+- `uv sync --locked` resolved and checked the locked environment successfully.
+- `make stage-web` generated 7 app files and 14 core files plus the manifest.
+- `make golden-check` passed all 22 frozen cases at `rtol=1e-12`, `atol=1e-14`.
+- `uv run pytest -q -m "not e2e"` passed the complete 196-test non-browser suite.
+- The focused public-API, staging-provenance, release-policy, core, design, and property command
+  passed all 128 selected tests.
+- All three workflow files parsed as YAML; the five release-policy tests passed; changelog-note
+  extraction produced a nonempty 44-line body without link-definition residue; and two
+  independently compressed `git archive` outputs compared byte-for-byte identical.
+- A fresh download of the pinned wheel matched SHA-256
+  `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457`; its metadata reports
+  `wald-inference` 0.1.1 under MIT. The release sdist and parity-report SHA-256 values are
+  `a650f0041a2082bc1b58413c5ddf59c1e2c0eab48f31c8524943f69369050fb0` and
+  `7619090d95b0767112039c9deec53d284101582692ccd2d8975ace63fb0547bc`.
+- `make fmt-check` passed for all 31 Python files, `make lint` passed, and `git diff --check`
+  reported no whitespace errors. Two consecutive stages produced byte-identical manifests
+  for the current checkout.
+- Frozen authority remains 22 B01–B08 cases at `rtol=1e-12`, `atol=1e-14`, with manifest SHA-256
+  `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc` and fixture-set SHA-256
+  `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d`.
+- Required candidate commands are recorded in
+  [ADR 0002](../adr/0002-released-core-and-generated-browser-stage.md). Results will be appended
+  only after they are observed.
+- GitHub Actions clean checkouts provide the ongoing no-sibling test: locked install fetches the
+  released artifact, `make stage-web` generates the ignored bundle, and the jobs fail if tracked
+  state changes.
+- Chromium, WebKit, clean-candidate checkout, PR/CI, tag, and release results remain pending and
+  are not claimed here.
+
+### Unresolved decisions and remaining risks
+
+- The core v0.1.1 release URL and assets exist; it was observed as a GitHub prerelease while this
+  entry was drafted. Its promotion state must be rechecked before final app release.
+- Candidate commit, pull request, CI run, Pages deployment, annotated `v0.1.1` tag, app release URL,
+  generated release-manifest hash, and source-archive checksum remain unobserved and therefore
+  unclaimed.
+- Any golden, strict-JSON, Python API, or browser difference is a release blocker rather than an
+  accepted migration change.
+
 ## Entry template
 
 Copy this section for each later milestone:

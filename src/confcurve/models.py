@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
+from wald_inference import EFFECT_SPECS as CORE_EFFECT_SPECS
+
 EffectFamily = Literal["additive", "ratio"]
 WorkingScale = Literal["identity", "log"]
 EstimateSource = Literal["inferred_from_ci", "provided_validated"]
@@ -28,78 +30,15 @@ class EffectSpec:
 
 
 EFFECT_SPECS: dict[str, EffectSpec] = {
-    "odds_ratio": EffectSpec(
-        key="odds_ratio",
-        label="Odds ratio",
-        family="ratio",
-        working_scale="log",
-        default_null=1.0,
-        positive_only=True,
-    ),
-    "risk_ratio": EffectSpec(
-        key="risk_ratio",
-        label="Risk ratio",
-        family="ratio",
-        working_scale="log",
-        default_null=1.0,
-        positive_only=True,
-    ),
-    "hazard_ratio": EffectSpec(
-        key="hazard_ratio",
-        label="Hazard ratio",
-        family="ratio",
-        working_scale="log",
-        default_null=1.0,
-        positive_only=True,
-    ),
-    "incidence_rate_ratio": EffectSpec(
-        key="incidence_rate_ratio",
-        label="Incidence rate ratio",
-        family="ratio",
-        working_scale="log",
-        default_null=1.0,
-        positive_only=True,
-    ),
-    "ratio_of_means": EffectSpec(
-        key="ratio_of_means",
-        label="Ratio of means",
-        family="ratio",
-        working_scale="log",
-        default_null=1.0,
-        positive_only=True,
-    ),
-    "mean_difference": EffectSpec(
-        key="mean_difference",
-        label="Mean difference",
-        family="additive",
-        working_scale="identity",
-        default_null=0.0,
-        positive_only=False,
-    ),
-    "risk_difference": EffectSpec(
-        key="risk_difference",
-        label="Risk difference",
-        family="additive",
-        working_scale="identity",
-        default_null=0.0,
-        positive_only=False,
-    ),
-    "rate_difference": EffectSpec(
-        key="rate_difference",
-        label="Rate difference",
-        family="additive",
-        working_scale="identity",
-        default_null=0.0,
-        positive_only=False,
-    ),
-    "regression_coefficient": EffectSpec(
-        key="regression_coefficient",
-        label="Regression coefficient",
-        family="additive",
-        working_scale="identity",
-        default_null=0.0,
-        positive_only=False,
-    ),
+    key: EffectSpec(
+        key=spec.key,
+        label=spec.label,
+        family=spec.family,
+        working_scale=spec.working_scale,
+        default_null=spec.default_null,
+        positive_only=spec.positive_only,
+    )
+    for key, spec in CORE_EFFECT_SPECS.items()
 }
 
 DEFAULT_EFFECT_TYPE = "odds_ratio"

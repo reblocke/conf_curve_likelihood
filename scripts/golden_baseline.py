@@ -33,6 +33,7 @@ RTOL = 1e-12
 ATOL = 1e-14
 EXACT_FLOAT_PATHS = ("$.response.meta.effect_spec.default_null",)
 DEPENDENCY_AUTHORITY_FILES = ("pyproject.toml", "uv.lock", ".python-version")
+HISTORICAL_PROVENANCE_VERSIONS = {"confcurve": "0.1.0"}
 
 FixtureKind = Literal["full_contract", "edge_summary", "expected_error"]
 
@@ -428,6 +429,14 @@ def _dependency_versions() -> dict[str, str]:
     }
 
 
+def _fixture_versions() -> dict[str, str]:
+    """Return generation provenance for the immutable pre-split fixture corpus."""
+
+    versions = _dependency_versions()
+    versions.update(HISTORICAL_PROVENANCE_VERSIONS)
+    return versions
+
+
 def _python_series(version: str) -> str:
     return ".".join(version.split(".")[:2])
 
@@ -440,10 +449,11 @@ def _dependency_version_mismatches(
     if not isinstance(recorded, dict):
         return [f"{path}: expected an object"]
     current = _dependency_versions()
+    expected = _fixture_versions()
     mismatches: list[str] = []
-    if set(recorded) != set(current):
-        missing = sorted(set(current) - set(recorded))
-        unexpected = sorted(set(recorded) - set(current))
+    if set(recorded) != set(expected):
+        missing = sorted(set(expected) - set(recorded))
+        unexpected = sorted(set(recorded) - set(expected))
         if missing:
             mismatches.append(f"{path}: missing keys {missing!r}")
         if unexpected:
@@ -455,7 +465,7 @@ def _dependency_version_mismatches(
             f"{path}.python_runtime: current runtime {current['python_runtime']!r} "
             f"is outside declared Python {current['python_declared']!r}"
         )
-    for key, current_value in current.items():
+    for key, expected_value in expected.items():
         recorded_value = recorded[key]
         if key == "python_runtime":
             if (
@@ -467,9 +477,9 @@ def _dependency_version_mismatches(
                     f"{recorded_value!r} is outside declared Python "
                     f"{current['python_declared']!r}"
                 )
-        elif recorded_value != current_value:
+        elif recorded_value != expected_value:
             mismatches.append(
-                f"{path}.{key}: expected {current_value!r}, observed {recorded_value!r}"
+                f"{path}.{key}: expected {expected_value!r}, observed {recorded_value!r}"
             )
     return mismatches
 
@@ -2075,7 +2085,7 @@ def _export_schemas() -> dict[str, Any]:
 
 
 def build_artifacts() -> dict[Path, str]:
-    versions = _dependency_versions()
+    versions = _fixture_versions()
     artifacts: dict[Path, str] = {}
     manifest_cases: list[dict[str, Any]] = []
     fixture_hash_inputs: list[str] = []

@@ -25,6 +25,9 @@ test-results/
 # Ruff
 .ruff_cache/
 
+# Generated browser Python bundle
+/web/assets/py/
+
 # Jupyter
 .ipynb_checkpoints/
 

@@ -186,6 +186,22 @@ def test_manifest_static_structure_rejects_tampered_expected_status() -> None:
     assert any("manifest.cases[0].expected_status" in mismatch for mismatch in mismatches)
 
 
+def test_manifest_preserves_historical_adapter_version_as_fixture_provenance() -> None:
+    manifest = json.loads((GOLDEN_ROOT / "manifest.json").read_text())
+
+    assert baseline._dependency_versions()["confcurve"] == "0.1.1"
+    assert baseline._fixture_versions()["confcurve"] == "0.1.0"
+    assert manifest["versions"]["confcurve"] == "0.1.0"
+    assert all(case["versions"]["confcurve"] == "0.1.0" for case in manifest["cases"])
+    assert _manifest_structure_mismatches(manifest) == []
+
+    tampered = copy.deepcopy(manifest)
+    tampered["versions"]["confcurve"] = "0.1.1"
+    mismatches = _manifest_structure_mismatches(tampered)
+
+    assert "manifest.versions.confcurve: expected '0.1.0', observed '0.1.1'" in mismatches
+
+
 def test_manifest_accepts_a_different_patch_within_declared_python(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
