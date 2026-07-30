@@ -96,6 +96,8 @@ record:
 
 - Issue #12 explicitly said its creation was not approval. Authorization was later supplied in the
   migration task outside GitHub; PR #14 then implemented the strict-JSON boundary correction.
+- The PR #13 metadata choice was likewise not publicly approved on GitHub. The migration task
+  owner later confirmed the exact author identity as `Brian Locke` and the license as MIT.
 - PR #14 is the only intentional production-behavior difference. PR #13 metadata and PR #11
   documentation/testing surfaces were also intentional non-production differences.
 - GitHub Actions independently evidences the passing CI jobs. The local-suite and numerical-review
