@@ -15,6 +15,9 @@
 
 ## Milestone 00 — Freeze and characterize the integrated baseline
 
+> Historical entry retained as recorded; the dated evidence corrections at the end of this
+> milestone supersede the qualified statements they identify.
+
 | Field | Status |
 |---|---|
 | Date opened/completed | 2026-07-29 |
@@ -100,6 +103,9 @@ record:
   public Actions record.
 
 ## Milestone 02 — Rewire the integrated workbench to the released core
+
+> Historical entry retained as recorded; the dated evidence corrections at the end of this
+> milestone supersede the qualified statements they identify.
 
 | Field | Status |
 |---|---|
