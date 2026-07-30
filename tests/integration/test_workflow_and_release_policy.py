@@ -123,13 +123,31 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.2"
+    assert pyproject["project"]["version"] == "0.2.3"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.2" in citation
+    assert "version: 0.2.3" in citation
     assert 'date-released: "2026-07-30"' in citation
-    assert "## [0.2.2] - 2026-07-30" in changelog
+    assert "## [0.2.3] - 2026-07-30" in changelog
+    release_notes = changelog.split("## [0.2.3] - 2026-07-30", 1)[1].split(
+        "## [0.2.2] - 2026-07-30", 1
+    )[0]
+    for required_release_detail in (
+        "docs/SCIENTIFIC_SCOPE.md",
+        "docs/VALIDATION.md",
+        "wald-inference` v0.4.1",
+        "B01-B08",
+        "compatibility-curve",
+        "wald-likelihood-support",
+        "critical-effect-size",
+        "type-s-m-calibrator",
+        "precision-guardrail-planner",
+        "docs/MAINTENANCE.md",
+        "backward compatible",
+        "not clinical validation or scientific revalidation",
+    ):
+        assert required_release_detail in release_notes
 
     provenance_surfaces = (
         _read("pyproject.toml"),
@@ -151,6 +169,38 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     assert f"Numerical core: wald-inference {CORE_VERSION}" in llms
     for surface in (migration_log, llms):
         assert CORE_WHEEL_SHA256 in surface
+
+
+def test_scientific_repository_documentation_matrix_is_complete() -> None:
+    required_paths = (
+        "README.md",
+        "LICENSE",
+        "CITATION.cff",
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "docs/SCIENTIFIC_SCOPE.md",
+        "docs/VALIDATION.md",
+        "docs/PRIVACY.md",
+        "docs/DECISIONS.md",
+        "docs/MAINTENANCE.md",
+        "llms.txt",
+    )
+    for relative_path in required_paths:
+        path = PROJECT_ROOT / relative_path
+        assert path.is_file() and path.stat().st_size > 0, relative_path
+
+    scientific_scope = _read("docs/SCIENTIFIC_SCOPE.md")
+    validation = _read("docs/VALIDATION.md")
+    readme = _read("README.md")
+    assert "**Task question:**" in readme
+    assert "Observed-data reconstruction" in scientific_scope
+    assert "Design calibration" in scientific_scope
+    assert "wald-inference` 0.4.1" in scientific_scope
+    assert "not scientifically or clinically validated" in scientific_scope
+    assert "pre-split-baseline-2026-07-29" in validation
+    assert "rtol=1e-12" in validation
+    assert "make verify" in validation
+    assert "portfolio audit" in validation
 
 
 def test_integrated_role_maintenance_and_request_routing_are_explicit() -> None:

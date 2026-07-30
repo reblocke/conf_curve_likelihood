@@ -4,6 +4,45 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-30
+
+### Added
+
+- Add the canonical `docs/SCIENTIFIC_SCOPE.md` and `docs/VALIDATION.md` records required by the
+  cross-repository validation matrix.
+
+### Changed
+
+- Reconcile the migration log and metadata audit with the completed v0.2.1 and v0.2.2 releases.
+- Preserve the v0.2.2 numerical, Python, browser-payload, privacy, accessibility, and export
+  contracts unchanged.
+
+### Core and parity
+
+- Pin the exact
+  [`wald-inference` v0.4.1](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1)
+  release and wheel SHA-256
+  `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`.
+- Retain all 22 frozen B01-B08 responses at `rtol=1e-12` and `atol=1e-14`, with declared identity
+  fields exact. This patch changes documentation and version surfaces only.
+
+### Portfolio and maintenance
+
+- Continue to recommend the
+  [focused Wald tools catalog](https://reblocke.github.io/wald-inference-tools/) for a single
+  question. The focused applications are
+  [Compatibility curve](https://reblocke.github.io/compatibility-curve/),
+  [Wald likelihood support](https://reblocke.github.io/wald-likelihood-support/),
+  [Critical effect size](https://reblocke.github.io/critical-effect-size/),
+  [Type S/M calibrator](https://reblocke.github.io/type-s-m-calibrator/), and
+  [Precision guardrail planner](https://reblocke.github.io/precision-guardrail-planner/).
+- Retain the supported-change, compatibility, deprecation, and human-gated archival policy in
+  [`docs/MAINTENANCE.md`](https://github.com/reblocke/conf_curve_likelihood/blob/v0.2.3/docs/MAINTENANCE.md).
+- Keep the repository, Pages URL, `confcurve` imports, `compute_curves()` contract, default inputs,
+  view modes, warnings/errors, plots, and CSV/PNG/caption/reviewer exports backward compatible.
+- This is software-validation evidence, not clinical validation or scientific revalidation beyond
+  the documented frozen tests and independent review.
+
 ## [0.2.2] - 2026-07-30
 
 ### Changed
@@ -143,7 +182,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.0
