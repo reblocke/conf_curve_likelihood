@@ -284,3 +284,26 @@ methodology reference for sign error, magnitude/exaggeration ratio, and design c
   CSV, scenario-table, or reviewer-text values.
 - The `2x` guide is a visual reference only; it is not a selected-claim rule, precision target, or
   validation threshold.
+
+## 2026-07-29: Canonicalize public metadata under Brian Locke
+
+**Context:**
+
+Public repository metadata used conflicting identities: the Python package and software citation
+named Reed Blocke, the README named Brian W. Locke, and the MIT license retained an unresolved
+copyright-holder placeholder. A single authoritative identity is required before partitioning and
+releasing related repositories.
+
+**Decision:**
+
+Use `Brian Locke` as the canonical public author and maintainer name in package metadata, software
+citation metadata, and repository documentation. Retain the MIT License and set its copyright notice
+to `Copyright (c) 2026 Brian Locke`.
+
+**Consequences:**
+
+- Future repository metadata should use `Brian Locke` unless a later explicit decision supersedes
+  this one.
+- The existing `@reblocke` GitHub account and repository URLs remain unchanged.
+- This metadata correction does not change scientific calculations, browser behavior, public APIs,
+  package versions, or release dates.
