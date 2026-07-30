@@ -182,16 +182,16 @@
 | Field | Status |
 |---|---|
 | Date opened/completed | 2026-07-30 |
-| Source repository/SHA | `reblocke/conf_curve_likelihood` / `8f980aa61832483b8d98f3705411bef9f1d16663` |
-| Target repository/SHA | Same repository; release candidate recorded by the Ticket 10 PR |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `92db9ad6d68300f029c9a099286b7414a53dc32b` |
+| Target repository/SHA | Candidate `2f4f8aae9285e59daf545c12d9c035432c084e87`; merged `5d0ac9ff7b35df2388614a5d9ff2bec513c957fe` |
 | Branch | `codex/mig-10-finalize-workbench` |
-| Pull request | Recorded at merge |
-| Tag/release | Planned annotated `v0.2.0` prerelease |
+| Pull request | [#19](https://github.com/reblocke/conf_curve_likelihood/pull/19), merged at the exact candidate head |
+| Tag/release | Annotated `v0.2.0` prerelease, created from the evidence-complete main branch after this record |
 | Core version | Exact `wald-inference` v0.4.0 release |
 | Core artifact | [`wald_inference-0.4.0-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl) |
 | Validation status | Release candidate pending independent portfolio validation |
 | Intended behavior changes | Integrated-workbench positioning, portfolio navigation, authored browser-error presentation, maintenance/routing policy, and workflow runtimes; no formula or contract change |
-| Artifact/manifest hashes | Core wheel `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`; app release hashes recorded by the tag workflow |
+| Artifact/manifest hashes | Core wheel `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`; deployed browser bundle `13af1bef8091181753ad1c018283435c10d8b9801b3ecb049db1014c38678df5`; source/release checksums recorded by the tag workflow |
 
 ### Work recorded
 
@@ -206,14 +206,29 @@
 - Replace raw Pyodide traceback display with a stable authored error while retaining the final
   exception type/text and recovery behavior.
 - Move CI, Pages, and release workflows to current Node 24-compatible action majors.
+- Update the public repository description/homepage and close
+  [issue #5](https://github.com/reblocke/conf_curve_likelihood/issues/5) after the upgraded
+  workflows passed on `main`.
 
 ### Validation authority
 
 - The unchanged 22-case B01-B08 corpus remains authoritative at `rtol=1e-12`, `atol=1e-14`, with
   declared identity fields exact.
-- The release candidate must pass the legacy public API, strict JSON, deterministic staging,
-  complete non-browser suite, full Chromium suite, WebKit smoke, portfolio-link check, clean
-  checkout, and hosted input-free/privacy smoke before the annotated tag is released.
+- Local final verification passed the 22 B01-B08 cases, 205 non-browser tests, all 48 Chromium
+  tests, WebKit initial-render smoke, strict JSON, public API, deterministic staging,
+  portfolio-link, duplicate/stale-link, clean-tree, and export/error-recovery gates.
+- Both push and pull-request CI runs passed at candidate
+  `2f4f8aae9285e59daf545c12d9c035432c084e87`:
+  [run 30536727262](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30536727262)
+  and
+  [run 30536744401](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30536744401).
+- Post-merge [main CI](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30537447640)
+  and [Pages](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30537447689)
+  passed at merge commit `5d0ac9ff7b35df2388614a5d9ff2bec513c957fe`.
+- Hosted Chromium verified app/Core versions, the exact ten-link footer, a rendered plot, input-free
+  URLs, zero input-triggered network requests, and no cookies, local/session storage, IndexedDB,
+  service worker, or mobile overflow. The authenticated live-link check reached all ten public
+  targets.
 
 ### Unresolved decisions and remaining risks
 
