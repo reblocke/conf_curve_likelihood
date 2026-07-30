@@ -210,8 +210,17 @@ These corrections supersede the affected wording above:
   `d83d066411d2baf0281fa5c68e25b958d10fefd2`. Pull-request run 30514221666 tested GitHub's
   synthetic merge `639847847a2099a3ab384c0ee23aa4e596798cb0`, which merged that candidate into
   then-current base `45c29e8f57ef793f40688e5352249c73f1001295`.
+- The local-suite, disposable-clone, and hosted-smoke execution claims are implementation
+  observations that are not independently recoverable from the public GitHub record. Publicly
+  recoverable evidence covers the cited CI, Pages, and release runs plus published artifacts and
+  checksums.
+- “After exact-head review” refers to candidate-head verification and expected-head merge
+  protection; no separate GitHub review or comment independently substantiates that review claim.
 - The verified version footer was an intentional presentation change. No numerical, Python API,
   browser-payload, or export-contract change was intended.
+- The historical no-difference assurance is limited to the named, tested scientific, golden,
+  strict-JSON, Python-API, browser-payload, and export contracts. It does not exclude the recorded
+  presentation, staging, dependency, or workflow changes.
 - The v0.1.1 app had no Web Worker; the browser runtime recovered after corrected input.
 
 ## Milestone 10 — Finalize the integrated workbench role
