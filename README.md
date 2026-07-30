@@ -43,15 +43,6 @@ Observed-data panels condition on the reported estimate and CI; design panels co
 true effects and repeated-study behavior. Use this integrated interface only when comparing those
 paradigms together is intentional.
 
-## Related Wald tools
-
-- [Portfolio catalog](https://reblocke.github.io/wald-inference-tools/)
-- [Focused compatibility-curve app](https://reblocke.github.io/compatibility-curve/)
-- [Integrated workbench](https://reblocke.github.io/conf_curve_likelihood/)
-- [Source repository](https://github.com/reblocke/conf_curve_likelihood)
-- Numerical source: [`wald-inference Core v0.1.1`](https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1)
-- [Privacy and data path](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path): entered numerical values stay in the browser; static CDNs still receive ordinary request metadata.
-
 ## What the app does
 
 - accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional user-supplied reference thresholds/MCIDs, and ratio-axis spacing
@@ -255,4 +246,5 @@ Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for re
 - Numerical dependency:
   [wald-inference Core v0.4.0](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0)
 - Privacy: calculations run locally in the browser; entered numerical values are not placed in URLs
-  or sent to an application server. See [Privacy](docs/PRIVACY.md).
+  or sent to an application server. See
+  [Privacy](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md).

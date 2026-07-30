@@ -10,11 +10,8 @@ REQUIRED_LINKS = {
     "https://reblocke.github.io/compatibility-curve/",
     "https://reblocke.github.io/conf_curve_likelihood/",
     "https://github.com/reblocke/conf_curve_likelihood",
-    "https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1",
-    (
-        "https://github.com/reblocke/conf_curve_likelihood/blob/main/"
-        "docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path"
-    ),
+    "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0",
+    "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md",
 }
 
 
@@ -53,8 +50,8 @@ def test_readme_has_exact_related_wald_tools_block() -> None:
 
     for url in REQUIRED_LINKS:
         assert url in related_block
-    assert "wald-inference Core v0.1.1" in related_block
-    assert "Privacy and data path" in related_block
+    assert "wald-inference Core v0.4.0" in related_block
+    assert "Privacy" in related_block
 
 
 def test_required_links_and_privacy_note_are_inside_semantic_footer() -> None:
@@ -64,5 +61,5 @@ def test_required_links_and_privacy_note_are_inside_semantic_footer() -> None:
     footer_text = " ".join(" ".join(parser.footer_text).split())
     assert parser.footer_count == 1
     assert REQUIRED_LINKS <= parser.footer_links
-    assert "wald-inference Core v0.1.1" in footer_text
+    assert "wald-inference Core v0.4.0" in footer_text
     assert "Privacy:" in footer_text
