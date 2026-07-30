@@ -130,7 +130,8 @@ Each release record should identify:
 
 The independent portfolio audit and its machine-readable status live in the
 [`wald-inference-tools`](https://github.com/reblocke/wald-inference-tools) catalog repository.
-Only that evidence can change the portfolio status from release candidate to validated.
+Only that external evidence can change the portfolio status; a successful workbench release does
+not establish or self-certify the portfolio verdict.
 
 ## Known validation boundary
 

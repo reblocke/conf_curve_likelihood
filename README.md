@@ -25,7 +25,7 @@ browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
 
-The v0.2.3 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
+The v0.2.4 integrated-workbench release is pinned to `wald-inference` v0.4.1. It preserves the
 legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
 Core release.
 

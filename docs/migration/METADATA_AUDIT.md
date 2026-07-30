@@ -9,8 +9,9 @@ name and approved retaining the MIT License. PR #13 applied that decision at
 `9d59fd9e17900ef177e695ba3a34ccc0a08e374b`.
 
 Ticket 10 and its Milestone 11 corrective releases refreshed the product/version surfaces on
-2026-07-30 while preserving that identity decision. The table below reports the v0.2.3
-release-candidate state; the original conflicts remain described as provenance.
+2026-07-30 while preserving that identity decision. The table below reports the reconciled
+post-v0.2.3 release state carried by the documentation-only v0.2.4 patch; the original conflicts
+remain described as provenance.
 
 The historical conflict remains recorded here as provenance: the README used `Brian W.
 Locke`, package and citation metadata used `Reed Blocke`, and the license used the
@@ -29,18 +30,18 @@ placeholder `Your Name`.
 | Package description | `Static GitHub Pages app and compatibility adapter for Wald inference` | From `pyproject.toml`; distinct from the verified live GitHub description above |
 | Distribution name | `confcurve` | From `pyproject.toml` |
 | Import package | `confcurve` | From `src/confcurve/` |
-| Package version | `0.2.3` | From `pyproject.toml` |
+| Package version | `0.2.4` | From `pyproject.toml` |
 | README maintainer | `Brian Locke` (`@reblocke`) | Canonical form applied by PR #13 |
 | `pyproject.toml` author | `Brian Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` author | Given name `Brian`; family name `Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` title | `Integrated Wald Inference Workbench` | Consistent with README/HTML |
-| `CITATION.cff` version | `0.2.3` | Consistent with package version |
+| `CITATION.cff` version | `0.2.4` | Consistent with package version |
 | `CITATION.cff` release date | `2026-07-30` | Consistent with changelog release heading |
 | `CITATION.cff` repository | `https://github.com/reblocke/conf_curve_likelihood` | Consistent with `origin` |
 | License identifier | MIT | Consistent across README, `CITATION.cff`, and `LICENSE` |
 | License copyright line | `Copyright (c) 2026 Brian Locke` | Approved MIT attribution applied by PR #13 |
 | Hosted app | `https://reblocke.github.io/conf_curve_likelihood/` | Consistent across README, GitHub homepage, and deployment policy |
-| Release tags | `pre-split-baseline-2026-07-29`, `v0.1.1`, `v0.2.0`, `v0.2.1`, `v0.2.2`; `v0.2.3` release candidate | Historical tags verified; v0.2.3 is gated on CI/review and an annotated tag |
+| Verified release tags through the evidence reconciliation | `pre-split-baseline-2026-07-29`, `v0.1.1`, `v0.2.0`, `v0.2.1`, `v0.2.2`, `v0.2.3` | v0.2.3 annotated tag, release assets, Pages commit, and workflows verified on 2026-07-30 |
 
 The audited Git commit also records `Brian Locke` as its Git author/committer, but that
 provenance was not treated as authority; the explicit owner instruction is the controlling
@@ -75,8 +76,8 @@ This audit does not re-evaluate those papers, their licenses, or the scientific 
 support. No external figure, table, or substantial copied text is introduced by these
 migration documents.
 
-## Remaining follow-up
+## Portfolio-verdict boundary
 
-After publication, the independent portfolio report in `reblocke/wald-inference-tools` will record
-the exact v0.2.3 tag, release assets, deployment commit, and validation verdict. No unresolved
-authorship or license decision remains.
+The independent report in `reblocke/wald-inference-tools` is authoritative for the portfolio
+verdict. This repository records its release facts but does not self-certify portfolio validation.
+No unresolved authorship or license decision remains.
