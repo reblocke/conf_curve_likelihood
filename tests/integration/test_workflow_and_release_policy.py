@@ -145,6 +145,7 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
         "precision-guardrail-planner",
         "docs/MAINTENANCE.md",
         "backward compatible",
+        "not clinical validation or scientific revalidation",
     ):
         assert required_release_detail in release_notes
 

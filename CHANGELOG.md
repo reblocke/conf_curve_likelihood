@@ -40,6 +40,8 @@ All notable changes to the integrated workbench are documented here.
   [`docs/MAINTENANCE.md`](https://github.com/reblocke/conf_curve_likelihood/blob/v0.2.3/docs/MAINTENANCE.md).
 - Keep the repository, Pages URL, `confcurve` imports, `compute_curves()` contract, default inputs,
   view modes, warnings/errors, plots, and CSV/PNG/caption/reviewer exports backward compatible.
+- This is software-validation evidence, not clinical validation or scientific revalidation beyond
+  the documented frozen tests and independent review.
 
 ## [0.2.2] - 2026-07-30
 
