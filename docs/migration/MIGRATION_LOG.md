@@ -90,18 +90,18 @@
 
 | Field | Status |
 |---|---|
-| Date opened/completed | Opened 2026-07-29; completion pending merge, CI, tag, and app release |
+| Date opened/completed | Opened and completed 2026-07-29 |
 | Source repository/SHA | `reblocke/conf_curve_likelihood` at `45c29e8f57ef793f40688e5352249c73f1001295` |
-| Target repository/SHA | `reblocke/conf_curve_likelihood`; candidate SHA pending |
+| Target repository/SHA | Candidate `d83d066411d2baf0281fa5c68e25b958d10fefd2`; merged `201f4a57b337ab7a82e85d08aa458c775a5825da` |
 | Branch | `codex/mig-02-rewire-core` |
-| Pull request | Pending |
-| Tag/release | App v0.1.1 prepared; tag and release not yet created |
+| Pull request | [#16](https://github.com/reblocke/conf_curve_likelihood/pull/16), merged at the exact candidate head |
+| Tag/release | Annotated `v0.1.1`; [prerelease](https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.1.1) |
 | Core version | Exact `wald-inference` v0.1.1 release |
 | Core artifact | [`wald_inference-0.1.1-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl) |
 | Core release commit | `d1ffb0baa46eb8ad27175d58c90e4febc0ac2809` |
-| Validation status | Local and external completion evidence pending |
+| Validation status | Local, clean-clone, PR, main, release, Pages, and hosted-smoke gates passed |
 | Intended behavior changes | None; formula ownership and staging mechanism only |
-| Artifact/manifest hashes | Core wheel SHA-256 `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457`; generated stage records per-file and aggregate hashes |
+| Artifact/manifest hashes | Core wheel `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457`; release manifest `80d205c692182c68131cf23ebbb8ff416d1a2aac893f61aaeb056f53729f0829`; source archive `ac9c9c7246573e0e86e0a4ecb6e82bd0af5ae2c051e28941e0cf90f8df368f44` |
 
 ### Work recorded
 
@@ -112,7 +112,7 @@
 - Replace tracked generated Python with an ignored, atomically generated
   `web/assets/py/` bundle containing both packages and `manifest.json`.
 - Route local tests, local serving, CI, Pages, and tagged releases through `make stage-web`.
-- Prepare app v0.1.1 metadata and release notes. No tag or release is recorded before it exists.
+- Publish app v0.1.1 as an annotated, immutable prerelease after exact-head review and CI.
 
 ### Validation evidence
 
@@ -133,27 +133,49 @@
 - `make fmt-check` passed for all 31 Python files, `make lint` passed, and `git diff --check`
   reported no whitespace errors. Two consecutive stages produced byte-identical manifests
   for the current checkout.
+- Full local browser verification passed 48 Chromium tests and the WebKit initial-render smoke.
+- A disposable clone at candidate `d83d066411d2baf0281fa5c68e25b958d10fefd2`, in a parent
+  containing no sibling core checkout and with `PYTHONPATH` unset, passed locked sync,
+  deterministic staging, format, lint, all 22 golden cases, and all 196 non-browser tests.
+  The imported core resolved inside that clone's `.venv`, and `direct_url.json` identified the
+  exact v0.1.1 release wheel.
+- Both push and pull-request CI runs passed `test`, full Chromium, and WebKit smoke at the exact
+  candidate head:
+  [run 30514211604](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30514211604)
+  and
+  [run 30514221666](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30514221666).
+- Main-branch [CI](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30514706107),
+  [Pages](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30514706117), and the
+  browser-gated [release workflow](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30514716144)
+  all passed at merge commit `201f4a57b337ab7a82e85d08aa458c775a5825da`.
+- The annotated `v0.1.1` tag peels to the merge commit. Downloaded release assets passed the
+  published `SHA256SUMS`; the release manifest records app/core 0.1.1, 7/14 files, source commit
+  `201f4a57b337ab7a82e85d08aa458c775a5825da`, and bundle SHA-256
+  `784a3a5cd44ee5d3629945c9d93df63b8df164f3c3f5e374de3598a86a545313`.
+- Hosted smoke at
+  [reblocke.github.io/conf_curve_likelihood](https://reblocke.github.io/conf_curve_likelihood/)
+  verified the 0.1.1/0.1.1 footer, default ratio reconstruction, the B01 additive
+  reconstruction, validation-error recovery, unchanged input-free URL, and enabled local export
+  controls. Release-gated E2E separately verifies CSV, PNG, and caption contents.
 - Frozen authority remains 22 B01–B08 cases at `rtol=1e-12`, `atol=1e-14`, with manifest SHA-256
   `f54bb2d8311788c07adcf23fc9f038e35702449e4a77a474abea9411246cabcc` and fixture-set SHA-256
   `81c341b39e711caffc85a444f0c1e4bc1e2d00633474c82e720afeb60def3c4d`.
-- Required candidate commands are recorded in
-  [ADR 0002](../adr/0002-released-core-and-generated-browser-stage.md). Results will be appended
-  only after they are observed.
+- Required candidate commands and ownership boundaries are recorded in
+  [ADR 0002](../adr/0002-released-core-and-generated-browser-stage.md).
 - GitHub Actions clean checkouts provide the ongoing no-sibling test: locked install fetches the
   released artifact, `make stage-web` generates the ignored bundle, and the jobs fail if tracked
   state changes.
-- Chromium, WebKit, clean-candidate checkout, PR/CI, tag, and release results remain pending and
-  are not claimed here.
+- No scientific, golden, strict-JSON, Python-API, browser-contract, or export difference was
+  accepted in this migration.
 
 ### Unresolved decisions and remaining risks
 
-- The core v0.1.1 release URL and assets exist; it was observed as a GitHub prerelease while this
-  entry was drafted. Its promotion state must be rechecked before final app release.
-- Candidate commit, pull request, CI run, Pages deployment, annotated `v0.1.1` tag, app release URL,
-  generated release-manifest hash, and source-archive checksum remain unobserved and therefore
-  unclaimed.
-- Any golden, strict-JSON, Python API, or browser difference is a release blocker rather than an
-  accepted migration change.
+- Core and app releases intentionally remain GitHub prereleases until the independent
+  portfolio-validation milestone decides whether to promote them.
+- Invalid-input display retains the frozen pre-split behavior, including Pyodide traceback text.
+  The worker recovers when corrected. Safe-message presentation is deferred to the integrated
+  workbench finalization milestone rather than being introduced as an unapproved migration
+  difference.
 
 ## Entry template
 
