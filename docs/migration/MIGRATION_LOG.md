@@ -23,7 +23,7 @@
 | Source branch/SHA | `main` at `f77cd13f0286e933a66c0997af288a0dfa167bd5` |
 | Working branch | `codex/mig-00-freeze-baseline` |
 | Audited-versus-actual comparison | Identical; no commits after the audited SHA at inspection |
-| Pull request | Pending |
+| Pull request | [#11](https://github.com/reblocke/conf_curve_likelihood/pull/11) (draft) |
 | Baseline tag | Pending; intended `pre-split-baseline-2026-07-29` after verification and merge |
 | Core version | Not applicable; numerical code is still integrated in `confcurve` |
 | Validation status | Draft harness verified; release blocked by the known strict-JSON extreme-design defect |
@@ -52,9 +52,10 @@
 - Canonical public identity: package/citation metadata say `Reed Blocke`; README says
   `Brian W. Locke`; the audited Git commit says `Brian Locke`.
 - The MIT license contains the unresolved copyright placeholder `Your Name`.
-- An accepted extreme design request emits nonfinite standardized distances. The proposed
-  isolated fix is to reject an unrepresentable distance with `ValidationError`; it requires
-  explicit approval before production code changes.
+- [Issue #12](https://github.com/reblocke/conf_curve_likelihood/issues/12) records an
+  accepted extreme design request that emits nonfinite standardized distances. The
+  proposed isolated fix is to reject an unrepresentable distance with `ValidationError`;
+  it requires explicit approval before production code changes.
 - Final tag target, post-fix fixture hashes, final full verification, PR, and release remain
   pending.
 
