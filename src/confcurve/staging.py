@@ -23,10 +23,10 @@ EXCLUDED_DIRECTORY_SUFFIXES = (".dist-info", ".egg-info")
 EXCLUDED_DIRECTORY_NAMES = {"__pycache__"}
 EXCLUDED_FILE_SUFFIXES = {".pyc", ".pyo"}
 CORE_ARTIFACT_URL = (
-    "https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/"
-    "wald_inference-0.1.1-py3-none-any.whl"
+    "https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/"
+    "wald_inference-0.4.0-py3-none-any.whl"
 )
-CORE_ARTIFACT_SHA256 = "95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457"
+CORE_ARTIFACT_SHA256 = "401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6"
 
 
 class StagingError(RuntimeError):
@@ -48,13 +48,13 @@ PACKAGE_STAGE_SPECS = (
         role="app",
         distribution="confcurve",
         import_name="confcurve",
-        expected_version="0.1.1",
+        expected_version="0.2.0",
     ),
     PackageStageSpec(
         role="core",
         distribution="wald-inference",
         import_name="wald_inference",
-        expected_version="0.1.1",
+        expected_version="0.4.0",
         artifact_url=CORE_ARTIFACT_URL,
         artifact_sha256=CORE_ARTIFACT_SHA256,
     ),

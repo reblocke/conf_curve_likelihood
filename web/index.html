@@ -6,10 +6,10 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>Wald Confidence Curve Explorer</title>
+    <title>Integrated Wald Inference Workbench</title>
     <meta
       name="description"
-      content="Explore the transformation from a 95% confidence interval and optional point estimate to a Wald compatibility curve and normalized relative-likelihood display."
+      content="Compare observed-data Wald compatibility and normalized likelihood with assumed-truth repeated-study design calibration in a backward-compatible integrated workbench."
     />
     <link rel="stylesheet" href="./assets/styles.css" />
     <script
@@ -28,13 +28,23 @@
     <div class="page-shell">
       <aside class="sidebar" id="controls-panel">
         <div class="sidebar-header">
-          <p class="eyebrow">Comparison Framework</p>
-          <h1>Wald Confidence Curve Explorer</h1>
+          <p class="eyebrow">Integrated comparison</p>
+          <h1>Integrated Wald Inference Workbench</h1>
           <p class="intro">
             Enter a reported 95% confidence interval and optional point estimate to compare
-            the CI-implied estimate, null value, and optional thresholds across compatibility
-            and relative-likelihood views.
+            candidate effects under observed-data compatibility and relative-likelihood
+            reconstruction. Optionally add assumed true effects for repeated-study design
+            calibration.
           </p>
+          <aside class="portfolio-callout" aria-label="Focused tool guidance">
+            <strong>Working on one specific question?</strong>
+            <span>Use the focused catalog; this advanced workbench intentionally spans paradigms.</span>
+            <span>
+              It is not an exact profile-likelihood tool, posterior calculator, or clinical
+              decision-support product.
+            </span>
+            <a href="https://reblocke.github.io/wald-inference-tools/">Choose a focused Wald tool</a>
+          </aside>
         </div>
 
         <button class="mobile-toggle" id="controls-toggle" type="button" aria-expanded="true">
@@ -373,6 +383,11 @@
                 the exact fitted-model profile likelihood; likelihood-principle-style interpretation applies within the Wald
                 reconstruction shown here, not as a claim that the original model likelihood has been recovered.
               </p>
+              <p>
+                The paired 80% power markers are a legacy closed-form benchmark at alpha 0.05 and
+                target probability 0.80. They are not the exact critical-effect solution and are
+                not an MCID.
+              </p>
             </details>
           </div>
           <div id="plot-key" class="plot-key" aria-label="Plot key"></div>
@@ -417,7 +432,7 @@
           <ul id="warnings-list"></ul>
         </section>
 
-        <footer class="sources-footer" id="sources-footer" aria-labelledby="sources-heading">
+        <section class="sources-footer" id="sources-footer" aria-labelledby="sources-heading">
           <p class="eyebrow" id="sources-heading">More information</p>
           <ul>
             <li>
@@ -451,45 +466,64 @@
               <span>for Type S sign error, Type M magnitude/exaggeration ratio, and design calculations.</span>
             </li>
           </ul>
-          <nav aria-labelledby="related-tools-heading">
-            <p class="eyebrow" id="related-tools-heading">Related Wald tools</p>
-            <ul>
-              <li>
-                <a href="https://reblocke.github.io/wald-inference-tools/">Portfolio catalog</a>
-              </li>
-              <li>
-                <a href="https://reblocke.github.io/compatibility-curve/">
-                  Focused compatibility-curve app
-                </a>
-              </li>
-              <li>
-                <a href="https://reblocke.github.io/conf_curve_likelihood/">
-                  Integrated workbench
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/reblocke/conf_curve_likelihood">Source repository</a>
-              </li>
-              <li>
-                Numerical source:
-                <a href="https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1">
-                  wald-inference Core v0.1.1
-                </a>
-              </li>
-            </ul>
-          </nav>
-          <p>
-            <strong>Privacy:</strong> entered numerical values stay in this browser and are not sent
-            to a backend, retained, or logged; static CDNs still receive ordinary request metadata.
-            <a
-              href="https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path"
-            >
-              Privacy and data path
-            </a>
-          </p>
           <p class="technical-version" id="technical-version" aria-live="polite">
             Runtime versions pending verification.
           </p>
+        </section>
+
+        <footer class="portfolio-footer" aria-labelledby="portfolio-footer-heading">
+          <p class="eyebrow" id="portfolio-footer-heading">Related Wald tools</p>
+          <p>
+            For one focused question, begin with the catalog. This workbench remains available for
+            deliberate cross-paradigm comparison.
+          </p>
+          <ul>
+            <li>
+              <a href="https://reblocke.github.io/wald-inference-tools/">Choose a tool</a>
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/compatibility-curve/"
+                >Closest adjacent tool: Compatibility curve</a
+              >
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/wald-likelihood-support/"
+                >Wald likelihood support</a
+              >
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/critical-effect-size/"
+                >Critical effect size</a
+              >
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/type-s-m-calibrator/">Type S/M calibrator</a>
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/precision-guardrail-planner/"
+                >Precision guardrail planner</a
+              >
+            </li>
+            <li>
+              <a href="https://reblocke.github.io/conf_curve_likelihood/"
+                >Integrated workbench</a
+              >
+            </li>
+            <li>
+              <a href="https://github.com/reblocke/conf_curve_likelihood">App repository</a>
+            </li>
+            <li>
+              <a href="https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0"
+                >wald-inference Core v0.4.0</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md"
+                >Privacy: browser-local calculation and input-free URLs</a
+              >
+            </li>
+          </ul>
         </footer>
       </main>
     </div>

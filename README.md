@@ -1,4 +1,9 @@
-# Wald Confidence Curve Explorer
+# Integrated Wald Inference Workbench
+
+> Looking for one specific task? Use the
+> [focused Wald tools catalog](https://reblocke.github.io/wald-inference-tools/). This integrated
+> workbench keeps compatibility, normalized likelihood, and repeated-study design-calibration
+> views together for advanced side-by-side comparison.
 
 This repository builds a static web app and Python package that reconstruct:
 
@@ -17,17 +22,26 @@ browser through Pyodide.
 
 Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://reblocke.github.io/conf_curve_likelihood/)
 
-The v0.1.1 release candidate is pinned to `wald-inference` v0.1.1. The migration changes the
-implementation source, not the intended public numerical, browser, or export behavior.
+The v0.2.0 integrated-workbench release is pinned to `wald-inference` v0.4.0. It preserves the
+legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
+Core release.
 
-## Related Wald tools
+## Choose a focused tool for one question
 
-- [Portfolio catalog](https://reblocke.github.io/wald-inference-tools/)
-- [Focused compatibility-curve app](https://reblocke.github.io/compatibility-curve/)
-- [Integrated workbench](https://reblocke.github.io/conf_curve_likelihood/)
-- [Source repository](https://github.com/reblocke/conf_curve_likelihood)
-- Numerical source: [`wald-inference Core v0.1.1`](https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1)
-- [Privacy and data path](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path): entered numerical values stay in the browser; static CDNs still receive ordinary request metadata.
+- [Compatibility curve](https://reblocke.github.io/compatibility-curve/) — candidate effects under
+  an observed confidence-interval reconstruction.
+- [Wald likelihood support](https://reblocke.github.io/wald-likelihood-support/) — normalized
+  relative support and S-minus-2 summaries under that reconstruction.
+- [Critical effect size](https://reblocke.github.io/critical-effect-size/) — exact fixed-SE
+  detectability under a chosen future-study claim rule.
+- [Type S/M calibrator](https://reblocke.github.io/type-s-m-calibrator/) — repeated-study sign and
+  magnitude behavior conditional on assumed true effects and selection.
+- [Precision guardrail planner](https://reblocke.github.io/precision-guardrail-planner/) —
+  per-target and joint precision requirements under explicit design guardrails.
+
+Observed-data panels condition on the reported estimate and CI; design panels condition on assumed
+true effects and repeated-study behavior. Use this integrated interface only when comparing those
+paradigms together is intentional.
 
 ## What the app does
 
@@ -110,12 +124,12 @@ checkout, an editable path, or an unpinned Git reference.
 
 | Item | Authority |
 |---|---|
-| Core version | `wald-inference` v0.1.1 |
-| Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1> |
-| Release status observed 2026-07-29 | GitHub prerelease |
-| Release commit | `d1ffb0baa46eb8ad27175d58c90e4febc0ac2809` |
-| Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.1.1/wald_inference-0.1.1-py3-none-any.whl> |
-| Wheel SHA-256 | `95bc10d770836544d726362c401032e0640a5a9ec1573f043add7f6bd3a65457` |
+| Core version | `wald-inference` v0.4.0 |
+| Release | <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0> |
+| Release status observed 2026-07-30 | GitHub prerelease |
+| Release commit | `fd7b24740122bed7ae07769674732c5e56c91277` |
+| Wheel | <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl> |
+| Wheel SHA-256 | `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6` |
 | License | MIT |
 
 `make stage-web` deterministically replaces the ignored `web/assets/py/` directory from the
@@ -164,10 +178,17 @@ fields. Any unexplained difference is a release blocker.
 - `make fmt-check` checks Ruff formatting
 - `make lint` runs Ruff checks
 - `make golden-check` verifies the frozen B01–B08 contract and numerical baseline
+- `make portfolio-links` verifies checked-in catalog/focused/Core navigation
 - `make test` runs non-E2E tests
 - `make e2e` runs Playwright browser tests
 - `make verify` runs staging, format check, lint, frozen parity, non-E2E tests, and E2E checks
 - `make serve` regenerates the browser Python bundle before starting the local server
+
+After every portfolio release or URL change, run the public check:
+
+```bash
+uv run python scripts/check_portfolio_links.py --live
+```
 
 ## Worked examples
 
@@ -182,6 +203,8 @@ fields. Any unexplained difference is a release blocker.
 - `docs/DECISIONS.md` records architectural choices.
 - `docs/adr/0002-released-core-and-generated-browser-stage.md` records the core dependency,
   staging, upgrade, and rollback decision.
+- `docs/MAINTENANCE.md` defines the feature-freeze, compatibility, and future archival criteria.
+- `docs/PRIVACY.md` records the browser-memory, storage, network, and export boundaries.
 - `docs/migration/` records the frozen pre-split behavior and portfolio migration contract.
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
@@ -195,7 +218,10 @@ fields. Any unexplained difference is a release blocker.
 
 ### Project Status
 
-No manuscript version is expected. Code and teaching examples are repository-authored unless otherwise noted.
+Maintained, feature-frozen integrated workbench. Supported changes are Core upgrades, correctness,
+accessibility, security, browser compatibility, and documentation/portfolio-link maintenance. See
+[Maintenance](docs/MAINTENANCE.md). No manuscript version is expected. Code and teaching examples
+are repository-authored unless otherwise noted.
 
 ### Data and Reuse
 
@@ -208,3 +234,17 @@ MIT License for repository code; see `LICENSE`. Third-party and publisher materi
 ### Contact
 
 Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for repository-specific questions when the repository is public.
+
+## Related Wald tools
+
+- Choose a tool: [Wald inference tools catalog](https://reblocke.github.io/wald-inference-tools/)
+- Closest adjacent tool:
+  [Compatibility curve](https://reblocke.github.io/compatibility-curve/)
+- Integrated workbench:
+  [this hosted application](https://reblocke.github.io/conf_curve_likelihood/)
+- App repository: [reblocke/conf_curve_likelihood](https://github.com/reblocke/conf_curve_likelihood)
+- Numerical dependency:
+  [wald-inference Core v0.4.0](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0)
+- Privacy: calculations run locally in the browser; entered numerical values are not placed in URLs
+  or sent to an application server. See
+  [Privacy](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md).

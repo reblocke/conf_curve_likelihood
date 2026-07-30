@@ -333,3 +333,30 @@ policy is [ADR 0002](adr/0002-released-core-and-generated-browser-stage.md).
   an exact reviewed release.
 - Browser payload assembly, UI behavior, copy, exports, and the existing Pages URL remain owned here.
 - Generated Python files are ignored build artifacts and must leave tracked Git state clean.
+
+## 2026-07-30: Maintain this repository as the integrated Wald inference workbench
+
+**Context:**
+
+Five focused applets and a question-based catalog now provide clearer entry points for single
+inferential tasks. This repository still provides a legitimate advanced use case: comparing
+observed-data compatibility/relative-support views with assumed-truth repeated-study design views
+in one backward-compatible interface.
+
+**Decision:**
+
+Keep the repository name, Pages URL, `confcurve` package, browser payload, defaults, views, and
+exports unchanged. Present the product as the maintained integrated Wald inference workbench,
+recommend the catalog for single questions, and feature-freeze the workbench except for exact Core
+upgrades, correctness, accessibility, security, browser compatibility, and documentation/link
+maintenance. Adopt the exact released `wald-inference` v0.4.0 wheel, SHA-256
+`401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`, only after frozen parity
+passes.
+
+**Consequences:**
+
+- Focused-app-only features and new paradigms normally belong outside this repository.
+- Core additions are not exposed automatically through the legacy adapter.
+- Observed panels continue to describe candidate effects under the reported-data reconstruction;
+  design panels continue to describe assumed true effects under repeated-study behavior.
+- Future archival is a separate human decision governed by `docs/MAINTENANCE.md`.

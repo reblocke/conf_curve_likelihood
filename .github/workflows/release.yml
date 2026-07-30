@@ -17,17 +17,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
 
@@ -66,6 +66,9 @@ jobs:
 
       - name: Verify frozen golden baseline
         run: make golden-check
+
+      - name: Verify checked-in and public portfolio navigation
+        run: uv run python scripts/check_portfolio_links.py --live
 
       - name: Run non-browser tests
         run: uv run pytest -q -m "not e2e"
@@ -154,7 +157,7 @@ jobs:
 
     steps:
       - name: Download verified release bundle
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: verified-release-bundle
           path: release-bundle
@@ -180,5 +183,5 @@ jobs:
             release-bundle/SHA256SUMS \
             --verify-tag \
             --prerelease \
-            --title "Wald Confidence Curve Explorer $version" \
+            --title "Integrated Wald Inference Workbench $version" \
             --notes-file release-bundle/release-notes.md

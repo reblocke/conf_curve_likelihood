@@ -114,3 +114,21 @@ CI and Pages run `make stage-web` from a clean GitHub checkout and fail if gener
 tracked state. The tag workflow repeats locked non-browser, golden, staging, full-Chromium, and
 WebKit-smoke checks before publishing a deterministic source archive, the generated browser
 manifest, and checksums to a GitHub prerelease. It does not publish to PyPI.
+
+## 2026-07-30 upgrade record
+
+App v0.2.0 applies the upgrade procedure above and adopts the exact `wald-inference` v0.4.0
+release without changing the legacy adapter contract:
+
+- release:
+  <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.0>;
+- release commit: `fd7b24740122bed7ae07769674732c5e56c91277`;
+- wheel:
+  <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.0/wald_inference-0.4.0-py3-none-any.whl>;
+- wheel SHA-256:
+  `401a0cc2a182918764149eb03c79672217b647147c494215c83515fd609c7af6`;
+- license: MIT.
+
+The newer Core APIs remain available to focused downstream tools but are not automatically exposed
+through `confcurve`. B01-B08, the public Python surface, strict JSON, browser contract, and exports
+remain the compatibility gate.
