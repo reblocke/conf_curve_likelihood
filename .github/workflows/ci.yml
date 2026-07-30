@@ -28,6 +28,9 @@ jobs:
       - name: Stage browser Python package
         run: uv run python scripts/stage_web_python.py
 
+      - name: Verify frozen golden baseline
+        run: make golden-check
+
       - name: Ruff format (check)
         run: uv run ruff format --check .
 

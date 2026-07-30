@@ -1,6 +1,16 @@
 from __future__ import annotations
 
+import struct
+from pathlib import Path
+
 from playwright.sync_api import Page, expect
+
+
+def png_dimensions(path: Path) -> tuple[int, int]:
+    header = path.read_bytes()[:24]
+    if len(header) != 24 or header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
+        raise AssertionError(f"{path} is not a PNG with an IHDR header")
+    return struct.unpack(">II", header[16:24])
 
 
 def wait_for_ready(page: Page) -> None:

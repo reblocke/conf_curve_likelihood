@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
-from helpers import plot_width_metrics, wait_for_ready
+from helpers import plot_width_metrics, png_dimensions, wait_for_ready
 from playwright.sync_api import Page, expect
 
 pytestmark = pytest.mark.e2e
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _csv_columns(kind: str) -> list[str]:
+    schema_path = PROJECT_ROOT / "tests" / "golden" / "export_schemas" / "csv_columns.json"
+    return json.loads(schema_path.read_text(encoding="utf-8"))[kind]
 
 
 def test_csv_export_downloads_current_grid(app_url: str, page: Page, tmp_path: Path) -> None:
@@ -19,9 +27,8 @@ def test_csv_export_downloads_current_grid(app_url: str, page: Page, tmp_path: P
 
     csv_path = tmp_path / download.suggested_filename
     download.save_as(csv_path)
-    assert csv_path.read_text(encoding="utf-8").startswith(
-        "effect_display,effect_working,z,compatibility,relative_likelihood,log_relative_likelihood"
-    )
+    header = csv_path.read_text(encoding="utf-8").splitlines()[0].split(",")
+    assert header == _csv_columns("observed_only")
 
 
 def test_png_export_downloads_combined_figure(app_url: str, page: Page, tmp_path: Path) -> None:
@@ -35,6 +42,7 @@ def test_png_export_downloads_combined_figure(app_url: str, page: Page, tmp_path
     png_path = tmp_path / download.suggested_filename
     download.save_as(png_path)
     assert png_path.stat().st_size > 0
+    assert png_dimensions(png_path) == (2800, 2200)
 
 
 def test_png_export_works_in_single_panel_view_modes(
@@ -63,6 +71,7 @@ def test_png_export_works_in_single_panel_view_modes(
         png_path = tmp_path / f"{mode}-{download.suggested_filename}"
         download.save_as(png_path)
         assert png_path.stat().st_size > 0
+        assert png_dimensions(png_path) == (2800, 2200)
 
 
 def test_manuscript_png_export_works_without_embedding_caption(
@@ -96,6 +105,7 @@ def test_manuscript_png_export_works_without_embedding_caption(
         png_path = tmp_path / f"{mode}-{download.suggested_filename}"
         download.save_as(png_path)
         assert png_path.stat().st_size > 0
+        assert png_dimensions(png_path) == (2800, 2000)
 
     expect(page.locator("#figure-caption")).to_contain_text(
         "not exact fitted-model profile likelihood"
