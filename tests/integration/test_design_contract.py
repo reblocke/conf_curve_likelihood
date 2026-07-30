@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 
 import pytest
 
@@ -275,3 +276,33 @@ def test_invalid_design_fields_are_ignored_when_design_is_disabled() -> None:
     )
 
     assert response["design"] is None
+
+
+def test_extreme_finite_design_inputs_raise_instead_of_emitting_nonstandard_json() -> None:
+    with pytest.raises(ValidationError, match="standardized distance.*finite"):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": -1e-320,
+                "upper": 1e-320,
+                "null_value": 1e308,
+                "design_enabled": True,
+                "grid_points": 401,
+            }
+        )
+
+
+def test_unrepresentable_design_ci_width_raises_validation_error() -> None:
+    maximum = sys.float_info.max
+
+    with pytest.raises(ValidationError, match="confidence-interval width.*finite"):
+        compute_curves(
+            {
+                "effect_type": "mean_difference",
+                "lower": -0.6 * maximum,
+                "upper": 0.6 * maximum,
+                "null_value": 0.0,
+                "design_enabled": True,
+                "grid_points": 401,
+            }
+        )

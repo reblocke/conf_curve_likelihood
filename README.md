@@ -142,4 +142,4 @@ MIT License for repository code; see `LICENSE`. Third-party and publisher materi
 
 ### Contact
 
-Maintainer: Brian W. Locke (`@reblocke`). Use GitHub issues or pull requests for repository-specific questions when the repository is public.
+Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for repository-specific questions when the repository is public.

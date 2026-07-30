@@ -211,6 +211,28 @@ def test_invalid_design_inputs_surface_errors(app_url: str, page: Page) -> None:
     expect(page.locator("#status-card")).to_contain_text("strictly positive", timeout=120000)
 
 
+def test_extreme_finite_design_inputs_surface_validation_error(
+    app_url: str,
+    page: Page,
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+
+    page.select_option("#effect-type", "mean_difference")
+    page.locator("#ci-lower").fill("-1e-320")
+    page.locator("#ci-upper").fill("1e-320")
+    page.locator("#null-value").fill("1e308")
+    page.locator("#design-enabled").check()
+
+    expect(page.locator("#status-card")).to_contain_text(
+        "Design standardized distance exceeds the finite floating-point range",
+        timeout=120000,
+    )
+    expect(page.locator("#curve-plot .main-svg")).to_have_count(0)
+    expect(page.locator("#export-csv")).to_be_disabled()
+    expect(page.locator("#export-png")).to_be_disabled()
+
+
 def test_design_selection_rule_and_threshold_controls_update_summary(
     app_url: str, page: Page
 ) -> None:

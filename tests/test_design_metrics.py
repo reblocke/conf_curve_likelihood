@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import sys
 from collections.abc import Callable
 
 import pytest
@@ -502,3 +503,144 @@ def test_nonfinite_design_inputs_raise_validation_errors() -> None:
 
     with pytest.raises(ValidationError, match="estimate"):
         design_metrics_for_true_effects([1.0], null_working=0.0, se=1.0, estimate_working=math.inf)
+
+
+def test_standardized_distances_preserve_ordinary_direct_arithmetic() -> None:
+    true_effects = [-3.5, 0.0, 2.25]
+    null_value = 0.25
+    se = 0.5
+
+    metrics = design_metrics_for_true_effects(
+        true_effects,
+        null_working=null_value,
+        se=se,
+    )
+
+    assert [metric.delta for metric in metrics] == [
+        (true_effect - null_value) / se for true_effect in true_effects
+    ]
+
+
+def test_standardized_distances_recover_representable_subtraction_overflow() -> None:
+    maximum = sys.float_info.max
+
+    [max_distance] = design_metrics_for_true_effects(
+        [maximum],
+        null_working=-maximum,
+        se=2.0,
+    )
+    [distance_of_two] = design_metrics_for_true_effects(
+        [maximum],
+        null_working=-maximum,
+        se=maximum,
+    )
+
+    assert max_distance.delta == maximum
+    assert distance_of_two.delta == 2.0
+
+
+@pytest.mark.parametrize(
+    ("null_value", "se"),
+    [
+        (-sys.float_info.max, math.nextafter(2.0, 0.0)),
+        (0.0, 0.5),
+    ],
+)
+def test_unrepresentable_standardized_distances_raise_validation_error(
+    null_value: float,
+    se: float,
+) -> None:
+    with pytest.raises(ValidationError, match="standardized distance.*finite"):
+        design_metrics_for_true_effects(
+            [sys.float_info.max],
+            null_working=null_value,
+            se=se,
+        )
+
+
+def test_standardized_distance_preserves_smallest_subnormal_result() -> None:
+    smallest_subnormal = math.ulp(0.0)
+
+    [metric] = design_metrics_for_true_effects(
+        [smallest_subnormal],
+        null_working=-smallest_subnormal,
+        se=2.0,
+        near_null_delta=0.0,
+    )
+
+    assert metric.delta == smallest_subnormal
+
+
+def test_threshold_distance_recovers_representable_subtraction_overflow() -> None:
+    maximum = sys.float_info.max
+
+    spec = selection_rule_spec(
+        selection_rule="ci_excludes_mcid",
+        null_working=-maximum,
+        se=maximum,
+        claim_direction="positive",
+        threshold_working=maximum,
+    )
+
+    assert spec.threshold_delta == 2.0
+
+
+def test_unrepresentable_threshold_distance_raises_validation_error() -> None:
+    maximum = sys.float_info.max
+
+    with pytest.raises(ValidationError, match="standardized distance.*finite"):
+        selection_rule_spec(
+            selection_rule="ci_excludes_mcid",
+            null_working=-maximum,
+            se=math.nextafter(2.0, 0.0),
+            claim_direction="positive",
+            threshold_working=maximum,
+        )
+
+
+@pytest.mark.parametrize(
+    ("estimate", "expected"),
+    [
+        (0.0, 0.5),
+        (sys.float_info.max, 1.0),
+    ],
+)
+def test_observed_exaggeration_uses_finite_standardized_overflow_distances(
+    estimate: float,
+    expected: float,
+) -> None:
+    maximum = sys.float_info.max
+
+    [metric] = design_metrics_for_true_effects(
+        [maximum],
+        null_working=-maximum,
+        se=maximum,
+        estimate_working=estimate,
+    )
+
+    assert metric.observed_exaggeration == expected
+
+
+def test_observed_exaggeration_does_not_require_individually_representable_deltas() -> None:
+    maximum = sys.float_info.max
+
+    [metric] = design_metrics_for_true_effects(
+        [maximum / 2.0],
+        null_working=-maximum,
+        se=1.75,
+        estimate_working=maximum,
+    )
+
+    assert metric.delta == pytest.approx(1.5408798298819848e308)
+    assert metric.observed_exaggeration == pytest.approx(4.0 / 3.0)
+
+
+def test_unrepresentable_observed_exaggeration_raises_validation_error() -> None:
+    with pytest.raises(ValidationError, match="observed exaggeration.*finite"):
+        design_metrics_for_true_effects(
+            [1e-308],
+            null_working=0.0,
+            se=1e-308,
+            estimate_working=sys.float_info.max,
+            near_null_delta=0.0,
+        )
