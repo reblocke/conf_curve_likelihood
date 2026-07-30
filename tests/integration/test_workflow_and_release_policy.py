@@ -123,15 +123,15 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.3"
+    assert pyproject["project"]["version"] == "0.2.4"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.3" in citation
+    assert "version: 0.2.4" in citation
     assert 'date-released: "2026-07-30"' in citation
-    assert "## [0.2.3] - 2026-07-30" in changelog
-    release_notes = changelog.split("## [0.2.3] - 2026-07-30", 1)[1].split(
-        "## [0.2.2] - 2026-07-30", 1
+    assert "## [0.2.4] - 2026-07-30" in changelog
+    release_notes = changelog.split("## [0.2.4] - 2026-07-30", 1)[1].split(
+        "## [0.2.3] - 2026-07-30", 1
     )[0]
     for required_release_detail in (
         "docs/SCIENTIFIC_SCOPE.md",
@@ -169,6 +169,34 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     assert f"Numerical core: wald-inference {CORE_VERSION}" in llms
     for surface in (migration_log, llms):
         assert CORE_WHEEL_SHA256 in surface
+
+
+def test_migration_records_do_not_retain_superseded_v023_release_claims() -> None:
+    metadata_audit = _read("docs/migration/METADATA_AUDIT.md")
+    migration_log = _read("docs/migration/MIGRATION_LOG.md")
+    combined = f"{metadata_audit}\n{migration_log}"
+
+    for stale_claim in (
+        "v0.2.3 release-candidate state",
+        "v0.2.3 is gated on CI/review and an annotated tag",
+        "completion requires the tagged release",
+        "Pending at candidate source time",
+        "Planned annotated `v0.2.3` prerelease",
+        "To be published by the v0.2.3 release workflow",
+        "v0.2.3 tag, release assets, Pages deployment, and independent rerun remain pending",
+    ):
+        assert stale_claim not in combined
+
+    for release_evidence in (
+        "427d425d16f847a9462ef0084d96841137995512",
+        "30561596025",
+        "30561595983",
+        "30562484672",
+        "8a5a07687ba4b5cfa093266264a8911b2f56968b55e33ca0b772db07da4d82dd",
+        "e16e0cbfe85a83bf1b347a3a606cc747136e6ef86288133bb2caa65f07a5d54f",
+        "d3844f4d39cfca845ec6452d2d7a6df640e40acaa49fbe8d2a5e8ea42f89f2b1",
+    ):
+        assert release_evidence in migration_log
 
 
 def test_scientific_repository_documentation_matrix_is_complete() -> None:

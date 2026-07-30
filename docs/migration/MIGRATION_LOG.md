@@ -354,16 +354,16 @@ These corrections supersede the affected wording above:
 
 | Field | Status |
 |---|---|
-| Date opened/completed | Opened 2026-07-30; completion requires the tagged release |
+| Date opened/completed | Completed 2026-07-30 |
 | Source repository/SHA | `reblocke/conf_curve_likelihood` / `78d189ac03ec223a69778843497d27c70a8720c2` |
-| Target repository/SHA | Candidate established by the reviewed fix PR; the final annotated tag will resolve the immutable release commit |
+| Target repository/SHA | `reblocke/conf_curve_likelihood` / `427d425d16f847a9462ef0084d96841137995512` |
 | Branch | `codex/mig-10-validation-matrix-docs` |
-| Pull request | Pending at candidate source time |
-| Tag/release | Planned annotated `v0.2.3` prerelease |
+| Pull request | [#23](https://github.com/reblocke/conf_curve_likelihood/pull/23) |
+| Tag/release | [v0.2.3 prerelease](https://github.com/reblocke/conf_curve_likelihood/releases/tag/v0.2.3) |
 | Core version | Exact `wald-inference` v0.4.1 release |
-| Validation status | Corrective release candidate for independent portfolio-validation rerun |
+| Validation status | Exact release independently reviewed; portfolio verdict remains owned by the catalog report |
 | Intended behavior changes | Add required scientific-scope and validation records; no numerical or browser-contract change |
-| Artifact/manifest hashes | To be published by the v0.2.3 release workflow in `SHA256SUMS` |
+| Artifact/manifest hashes | Source archive `8a5a07687ba4b5cfa093266264a8911b2f56968b55e33ca0b772db07da4d82dd`; stage manifest `e16e0cbfe85a83bf1b347a3a606cc747136e6ef86288133bb2caa65f07a5d54f`; checksum file `d3844f4d39cfca845ec6452d2d7a6df640e40acaa49fbe8d2a5e8ea42f89f2b1` |
 
 ### Work recorded
 
@@ -375,45 +375,23 @@ These corrections supersede the affected wording above:
 
 ### Validation evidence
 
-- The release must pass the locked full verification command, frozen B01-B08 comparator,
-  Chromium suite, WebKit smoke, exact Pages artifact, and annotated-tag release workflow.
-- The independent portfolio audit must rerun Lane F and bind its result to the exact v0.2.3 tag.
+- Main CI
+  [run 30561596025](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30561596025)
+  passed the locked test, B01-B08, Chromium, WebKit, staging, and clean-tree gates at
+  `427d425d16f847a9462ef0084d96841137995512`.
+- Pages
+  [run 30561595983](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30561595983)
+  deployed the same commit.
+- Release
+  [run 30562484672](https://github.com/reblocke/conf_curve_likelihood/actions/runs/30562484672)
+  verified the annotated tag, reran all release gates, and published three checksum-verified
+  assets. The live stage-manifest bytes equal the released manifest bytes.
+- Independent post-tag review confirmed the v0.2.2-to-v0.2.3 diff changed documentation,
+  version metadata, and policy assertions only; `core.py`, `design.py`, `models.py`,
+  `web_contract.py`, defaults, payloads, and golden fixtures did not change.
 
 ### Unresolved decisions and remaining risks
 
-- The v0.2.3 tag, release assets, Pages deployment, and independent rerun remain pending at this
-  candidate source commit.
-
-## Entry template
-
-Copy this section for each later milestone:
-
-```markdown
-## Milestone NN — Title
-
-| Field | Status |
-|---|---|
-| Date opened/completed | |
-| Source repository/SHA | |
-| Target repository/SHA | |
-| Branch | |
-| Pull request | |
-| Tag/release | |
-| Core version | |
-| Validation status | |
-| Intended behavior changes | |
-| Artifact/manifest hashes | |
-
-### Work recorded
-
-- Pending.
-
-### Validation evidence
-
-- Command:
-- Result:
-
-### Unresolved decisions and remaining risks
-
-- Pending.
-```
+- Version 0.2.4 reconciles these release facts and version surfaces only. It does not change
+  scientific behavior, browser contracts, privacy, accessibility, or exports, and it makes no
+  self-certifying claim about the portfolio verdict.

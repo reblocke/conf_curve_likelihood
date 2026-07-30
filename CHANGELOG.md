@@ -4,6 +4,43 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-07-30
+
+### Changed
+
+- Reconcile `docs/migration/METADATA_AUDIT.md` and `docs/migration/MIGRATION_LOG.md` with the
+  completed v0.2.3 annotated tag, release assets, Pages deployment, and independent post-tag
+  review. Remove prospective lifecycle statements that became stale after publication.
+- Preserve the v0.2.3 numerical, Python, browser-payload, privacy, accessibility, UI, and export
+  contracts unchanged. This patch changes documentation and version/policy surfaces only.
+- Retain the required `docs/SCIENTIFIC_SCOPE.md` and `docs/VALIDATION.md` records.
+
+### Core and parity
+
+- Pin the exact
+  [`wald-inference` v0.4.1](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1)
+  release and wheel SHA-256
+  `d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b`.
+- Retain all 22 frozen B01-B08 responses at `rtol=1e-12` and `atol=1e-14`, with declared identity
+  fields exact.
+
+### Portfolio and maintenance
+
+- Continue to recommend the
+  [focused Wald tools catalog](https://reblocke.github.io/wald-inference-tools/) for a single
+  question. The focused applications are
+  [compatibility-curve](https://reblocke.github.io/compatibility-curve/),
+  [wald-likelihood-support](https://reblocke.github.io/wald-likelihood-support/),
+  [critical-effect-size](https://reblocke.github.io/critical-effect-size/),
+  [type-s-m-calibrator](https://reblocke.github.io/type-s-m-calibrator/), and
+  [precision-guardrail-planner](https://reblocke.github.io/precision-guardrail-planner/).
+- Retain the supported-change, compatibility, deprecation, and human-gated archival policy in
+  [`docs/MAINTENANCE.md`](https://github.com/reblocke/conf_curve_likelihood/blob/v0.2.4/docs/MAINTENANCE.md).
+- Keep the repository, Pages URL, `confcurve` imports, `compute_curves()` contract, default inputs,
+  view modes, warnings/errors, plots, and CSV/PNG/caption/reviewer exports backward compatible.
+- This is software-validation evidence, not clinical validation or scientific revalidation beyond
+  the documented frozen tests and independent review.
+
 ## [0.2.3] - 2026-07-30
 
 ### Added
@@ -182,7 +219,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.0...v0.2.1

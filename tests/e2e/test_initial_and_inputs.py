@@ -102,7 +102,7 @@ def test_initial_render_loads_pyodide_and_plots(
     expect(gelman_carlin_link).to_have_attribute("target", "_blank")
     expect(gelman_carlin_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#technical-version")).to_have_text(
-        "confcurve app 0.2.3 · wald-inference core 0.4.1"
+        "confcurve app 0.2.4 · wald-inference core 0.4.1"
     )
     footer = page.locator("footer.portfolio-footer")
     expect(footer).to_contain_text("Related Wald tools")
