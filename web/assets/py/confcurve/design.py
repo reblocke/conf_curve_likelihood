@@ -7,7 +7,7 @@ from typing import Literal, TypeAlias, get_args
 import numpy as np
 from scipy.stats import norm
 
-from .core import ValidationError
+from .core import ValidationError, standardized_distance
 
 SelectionRule: TypeAlias = Literal[
     "two_sided_p_lt_alpha",
@@ -108,6 +108,22 @@ def _coerce_true_effect_array(values: object) -> np.ndarray:
     return true_effects
 
 
+def _finite_standardized_distance(
+    values: np.ndarray,
+    *,
+    center: float,
+    scale: float,
+) -> np.ndarray:
+    """Return ``(values - center) / scale`` without emitting non-finite values."""
+
+    try:
+        return standardized_distance(values, theta_hat=center, se=scale)
+    except ValidationError as exc:
+        raise ValidationError(
+            "Design standardized distance exceeds the finite floating-point range."
+        ) from exc
+
+
 def _validate_se(se: float, *, label: str = "Design standard error") -> None:
     if not np.isfinite(se) or se <= 0:
         raise ValidationError(f"{label} must be finite and positive.")
@@ -186,7 +202,13 @@ def selection_rule_spec(
             threshold_working,
             label="Design claim threshold",
         )
-        threshold_delta = (threshold_value - null_value) / se_value
+        threshold_delta = float(
+            _finite_standardized_distance(
+                np.asarray([threshold_value]),
+                center=null_value,
+                scale=se_value,
+            )[0]
+        )
         if direction == "positive" and threshold_delta <= 0:
             raise ValidationError(
                 "Positive-claim threshold rules require a threshold above the null."
@@ -256,7 +278,8 @@ def _interval_probability(lower: float, upper: float, delta: float) -> float:
 def _pdf_shifted(value: float, delta: float) -> float:
     if not np.isfinite(value):
         return 0.0
-    return float(norm.pdf(value - delta))
+    with np.errstate(over="ignore", under="ignore"):
+        return float(norm.pdf(value - delta))
 
 
 def _interval_z_numerator(lower: float, upper: float, delta: float) -> float:
@@ -386,7 +409,11 @@ def design_metrics_for_true_effects(
         near_null_delta=near_null_value,
     )
 
-    standardized_true_effect = (true_effects - null_value) / se_value
+    standardized_true_effect = _finite_standardized_distance(
+        true_effects,
+        center=null_value,
+        scale=se_value,
+    )
 
     metrics: list[DesignMetric] = []
     for true_effect, delta in zip(true_effects, standardized_true_effect, strict=True):
@@ -413,11 +440,24 @@ def design_metrics_for_true_effects(
                 if expected_selected_abs_z is None
                 else max(0.0, expected_selected_abs_z / abs(delta_float))
             )
-            observed_exaggeration = (
-                None
-                if estimate_value is None
-                else abs((estimate_value - null_value) / (float(true_effect) - null_value))
-            )
+            if estimate_value is None:
+                observed_exaggeration = None
+            else:
+                estimate_distance = estimate_value - null_value
+                true_effect_distance = float(true_effect) - null_value
+                if np.isfinite(estimate_distance) and np.isfinite(true_effect_distance):
+                    observed_exaggeration = abs(estimate_distance / true_effect_distance)
+                else:
+                    estimate_distance = (0.5 * estimate_value) - (0.5 * null_value)
+                    true_effect_distance = (0.5 * float(true_effect)) - (0.5 * null_value)
+                    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+                        observed_exaggeration = float(
+                            abs(np.divide(estimate_distance, true_effect_distance))
+                        )
+                if not np.isfinite(observed_exaggeration):
+                    raise ValidationError(
+                        "Design observed exaggeration exceeds the finite floating-point range."
+                    )
 
         metrics.append(
             DesignMetric(

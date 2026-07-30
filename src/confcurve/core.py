@@ -409,7 +409,8 @@ def build_grid(
         values = _to_array(include_values)
         if values.size:
             _require_finite(values, "Included grid values")
-            required_span = float(np.max(np.abs(values - theta_hat)))
+            with np.errstate(over="ignore"):
+                required_span = float(np.max(np.abs(values - theta_hat)))
             if required_span > span:
                 span = required_span + (GRID_EXPANSION_PADDING_MULTIPLIER * se)
     if max_span is not None:
@@ -432,7 +433,17 @@ def standardized_distance(
     values = _to_array(theta)
     if se <= 0:
         raise ValidationError("Standard error must be positive.")
-    return (values - theta_hat) / se
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        differences = values - theta_hat
+        z_values = differences / se
+        overflowed_differences = ~np.isfinite(differences)
+        if np.any(overflowed_differences):
+            scaled_z_values = ((0.5 * values) - (0.5 * theta_hat)) / (0.5 * se)
+            z_values = np.where(overflowed_differences, scaled_z_values, z_values)
+
+    if not np.isfinite(z_values).all():
+        raise ValidationError("Standardized distance exceeds the finite floating-point range.")
+    return z_values
 
 
 def confidence_curve(
@@ -487,8 +498,13 @@ def max_safe_grid_span(
 def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float | None]:
     """Return summary statistics for the null value versus the MLE."""
 
-    null_distance = abs(null_value - theta_hat)
-    if null_distance > (MAX_FINITE_ABS_Z * se):
+    try:
+        null_z_value = float(
+            standardized_distance(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
+        )
+    except ValidationError:
+        null_z_value = None
+    if null_z_value is None or abs(null_z_value) > MAX_FINITE_ABS_Z:
         return {
             "null_relative_likelihood": 0.0,
             "log_null_relative_likelihood": None,
@@ -498,9 +514,6 @@ def summaries(theta_hat: float, se: float, null_value: float) -> dict[str, float
             "null_z_value": None,
         }
 
-    null_z_value = float(
-        standardized_distance(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
-    )
     log_null_relative_likelihood = float(
         log_relative_likelihood(null_value, theta_hat=theta_hat, se=se).reshape(-1)[0]
     )
