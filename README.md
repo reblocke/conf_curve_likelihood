@@ -20,6 +20,15 @@ Deployed app: [https://reblocke.github.io/conf_curve_likelihood/](https://rebloc
 The v0.1.1 release candidate is pinned to `wald-inference` v0.1.1. The migration changes the
 implementation source, not the intended public numerical, browser, or export behavior.
 
+## Related Wald tools
+
+- [Portfolio catalog](https://reblocke.github.io/wald-inference-tools/)
+- [Focused compatibility-curve app](https://reblocke.github.io/compatibility-curve/)
+- [Integrated workbench](https://reblocke.github.io/conf_curve_likelihood/)
+- [Source repository](https://github.com/reblocke/conf_curve_likelihood)
+- Numerical source: [`wald-inference Core v0.1.1`](https://github.com/reblocke/wald-inference-core/releases/tag/v0.1.1)
+- [Privacy and data path](https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/migration/CURRENT_BEHAVIOR.md#privacy-and-data-path): entered numerical values stay in the browser; static CDNs still receive ordinary request metadata.
+
 ## What the app does
 
 - accepts a 95% CI, effect type, optional point estimate, optional null, optional plausible display range, optional user-supplied reference thresholds/MCIDs, and ratio-axis spacing
