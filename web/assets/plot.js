@@ -199,6 +199,7 @@ function makeDesignRangeShapes(response, xref, yref) {
 export async function renderCurves(plotElement, response, displayOptions) {
   const viewMode = displayOptions.viewMode ?? "both";
   const manuscript = displayOptions.manuscript === true;
+  const compact = !manuscript && window.innerWidth < 700;
   const designEnabled = hasDesign(response);
   const domains = panelDomains(viewMode, designEnabled);
   const nullRelativeLikelihood = response.summary.null_relative_likelihood;
@@ -379,7 +380,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
         : []),
     ],
     annotations: [
-      ...makePanelAnnotations(viewMode, manuscript, designEnabled),
+      ...makePanelAnnotations(viewMode, manuscript, designEnabled, compact),
       ...makeIntervalAnnotations(response, viewMode, xAxisType, manuscript, designEnabled),
       ...makeDirectLabelAnnotations(response, displayOptions, xAxisType),
     ],
@@ -464,6 +465,7 @@ export async function renderCurves(plotElement, response, displayOptions) {
   };
 
   plotElement.dataset.designEnabled = String(designEnabled);
+  plotElement.dataset.compact = String(compact);
   await Plotly.react(plotElement, traces, layout, config);
   plotElement.dataset.viewMode = viewMode;
 }

@@ -48,7 +48,7 @@ PACKAGE_STAGE_SPECS = (
         role="app",
         distribution="confcurve",
         import_name="confcurve",
-        expected_version="0.2.1",
+        expected_version="0.2.2",
     ),
     PackageStageSpec(
         role="core",

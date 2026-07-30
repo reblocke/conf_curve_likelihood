@@ -210,3 +210,41 @@ def test_y_axis_titles_are_visible(app_url: str, page: Page) -> None:
     titles = y_axis_titles(page)
     assert "Compatibility / confidence curve" in titles
     assert "Relative likelihood" in titles
+
+
+def test_mobile_panel_annotations_stay_inside_the_plot_and_viewport(
+    app_url: str, page: Page
+) -> None:
+    page.goto(app_url)
+    wait_for_ready(page)
+    plot = page.locator("#curve-plot")
+    expect(plot).to_have_attribute("data-compact", "false")
+
+    page.set_viewport_size({"width": 390, "height": 844})
+    expect(plot).to_have_attribute("data-compact", "true")
+
+    bounds = plot.evaluate(
+        """
+        (plot) => {
+          const plotBounds = plot.getBoundingClientRect();
+          return Array.from(plot.querySelectorAll(".annotation-text"))
+            .filter((node) => /^[AB]\\./.test(node.textContent?.trim() ?? ""))
+            .map((node) => {
+              const box = node.getBoundingClientRect();
+              return {
+                left: box.left,
+                right: box.right,
+                plotLeft: plotBounds.left,
+                plotRight: plotBounds.right,
+                viewportWidth: window.innerWidth,
+              };
+            });
+        }
+        """
+    )
+    assert len(bounds) == 2
+    for box in bounds:
+        assert box["left"] >= box["plotLeft"] - 1
+        assert box["right"] <= box["plotRight"] + 1
+        assert box["left"] >= -1
+        assert box["right"] <= box["viewportWidth"] + 1

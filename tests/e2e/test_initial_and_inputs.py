@@ -15,7 +15,19 @@ from playwright.sync_api import Page, expect
 pytestmark = pytest.mark.e2e
 
 
-def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> None:
+def test_initial_render_loads_pyodide_and_plots(
+    app_url: str,
+    page: Page,
+    browser_name: str,
+    browser_type_launch_args: dict[str, object],
+) -> None:
+    launch_args = browser_type_launch_args.get("args", [])
+    assert isinstance(launch_args, list)
+    if browser_name == "chromium":
+        assert "--disable-quic" in launch_args
+    else:
+        assert "--disable-quic" not in launch_args
+
     page.goto(app_url)
     wait_for_ready(page)
 
@@ -90,7 +102,7 @@ def test_initial_render_loads_pyodide_and_plots(app_url: str, page: Page) -> Non
     expect(gelman_carlin_link).to_have_attribute("target", "_blank")
     expect(gelman_carlin_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#technical-version")).to_have_text(
-        "confcurve app 0.2.1 · wald-inference core 0.4.1"
+        "confcurve app 0.2.2 · wald-inference core 0.4.1"
     )
     footer = page.locator("footer.portfolio-footer")
     expect(footer).to_contain_text("Related Wald tools")

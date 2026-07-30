@@ -114,7 +114,7 @@ def _check_live(url: str, attempts: int = 3) -> None:
                 url,
                 headers={
                     "Cache-Control": "no-cache",
-                    "User-Agent": "confcurve-portfolio-link-check/0.2.1",
+                    "User-Agent": "confcurve-portfolio-link-check/0.2.2",
                 },
             )
             with urllib.request.urlopen(request, timeout=20) as response:

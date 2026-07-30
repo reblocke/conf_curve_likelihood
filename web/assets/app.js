@@ -567,6 +567,14 @@ function initializeUi() {
       }
       resizeFrame = window.requestAnimationFrame(() => {
         resizeFrame = null;
+        const compact = window.innerWidth < 700;
+        if (
+          runtimeState.currentResponse &&
+          plotElement.dataset.compact !== String(compact)
+        ) {
+          void rerenderCurrentResponse();
+          return;
+        }
         resizeCurrentPlot();
       });
     });
