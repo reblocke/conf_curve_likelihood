@@ -375,7 +375,12 @@ export function renderWarnings(response, displayOptions, warningsList) {
   }
   const messages = [...notes, ...response.warnings];
 
-  warningsList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
+  const warningItems = messages.map((message) => {
+    const warningItem = document.createElement("li");
+    warningItem.textContent = String(message);
+    return warningItem;
+  });
+  warningsList.replaceChildren(...warningItems);
 }
 
 function csvValue(value) {

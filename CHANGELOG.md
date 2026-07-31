@@ -4,6 +4,9 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+- Render response and design warning messages as inert list-item text rather than HTML, with a
+  browser regression that blocks element creation and handler execution; visible warning text and
+  all scientific/output content remain unchanged.
 - Harden CI, Pages, and future releases with reviewed full-SHA Action pins, explicit
   least-privilege permissions, nonpersisted checkout credentials, stable check IDs, and a disabled
   dependency cache in the release-artifact job.
