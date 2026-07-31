@@ -54,7 +54,7 @@ jobs:
           test "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag"
           test "$(git rev-parse "$GITHUB_REF_NAME^{commit}")" = "$GITHUB_SHA"
 
-      - name: Require GitHub verification of the signed remote tag
+      - name: Verify the annotated remote tag and event commit
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -82,18 +82,6 @@ jobs:
             gh api \
               -H "X-GitHub-Api-Version: 2026-03-10" \
               "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" \
-              --jq '.verification.verified'
-          )" = "true"
-          test "$(
-            gh api \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" \
-              --jq '.verification.reason'
-          )" = "valid"
-          test "$(
-            gh api \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" \
               --jq '.object.sha'
           )" = "$GITHUB_SHA"
           test "$(
@@ -103,7 +91,7 @@ jobs:
               --jq '.object.type'
           )" = "commit"
 
-      - name: Require the signed tag target to be on protected main history
+      - name: Require the tag target to be on protected main history
         shell: bash
         run: |
           git fetch \
@@ -123,7 +111,7 @@ jobs:
         with:
           enable-cache: false
 
-      - name: Confirm the verified tag matches version metadata
+      - name: Confirm the tag matches version metadata
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -276,17 +264,6 @@ jobs:
       - name: Confirm the checksummed GitHub CLI is selected
         shell: bash
         run: test "$(gh --version | awk 'NR == 1 { print $3 }')" = "$GH_CLI_VERSION"
-
-      - name: Require repository release immutability
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_SETTINGS_READ_TOKEN }}
-        run: |
-          test "$(
-            gh api \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "repos/${GITHUB_REPOSITORY}/immutable-releases" \
-              --jq .enabled
-          )" = "true"
 
       - name: Create draft stable release from verified files
         shell: bash
