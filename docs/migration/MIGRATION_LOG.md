@@ -407,3 +407,48 @@ These corrections supersede the affected wording above:
 - Version 0.2.5 corrects this lifecycle wording and version-policy surfaces only. It does not alter
   formulas, golden responses, tolerances, Python/browser contracts, defaults, privacy,
   accessibility, UI behavior, or exports.
+
+## Milestone 11 governance release — Core v0.4.2 adoption
+
+| Field | Status |
+|---|---|
+| Date opened/completed | Opened 2026-07-31; completion awaits reviewed merge, CI/Pages, and release verification |
+| Source repository/SHA | `reblocke/conf_curve_likelihood` / `5fda1df68613c08c793d2914258668ddea11f6b0` |
+| Target repository/SHA | Candidate branch below; exact protected-`main` merge SHA pending review |
+| Branch | `codex/adopt-core-v0.4.2` |
+| Pull request | Pending reviewed pull request |
+| Tag/release | Planned annotated `v0.2.6`; no tag or release exists from this candidate change |
+| Core version | Exact stable immutable `wald-inference` v0.4.2 release |
+| Core artifact | [`wald_inference-0.4.2-py3-none-any.whl`](https://github.com/reblocke/wald-inference-core/releases/download/v0.4.2/wald_inference-0.4.2-py3-none-any.whl) |
+| Validation status | Local candidate gates pass; reviewed merge, hosted CI/Pages/release, and catalog-owned portfolio gates remain pending |
+| Intended behavior changes | Governance-only Core adoption and version/provenance propagation; no formula, API, browser-payload, default, warning/error, view, or export change |
+| Artifact/manifest hashes | Core wheel `225331d7b9d7b70e2508eecb92851a92a8c4e245baf412a1eb0f464d85da1349`; local candidate staged bundle `807227dbbed7a4ddef3001cfd7dda21a2e7f09d48fbfe4d005632f529f89b9b1`; release hashes remain workflow-generated |
+
+### Work recorded
+
+- Pin the exact public v0.4.2 Core wheel in Python dependency metadata, the lockfile, browser
+  staging, runtime validation, public markers, and policy tests.
+- Bump the integrated workbench to v0.2.6 without exposing focused-only Core fields or changing
+  the frozen `confcurve` compatibility and export contracts.
+- Preserve all historical v0.4.0/v0.4.1 dependency and v0.2.0-v0.2.5 release records as
+  provenance and retain the exact v0.4.1 rollback coordinates.
+
+### Validation evidence
+
+- Core v0.4.2 was published as a stable immutable GitHub release at
+  `8afd0a463cc1d2586b8ce5cf92f40900647c3190`; the hosted wheel reports the exact required digest.
+- Local verification passed all 22 B01-B08 cases at `rtol=1e-12`, `atol=1e-14`, all 20 checked-in
+  portfolio requirements, 219 non-browser tests, 50 Chromium tests, and the documented WebKit
+  initial-render smoke. Formatting, lint, strict JSON, public API, exports, and deterministic
+  staging were included in those gates.
+- A fresh temporary clone with no sibling Core checkout installed the exact release URL, staged
+  app 0.2.6 (7 files) and Core 0.4.2 (14 files), reproduced bundle SHA-256
+  `807227dbbed7a4ddef3001cfd7dda21a2e7f09d48fbfe4d005632f529f89b9b1`, and left tracked status
+  unchanged after staging.
+- Main CI, Pages, hosted manifest, release assets, and catalog-owned portfolio evidence remain
+  post-merge gates and are not self-certified by this candidate repository.
+
+### Unresolved decisions and remaining risks
+
+- None in the local Core-adoption scope. Merge, tag, release, and catalog reconciliation remain
+  explicit later lifecycle steps after review and hosted verification.

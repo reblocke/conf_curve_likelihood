@@ -113,7 +113,7 @@ git status --short
 CI and Pages run `make stage-web` from a clean GitHub checkout and fail if generation changes
 tracked state. The tag workflow repeats locked non-browser, golden, staging, full-Chromium, and
 WebKit-smoke checks before publishing a deterministic source archive, the generated browser
-manifest, and checksums to a GitHub prerelease. It does not publish to PyPI.
+manifest, and checksums to a stable immutable GitHub release. It does not publish to PyPI.
 
 ## 2026-07-30 upgrade record
 
@@ -150,3 +150,22 @@ App v0.2.1 follows the same procedure and replaces Core v0.4.0 with the exact co
 Core v0.4.1 repairs invalid precision-bracketing, pairwise-support, and ratio-underflow edge
 behavior. It does not change the decision to keep new Core fields outside the feature-frozen
 `confcurve` contract; all compatibility gates above remain required.
+
+## 2026-07-31 governance-only upgrade record
+
+App v0.2.6 follows the same procedure and replaces Core v0.4.1 with the exact stable immutable
+`wald-inference` v0.4.2 release:
+
+- release:
+  <https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2>;
+- release commit: `8afd0a463cc1d2586b8ce5cf92f40900647c3190`;
+- wheel:
+  <https://github.com/reblocke/wald-inference-core/releases/download/v0.4.2/wald_inference-0.4.2-py3-none-any.whl>;
+- wheel SHA-256:
+  `225331d7b9d7b70e2508eecb92851a92a8c4e245baf412a1eb0f464d85da1349`;
+- license: MIT.
+
+Core v0.4.2 changes governance and release provenance only. It explicitly preserves numerical
+formulas, public APIs, tolerances, dependency resolution, and frozen baseline values. The
+integrated adapter therefore exposes no new Core fields and retains every compatibility gate
+above. Rollback restores the exact v0.4.1 pin and digest in the preceding record.

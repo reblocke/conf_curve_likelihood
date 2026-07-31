@@ -11,13 +11,13 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_ROOT = PROJECT_ROOT / ".github" / "workflows"
 STAGE_SCRIPT_COMMAND = "uv run python scripts/stage_web_python.py"
-CORE_VERSION = "0.4.1"
-CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1"
+CORE_VERSION = "0.4.2"
+CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2"
 CORE_WHEEL_URL = (
-    "https://github.com/reblocke/wald-inference-core/releases/download/v0.4.1/"
-    "wald_inference-0.4.1-py3-none-any.whl"
+    "https://github.com/reblocke/wald-inference-core/releases/download/v0.4.2/"
+    "wald_inference-0.4.2-py3-none-any.whl"
 )
-CORE_WHEEL_SHA256 = "d7272023f65088729d3ff997cab7cac57b84f22ac6108244ec2170434557d99b"
+CORE_WHEEL_SHA256 = "225331d7b9d7b70e2508eecb92851a92a8c4e245baf412a1eb0f464d85da1349"
 GH_CLI_VERSION = "2.93.0"
 GH_CLI_LINUX_AMD64_SHA256 = "02d1290eba130e0b896f3709ffff22e1c75a51475ddb70476a85abc6b5807af0"
 EXPECTED_ACTION_PINS = {
@@ -512,20 +512,20 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.5"
+    assert pyproject["project"]["version"] == "0.2.6"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.5" in citation
-    assert 'date-released: "2026-07-30"' in citation
-    assert "## [0.2.5] - 2026-07-30" in changelog
-    release_notes = changelog.split("## [0.2.5] - 2026-07-30", 1)[1].split(
-        "## [0.2.4] - 2026-07-30", 1
+    assert "version: 0.2.6" in citation
+    assert 'date-released: "2026-07-31"' in citation
+    assert "## [0.2.6] - 2026-07-31" in changelog
+    release_notes = changelog.split("## [0.2.6] - 2026-07-31", 1)[1].split(
+        "## [0.2.5] - 2026-07-30", 1
     )[0]
     for required_release_detail in (
         "docs/SCIENTIFIC_SCOPE.md",
         "docs/VALIDATION.md",
-        "wald-inference` v0.4.1",
+        "wald-inference` v0.4.2",
         "B01-B08",
         "compatibility-curve",
         "wald-likelihood-support",
@@ -618,16 +618,12 @@ def test_current_core_publication_state_is_stable_and_app_state_is_distinct() ->
     changelog = _read("CHANGELOG.md")
     normalized_migration_log = " ".join(migration_log.split())
 
-    assert "| Release status observed 2026-07-30 | GitHub stable release |" in readme
+    assert "| Release status observed 2026-07-31 | GitHub stable immutable release |" in readme
     assert (
-        "Core v0.4.1 was subsequently promoted to a stable GitHub release"
-        in normalized_migration_log
+        "Core v0.4.2 was published as a stable immutable GitHub release" in normalized_migration_log
     )
-    assert (
-        "Focused and integrated apps remain explicitly experimental prereleases"
-        in normalized_migration_log
-    )
-    assert "retaining this integrated app's experimental GitHub-prerelease status" in changelog
+    assert "no tag or release exists from this candidate change" in normalized_migration_log
+    assert "not clinical validation or scientific revalidation" in changelog
 
 
 def test_scientific_repository_documentation_matrix_is_complete() -> None:
@@ -656,7 +652,7 @@ def test_scientific_repository_documentation_matrix_is_complete() -> None:
     assert "**Task question:**" in readme
     assert "Observed-data reconstruction" in scientific_scope
     assert "Design calibration" in scientific_scope
-    assert "wald-inference` 0.4.1" in scientific_scope
+    assert "wald-inference` 0.4.2" in scientific_scope
     assert "not scientifically or clinically validated" in scientific_scope
     assert "pre-split-baseline-2026-07-29" in validation
     assert "rtol=1e-12" in validation

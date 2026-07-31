@@ -202,7 +202,7 @@ EXPECTED_DATACLASS_FIELDS = {
 
 
 def test_public_exports_and_signatures_match_the_frozen_contract() -> None:
-    assert confcurve.__version__ == "0.2.5"
+    assert confcurve.__version__ == "0.2.6"
     assert confcurve.__all__ == EXPECTED_ALL
     assert set(EXPECTED_SIGNATURES) == {
         name for name in confcurve.__all__ if callable(getattr(confcurve, name))
