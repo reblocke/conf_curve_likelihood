@@ -198,14 +198,15 @@ After every portfolio release or URL change, run the public check:
 uv run python scripts/check_portfolio_links.py --live
 ```
 
-Future version tags must be signed, annotated, equal to the declared project and citation version,
-and point to a reviewed commit contained in protected `main` history. The release workflow verifies
+Future version tags must be annotated, equal to the declared project and citation version, and
+point to a reviewed commit contained in protected `main` history. The release workflow verifies
 those properties before running repository code, reruns B01–B08 and both browser engines, builds
 and checksums the deterministic source archive and browser manifest, and transfers the complete
 bundle to a separate publishing job. That job requires immutable releases, creates a draft stable
 release, re-downloads and compares every asset and the release body, and publishes only the
 verified draft. Credentialed release commands use an exact checksummed GitHub CLI; the
-immutability check uses the repository-scoped `RELEASE_SETTINGS_READ_TOKEN` Actions secret.
+job-scoped GitHub token is the only release credential. The workflow verifies release immutability
+immediately after publication.
 
 ## Worked examples
 

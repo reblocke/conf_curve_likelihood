@@ -1,5 +1,41 @@
 # Decisions
 
+## 2026-07-31: Release automation uses only the job-scoped GitHub token
+
+**Context:**
+
+The prior release policy required both GitHub verification of a tag signature and a separately
+managed Administration-read credential for a pre-publication immutable-settings query. Those
+external credential requirements add release friction without contributing to the retained tag
+identity, commit containment, deterministic artifact, or draft-verification controls.
+
+**Decision:**
+
+This decision supersedes only those two requirements in the 2026-07-30 repository and release
+governance decision. The earlier decision remains below as the historical policy record.
+
+Future releases still require an annotated semantic-version tag. Before repository code executes,
+the workflow confirms the local annotated tag, remote tag-object type and SHA, tag name, peeled
+event commit, protected-`main` containment, and exact project/citation version match.
+Deterministic assets, checksums, bundle transfer, draft-first creation, release-body and asset byte
+comparison, and stable one-time publication are unchanged.
+
+The publishing job no longer queries repository immutable-release settings before creating the
+draft. Every credentialed GitHub command uses the exact checksummed GitHub CLI with the job-scoped
+`github.token`; no separately managed release credential is required. Immutable releases must
+still be enabled before creating the tag. Immediately after publication, the workflow requires
+the release to report immutable and independently verifies the release and every asset.
+
+**Consequences:**
+
+- A release no longer depends on a signing-key enrollment or external repository-settings token.
+- Annotated-tag identity, protected-main containment, version binding, deterministic assets,
+  exact draft comparison, and post-publication immutable-release/asset verification remain gates.
+- Because the settings query is intentionally removed, maintainers must confirm immutable releases
+  are enabled before tagging; the workflow detects a disabled setting only after publication.
+- This policy change does not alter app version 0.2.5, Core v0.4.1, B01–B08 fixtures, formulas,
+  APIs, browser behavior, exports, privacy, or scientific interpretation.
+
 ## 2026-07-30 — Bound compact panel-label rendering
 
 The integrated plot wraps observed-panel annotations only below the existing compact breakpoint

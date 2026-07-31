@@ -55,12 +55,12 @@ strict JSON, staging, clean-clone verification without a sibling Core checkout, 
 
 ## Release changes
 
-A release change requires a reviewed pull request and a signed, annotated version tag pointing to
+A release change requires a reviewed pull request and an annotated version tag pointing to
 the exact reviewed merge commit. The tag must equal `v` plus the authoritative project version,
 and that version needs a nonempty changelog section. The tag workflow:
 
-1. cryptographically verifies the remote tag and binds it to the event commit;
-2. requires the verified target to be contained in protected `main` history before isolated
+1. verifies the annotated remote tag object and binds it to the event commit;
+2. requires the tag target to be contained in protected `main` history before isolated
    version parsing or repository execution;
 3. reruns formatting, lint, B01–B08, portfolio, non-browser, Chromium, and WebKit gates with
    read-only contents permission;
@@ -72,10 +72,10 @@ and that version needs a nonempty changelog section. The tag workflow:
 8. downloads and compares every draft asset and the release body; and
 9. publishes only the verified draft once as stable.
 
-Before creating the tag, enable immutable releases and configure a repository-scoped
-Administration-read token as the `RELEASE_SETTINGS_READ_TOKEN` Actions secret. The publishing job
-uses that secret only for the fail-closed settings query; release creation uses the job-scoped
-GitHub token.
+Before creating the tag, enable immutable releases. Every credentialed release command uses the
+job-scoped GitHub token; no external release credential is required. After publication, the
+workflow requires the release to report immutable and independently verifies it and every asset.
 
-If a release job fails after draft creation, leave the release as a draft for inspection. Do not
-replace assets or move a tag after publication.
+If a release job fails while the release remains a draft, leave the draft for inspection. If a
+post-publication verification fails, preserve the published artifacts and investigate the release
+state. Do not replace assets or move a tag after publication.

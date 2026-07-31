@@ -118,8 +118,8 @@ Generated ignored build/test directories may exist afterward; tracked source mus
 
 Each release record should identify:
 
-- GitHub-verified signed annotated tag object, peeled event commit, and containment in protected
-  `main` history before repository code executes;
+- annotated remote tag-object identity, peeled event commit, and containment in protected `main`
+  history before repository code executes;
 - app, Core, Python, Pyodide, NumPy, SciPy, Plotly, and browser versions;
 - Core artifact URL and digest;
 - staged package manifest and bundle digests;
@@ -127,13 +127,15 @@ Each release record should identify:
 - Pages workflow and deployed manifest source commit;
 - exact local and downloaded draft-release body and asset comparison;
 - release assets, published checksums, and immutable-release/asset verification;
+- exact checksummed GitHub CLI use with only the job-scoped GitHub token for credentialed release
+  commands;
 - frozen numerical maximum absolute and relative differences; and
 - any evidence limitations or unresolved findings.
 
 Repository-policy tests additionally verify reviewed full-SHA Action pins with version comments,
 least-privilege permissions, nonpersisted checkout credentials, stable CI check IDs,
-release-cache isolation, signature and protected-main ordering, exact version-specific notes and
-assets, draft-first stable publication, immutable-release enforcement, checksummed GitHub CLI,
+release-cache isolation, annotated-tag and protected-main ordering, exact version-specific notes
+and assets, draft-first stable publication, immutable-release enforcement, checksummed GitHub CLI,
 Dependabot cooldowns, and private-reporting guidance. These controls validate engineering
 provenance; they do not establish scientific or clinical validity.
 
