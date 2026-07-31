@@ -167,7 +167,7 @@ def test_browser_stage_is_complete_deterministic_and_removes_stale_files(
         (package["role"], package["distribution"], package["import_name"], package["version"])
         for package in packages
     ] == [
-        ("app", "confcurve", "confcurve", "0.2.5"),
+        ("app", "confcurve", "confcurve", "0.2.6"),
         ("core", "wald-inference", "wald_inference", CORE_VERSION),
     ]
 
@@ -227,7 +227,7 @@ def test_app_stage_rejects_an_import_shadow_outside_the_source_commit_checkout(
     project_root = Path(__file__).resolve().parents[2]
     shadow_root = tmp_path / "shadow" / "confcurve"
     shadow_root.mkdir(parents=True)
-    (shadow_root / "__init__.py").write_text('__version__ = "0.2.5"\n', encoding="utf-8")
+    (shadow_root / "__init__.py").write_text('__version__ = "0.2.6"\n', encoding="utf-8")
     monkeypatch.setattr(staging, "_installed_package_root", lambda import_name: shadow_root)
 
     with pytest.raises(StagingError, match="must resolve to"):
@@ -354,7 +354,7 @@ def test_browser_stage_imports_both_packages_from_staged_tree(tmp_path: Path) ->
         env=environment,
     )
 
-    assert result.stdout.strip() == f"0.2.5 {CORE_VERSION}"
+    assert result.stdout.strip() == f"0.2.6 {CORE_VERSION}"
 
 
 def test_browser_runtime_rejects_nonstandard_json_numbers() -> None:

@@ -102,7 +102,7 @@ def test_initial_render_loads_pyodide_and_plots(
     expect(gelman_carlin_link).to_have_attribute("target", "_blank")
     expect(gelman_carlin_link).to_have_attribute("rel", "noopener noreferrer")
     expect(page.locator("#technical-version")).to_have_text(
-        "confcurve app 0.2.5 · wald-inference core 0.4.1"
+        "confcurve app 0.2.6 · wald-inference core 0.4.2"
     )
     footer = page.locator("footer.portfolio-footer")
     expect(footer).to_contain_text("Related Wald tools")
@@ -115,7 +115,7 @@ def test_initial_render_loads_pyodide_and_plots(
         "https://reblocke.github.io/precision-guardrail-planner/",
         "https://reblocke.github.io/conf_curve_likelihood/",
         "https://github.com/reblocke/conf_curve_likelihood",
-        "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1",
+        "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2",
         "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md",
     }
     assert set(footer.locator("a").evaluate_all("(links) => links.map((link) => link.href)")) == (

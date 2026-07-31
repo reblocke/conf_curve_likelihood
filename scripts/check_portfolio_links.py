@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CATALOG_URL = "https://reblocke.github.io/wald-inference-tools/"
 INTEGRATED_URL = "https://reblocke.github.io/conf_curve_likelihood/"
 APP_REPOSITORY_URL = "https://github.com/reblocke/conf_curve_likelihood"
-CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1"
+CORE_RELEASE_URL = "https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2"
 PRIVACY_URL = "https://github.com/reblocke/conf_curve_likelihood/blob/main/docs/PRIVACY.md"
 FOCUSED_URLS = (
     "https://reblocke.github.io/compatibility-curve/",
@@ -92,8 +92,8 @@ def validate_portfolio_links(readme: str, html: str) -> list[str]:
             "deployed footer links must exactly match the ordered portfolio contract"
         )
     footer_text = " ".join(parser.text)
-    if "wald-inference Core v0.4.1" not in footer_text or "privacy" not in footer_text.lower():
-        raise PortfolioLinkError("deployed footer must name Core v0.4.1 and its privacy boundary")
+    if "wald-inference Core v0.4.2" not in footer_text or "privacy" not in footer_text.lower():
+        raise PortfolioLinkError("deployed footer must name Core v0.4.2 and its privacy boundary")
     if CATALOG_URL not in html[: html.find("<form")]:
         raise PortfolioLinkError("catalog guidance must be prominent before the input form")
     return [*required_readme, *FOOTER_URLS]
@@ -114,7 +114,7 @@ def _check_live(url: str, attempts: int = 3) -> None:
                 url,
                 headers={
                     "Cache-Control": "no-cache",
-                    "User-Agent": "confcurve-portfolio-link-check/0.2.5",
+                    "User-Agent": "confcurve-portfolio-link-check/0.2.6",
                 },
             )
             with urllib.request.urlopen(request, timeout=20) as response:

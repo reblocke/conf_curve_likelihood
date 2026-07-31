@@ -4,6 +4,26 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-07-31
+
+### Changed
+
+- Adopt the exact stable immutable
+  [`wald-inference` v0.4.2](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2)
+  wheel at commit `8afd0a463cc1d2586b8ce5cf92f40900647c3190`, with SHA-256
+  `225331d7b9d7b70e2508eecb92851a92a8c4e245baf412a1eb0f464d85da1349`.
+- Preserve all 22 frozen B01-B08 responses, the `confcurve` Python surface, strict JSON, browser
+  payloads, defaults, views, warnings/errors, plots, and CSV/PNG/caption/reviewer exports without
+  exposing focused-only Core fields. The integrated workbench remains backward compatible.
+- Retain `docs/SCIENTIFIC_SCOPE.md`, `docs/VALIDATION.md`, and the supported-change boundary in
+  `docs/MAINTENANCE.md`.
+- This release is engineering-validation evidence, not clinical validation or scientific revalidation.
+- Continue to route single questions through the focused tools:
+  [compatibility-curve](https://reblocke.github.io/compatibility-curve/),
+  [wald-likelihood-support](https://reblocke.github.io/wald-likelihood-support/),
+  [critical-effect-size](https://reblocke.github.io/critical-effect-size/),
+  [type-s-m-calibrator](https://reblocke.github.io/type-s-m-calibrator/), and
+  [precision-guardrail-planner](https://reblocke.github.io/precision-guardrail-planner/).
 - Render response and design warning messages as inert list-item text rather than HTML, with a
   browser regression that blocks element creation and handler execution; visible warning text and
   all scientific/output content remain unchanged.
@@ -22,10 +42,8 @@ All notable changes to the integrated workbench are documented here.
   updater respects the released scientific NumPy `<2.3` and SciPy `<1.15` ceilings.
 - Pin the development-only security updates pytest 9.0.3, Requests 2.33.0, Pygments 2.20.0,
   urllib3 2.7.0, and idna 3.15 while retaining pytest 9.0.2 solely as frozen fixture provenance;
-  no golden file, application runtime, browser stage, Core dependency, or scientific result changes.
-- Preserve app version 0.2.5, the exact `wald-inference` v0.4.1 wheel and checksum, all 22 frozen
-  B01–B08 cases, `confcurve` compatibility, browser behavior, exports, feature-freeze, and
-  scientific/privacy scope.
+  those development-tool updates do not alter golden files, application runtime dependencies,
+  browser behavior, or scientific results.
 
 ## [0.2.5] - 2026-07-30
 
@@ -266,7 +284,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.2...v0.2.3

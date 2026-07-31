@@ -70,7 +70,7 @@ reconstructed summaries.
 
 All production statistical formulas are owned by the public root API or documented legacy adapter
 of the exact released
-[`wald-inference` 0.4.1](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.1)
+[`wald-inference` 0.4.2](https://github.com/reblocke/wald-inference-core/releases/tag/v0.4.2)
 artifact. The local `confcurve` package is a backward-compatible request/response adapter and
 presentation layer; it does not fork the Core formulas.
 

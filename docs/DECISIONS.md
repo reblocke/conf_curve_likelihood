@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-07-31: Adopt governance-only Core v0.4.2 without expanding the workbench
+
+**Context:**
+
+`wald-inference` v0.4.2 is the current stable immutable Core release. Its release changes
+repository governance, build provenance, and immutable-release controls while explicitly
+preserving every numerical formula, public API, tolerance, dependency resolution, and frozen
+baseline value.
+
+**Decision:**
+
+Release integrated workbench v0.2.6 against the exact v0.4.2 wheel at Core commit
+`8afd0a463cc1d2586b8ce5cf92f40900647c3190`, URL
+<https://github.com/reblocke/wald-inference-core/releases/download/v0.4.2/wald_inference-0.4.2-py3-none-any.whl>,
+and SHA-256 `225331d7b9d7b70e2508eecb92851a92a8c4e245baf412a1eb0f464d85da1349`.
+
+Keep the integrated workbench feature-frozen. Do not expose focused-only Core fields, change the
+`confcurve` public surface or browser payload, copy any Core formula, widen tolerances, regenerate
+the B01-B08 fixtures, or change defaults, views, warnings/errors, plots, or exports.
+
+**Consequences:**
+
+- Python, browser staging, runtime markers, documentation, and tests use one exact public Core
+  artifact; rollback restores the v0.4.1 URL and digest recorded below.
+- Frozen B01-B08, strict-JSON, public-API, deterministic-staging, Chromium, WebKit, export,
+  privacy, and clean-clone/no-sibling checks remain release gates.
+- The Core upgrade changes dependency and provenance metadata only; it does not claim new
+  scientific or clinical validation for the integrated workbench.
+
 ## 2026-07-31: Release automation uses only the job-scoped GitHub token
 
 **Context:**

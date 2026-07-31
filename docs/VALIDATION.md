@@ -49,7 +49,7 @@ Source-policy and parity tests require statistical primitives to resolve through
 presentation logic but must not add a second production implementation of a Core formula or
 selection rule.
 
-The exact Core 0.4.1 wheel URL is bound across `pyproject.toml`, `uv.lock`, staging metadata,
+The exact Core 0.4.2 wheel URL is bound across `pyproject.toml`, `uv.lock`, staging metadata,
 installed direct-URL metadata, documentation, and tests. Its SHA-256 is bound in dependency
 metadata, the lockfile, staging constants, documentation, and tests; installed file identity is
 also checked against the wheel `RECORD`. `make stage-web` copies the installed `wald_inference` and
