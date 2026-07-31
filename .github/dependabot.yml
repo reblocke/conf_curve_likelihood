@@ -14,10 +14,12 @@ updates:
       python-dependencies:
         patterns:
           - "*"
-    # Preserve the released Core/scientific compatibility ceiling in pyproject.toml.
+    # Preserve the released Core/scientific compatibility ceilings in pyproject.toml.
     ignore:
       - dependency-name: "numpy"
         versions: [">=2.3"]
+      - dependency-name: "scipy"
+        versions: [">=1.15"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: "github-actions"

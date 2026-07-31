@@ -4,6 +4,9 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+- Render response and design warning messages as inert list-item text rather than HTML, with a
+  browser regression that blocks element creation and handler execution; visible warning text and
+  all scientific/output content remain unchanged.
 - Harden CI, Pages, and future releases with reviewed full-SHA Action pins, explicit
   least-privilege permissions, nonpersisted checkout credentials, stable check IDs, and a disabled
   dependency cache in the release-artifact job.
@@ -16,7 +19,7 @@ All notable changes to the integrated workbench are documented here.
 - Add grouped weekly Dependabot proposals with a seven-day cooldown for `uv` and GitHub Actions,
   private vulnerability reporting guidance, contribution policy, scoped issue and pull-request
   templates, and repository-policy regressions. Dependency proposals remain review-only, and the
-  updater respects the released scientific `<2.3` NumPy ceiling.
+  updater respects the released scientific NumPy `<2.3` and SciPy `<1.15` ceilings.
 - Pin the development-only security updates pytest 9.0.3, Requests 2.33.0, Pygments 2.20.0,
   urllib3 2.7.0, and idna 3.15 while retaining pytest 9.0.2 solely as frozen fixture provenance;
   no golden file, application runtime, browser stage, Core dependency, or scientific result changes.
