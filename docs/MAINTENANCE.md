@@ -50,9 +50,10 @@ Review Pyodide, Plotly, Python, NumPy, SciPy, uv, Ruff, pytest, Hypothesis, Play
 Actions, and especially `wald-inference` deliberately. Dependabot groups weekly `uv` and GitHub
 Actions updates after a seven-day cooldown for review; it does not authorize automatic merging.
 Keep every third-party Action pinned to a reviewed full commit SHA with its version in a comment.
-The updater ignores NumPy versions at or above 2.3 because the released Core/scientific
-compatibility contract requires the existing `<2.3` ceiling; changing that ceiling requires a
-reviewed compatibility upgrade, not an unresolvable automated proposal.
+The updater ignores NumPy versions at or above 2.3 and SciPy versions at or above 1.15 because the
+released Core/scientific compatibility contract requires the existing `numpy>=2.2.5,<2.3` and
+`scipy>=1.14.1,<1.15` ranges. Changing either ceiling requires a reviewed compatibility upgrade,
+not an unresolvable automated proposal.
 
 For a Core update, follow [the Core upgrade checklist](CORE_UPGRADE_CHECKLIST.md), update the exact
 wheel version, URL, and SHA-256 together, regenerate the lock and browser stage, and rerun the

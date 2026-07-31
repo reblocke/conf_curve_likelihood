@@ -6,6 +6,8 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_ROOT = PROJECT_ROOT / ".github" / "workflows"
 STAGE_SCRIPT_COMMAND = "uv run python scripts/stage_web_python.py"
@@ -32,6 +34,41 @@ EXPECTED_ACTION_PINS = {
 
 def _read(relative_path: str) -> str:
     return (PROJECT_ROOT / relative_path).read_text(encoding="utf-8")
+
+
+def _dependabot_update_block(config: str, ecosystem: str) -> str:
+    marker = f'  - package-ecosystem: "{ecosystem}"'
+    start = config.index(marker)
+    end = config.find("\n  - package-ecosystem:", start + len(marker))
+    return config[start:] if end == -1 else config[start:end]
+
+
+def _dependabot_mapping_block(update: str, key: str) -> str:
+    marker = re.compile(rf"(?m)^    {re.escape(key)}:\s*$")
+    matches = list(marker.finditer(update))
+    if len(matches) != 1:
+        raise ValueError(f"expected exactly one {key!r} mapping in the updater")
+    start = matches[0].end()
+    next_key = re.search(r"(?m)^    [A-Za-z0-9_-]+:\s*(?:#.*)?$", update[start:])
+    end = len(update) if next_key is None else start + next_key.start()
+    return update[start:end]
+
+
+def _dependabot_version_ignore_rules(update: str) -> list[tuple[str, str]]:
+    ignore = _dependabot_mapping_block(update, "ignore")
+    rules = re.findall(
+        r'^      - dependency-name: "([^"]+)"\n'
+        r'^        versions: \["([^"]+)"\]$',
+        ignore,
+        re.MULTILINE,
+    )
+    if ignore.count("      - dependency-name:") != len(rules):
+        raise ValueError("every ignore entry must be an exact dependency/version rule")
+    if ignore.count("        versions:") != len(rules):
+        raise ValueError("every ignore entry must have exactly one inline versions range")
+    if update.count("      - dependency-name:") != len(rules):
+        raise ValueError("dependency/version rules must not appear outside the ignore mapping")
+    return rules
 
 
 def test_makefile_owns_the_single_stage_entrypoint_and_serve_stages_first() -> None:
@@ -290,17 +327,74 @@ def test_release_installs_checksummed_github_cli_before_credentialed_commands() 
 def test_dependabot_covers_locked_python_and_actions_without_auto_merge() -> None:
     dependabot = _read(".github/dependabot.yml")
     pyproject = tomllib.loads(_read("pyproject.toml"))
+    uv_update = _dependabot_update_block(dependabot, "uv")
+    actions_update = _dependabot_update_block(dependabot, "github-actions")
 
-    assert 'package-ecosystem: "uv"' in dependabot
-    assert 'package-ecosystem: "github-actions"' in dependabot
     assert dependabot.count('interval: "weekly"') == 2
     assert dependabot.count("default-days: 7") == 2
     assert "python-dependencies:" in dependabot
     assert "github-actions:" in dependabot
-    assert 'dependency-name: "numpy"' in dependabot
-    assert 'versions: [">=2.3"]' in dependabot
-    assert "numpy>=2.2.5,<2.3" in pyproject["project"]["dependencies"]
+    assert [
+        dependency
+        for dependency in pyproject["project"]["dependencies"]
+        if dependency.startswith(("numpy", "scipy"))
+    ] == [
+        "numpy>=2.2.5,<2.3",
+        "scipy>=1.14.1,<1.15",
+    ]
+    version_ignore_rules = _dependabot_version_ignore_rules(uv_update)
+    assert version_ignore_rules == [
+        ("numpy", ">=2.3"),
+        ("scipy", ">=1.15"),
+    ]
+    assert 'dependency-name: "numpy"' not in actions_update
+    assert 'dependency-name: "scipy"' not in actions_update
     assert "automerge" not in dependabot.lower()
+
+
+def test_dependabot_version_ignore_regression_rejects_structural_mutations() -> None:
+    dependabot = _read(".github/dependabot.yml")
+    expected_rules = [
+        ("numpy", ">=2.3"),
+        ("scipy", ">=1.15"),
+    ]
+    numpy_rule = '      - dependency-name: "numpy"\n        versions: [">=2.3"]\n'
+    scipy_rule = '      - dependency-name: "scipy"\n        versions: [">=1.15"]\n'
+    ignore_block = f"    ignore:\n{numpy_rule}{scipy_rule}"
+
+    renamed_ignore = dependabot.replace("    ignore:", "    allow:", 1)
+    with pytest.raises(ValueError, match="exactly one 'ignore' mapping"):
+        _dependabot_version_ignore_rules(
+            _dependabot_update_block(renamed_ignore, "uv"),
+        )
+
+    missing_ignore = dependabot.replace(ignore_block, "", 1)
+    with pytest.raises(ValueError, match="exactly one 'ignore' mapping"):
+        _dependabot_version_ignore_rules(
+            _dependabot_update_block(missing_ignore, "uv"),
+        )
+
+    moved_rule = dependabot.replace(
+        ignore_block,
+        f"    ignore:\n{numpy_rule}    proposed-version-rules:\n{scipy_rule}",
+        1,
+    )
+    with pytest.raises(ValueError, match="outside the ignore mapping"):
+        _dependabot_version_ignore_rules(
+            _dependabot_update_block(moved_rule, "uv"),
+        )
+
+    mispaired_range = dependabot.replace(
+        'versions: [">=1.15"]',
+        'versions: [">=2.3"]',
+        1,
+    )
+    assert (
+        _dependabot_version_ignore_rules(
+            _dependabot_update_block(mispaired_range, "uv"),
+        )
+        != expected_rules
+    )
 
 
 def test_public_coordination_files_preserve_scope_and_private_reporting() -> None:
