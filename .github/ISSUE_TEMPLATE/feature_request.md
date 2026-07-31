@@ -21,6 +21,9 @@ This repository is feature-frozen for advanced integrated comparison. Supported 
 cover Core upgrades, correctness, accessibility, security, browser compatibility, or
 documentation/portfolio links.
 
+Do not include protected health information, credentials, unpublished restricted data, or
+vulnerability details. Use the private process in `SECURITY.md` for security reports.
+
 ## Why this belongs in the integrated workbench
 
 ## Proposed solution

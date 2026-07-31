@@ -33,7 +33,9 @@ RTOL = 1e-12
 ATOL = 1e-14
 EXACT_FLOAT_PATHS = ("$.response.meta.effect_spec.default_null",)
 DEPENDENCY_AUTHORITY_FILES = ("pyproject.toml", "uv.lock", ".python-version")
-HISTORICAL_PROVENANCE_VERSIONS = {"confcurve": "0.1.0"}
+# Fixture provenance records the versions used when the frozen baseline was authored; dependency
+# security updates must not rewrite that historical evidence.
+HISTORICAL_PROVENANCE_VERSIONS = {"confcurve": "0.1.0", "pytest": "9.0.2"}
 
 FixtureKind = Literal["full_contract", "edge_summary", "expected_error"]
 

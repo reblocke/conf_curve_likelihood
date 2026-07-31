@@ -4,6 +4,26 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+- Harden CI, Pages, and future releases with reviewed full-SHA Action pins, explicit
+  least-privilege permissions, nonpersisted checkout credentials, stable check IDs, and a disabled
+  dependency cache in the release-artifact job.
+- Require a GitHub-verified signed annotated tag, bind its remote tag object to the event commit,
+  require protected-`main` containment before isolated version parsing or repository execution,
+  and require exact agreement between the tag and app/citation/changelog versions.
+- Install an exact checksummed GitHub CLI before credentialed release commands, require immutable
+  releases through a dedicated Administration-read secret, and verify the exact draft assets and
+  version-bounded release body before one-time stable publication.
+- Add grouped weekly Dependabot proposals with a seven-day cooldown for `uv` and GitHub Actions,
+  private vulnerability reporting guidance, contribution policy, scoped issue and pull-request
+  templates, and repository-policy regressions. Dependency proposals remain review-only, and the
+  updater respects the released scientific `<2.3` NumPy ceiling.
+- Pin the development-only security updates pytest 9.0.3, Requests 2.33.0, Pygments 2.20.0,
+  urllib3 2.7.0, and idna 3.15 while retaining pytest 9.0.2 solely as frozen fixture provenance;
+  no golden file, application runtime, browser stage, Core dependency, or scientific result changes.
+- Preserve app version 0.2.5, the exact `wald-inference` v0.4.1 wheel and checksum, all 22 frozen
+  B01–B08 cases, `confcurve` compatibility, browser behavior, exports, feature-freeze, and
+  scientific/privacy scope.
+
 ## [0.2.5] - 2026-07-30
 
 ### Changed

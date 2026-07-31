@@ -1,22 +1,37 @@
-## Summary
+## Scope
 
-What does this change do, and why?
+Describe the compatibility, engineering, documentation, governance, or maintenance problem
+addressed. If this adds a feature, explain why it belongs in the feature-frozen integrated
+workbench rather than its focused repository. Name `wald-inference` when its released numerical
+behavior owns the issue.
+
+## Risk and release impact
+
+Describe silent-failure risks, B01–B08 implications, observed-data versus assumed-truth
+interpretation, privacy/accessibility effects, generated-stage changes, and release impact.
 
 ## Verification
 
-- [ ] `make fmt-check`
-- [ ] `make lint`
-- [ ] `make test`
-- [ ] `make e2e`
-- [ ] `make verify`
-- [ ] `make portfolio-links`
-- [ ] `make stage-web` run after Python-package changes
+List the exact commands run and their outcomes. Include skipped checks and warnings.
 
-## Notes for reviewers
+## Checklist
 
-- Relevant `.agents/skills/` gates used?
-- Any design/assumption changes documented in `docs/DECISIONS.md`?
-- Any deployment, browser-runtime, or export behavior changes called out here?
-- If Core changed, is `docs/CORE_UPGRADE_CHECKLIST.md` complete with B01-B08 evidence?
-- If this adds a feature, why does it belong in the feature-frozen integrated workbench rather than
-  a focused repository?
+- [ ] No Wald or design-calibration formula was added or copied into `confcurve`.
+- [ ] The `confcurve` public API, browser payload, defaults, views, warnings/errors, strict JSON,
+      and CSV/PNG/caption/reviewer exports remain backward compatible.
+- [ ] All 22 B01–B08 cases pass; an intentional contract change names its authority and migration
+      path.
+- [ ] Observed-data reconstruction and assumed-truth design calibration remain distinctly
+      conditioned and are not described as posterior or clinical guidance.
+- [ ] Examples and fixtures are synthetic and contain no credentials, sensitive data, or protected
+      health information.
+- [ ] No backend, telemetry, persistence, cookies, hidden state, upload, or input-bearing URL was
+      added.
+- [ ] Generated Python under `web/assets/py/` was produced by `make stage-web`, not edited by hand.
+- [ ] Every third-party GitHub Action remains pinned to a full commit SHA with a version comment.
+- [ ] The official Core version, URL, and checksum remain synchronized across package metadata,
+      lockfile, staging configuration, docs, and tests.
+- [ ] `uv sync --locked`, `make verify`, the WebKit smoke, and `make portfolio-links` pass.
+- [ ] A Core or staging change passes clean-clone verification without a sibling Core checkout.
+- [ ] README, scientific scope, validation, privacy, decisions, maintenance, citation, migration
+      records, and changelog were reviewed for synchronization.

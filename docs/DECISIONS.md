@@ -384,3 +384,72 @@ passes.
 - Observed panels continue to describe candidate effects under the reported-data reconstruction;
   design panels continue to describe assumed true effects under repeated-study behavior.
 - Future archival is a separate human decision governed by `docs/MAINTENANCE.md`.
+
+## 2026-07-30: Fail closed on repository and release governance
+
+**Context:**
+
+The integrated workbench retains a large backward-compatibility surface and deterministic release
+artifacts. Mutable Action tags, broad workflow tokens, persisted checkout credentials, unsigned or
+off-main version tags, runner-supplied release tooling, partial assets, or mutable published
+releases could break provenance without changing a scientific test.
+
+**Decision:**
+
+Content-address every third-party GitHub Action by a reviewed full commit SHA. Keep the existing CI
+check IDs and give CI explicit read-only contents permission. Separate the read-only Pages build
+from the narrowly write-enabled deployment, do not persist checkout credentials, and disable
+shared dependency caching in the release-artifact job. Dependabot may propose grouped weekly `uv`
+and GitHub Actions updates only after a seven-day cooldown; proposals remain review-only.
+
+A future release requires a GitHub-verified signed annotated tag whose remote tag object resolves
+to the event commit. The verified target must be contained in protected `main` history before
+isolated project/citation version checks or any repository dependency installation, test, or
+build. Release assets are built and checksummed before release creation and transferred to a
+separate publishing job. Credentialed commands use an exact checksummed GitHub CLI. A
+repository-scoped Administration-read `RELEASE_SETTINGS_READ_TOKEN` fails closed unless immutable
+releases are enabled; it is not used to publish. The job-scoped token creates a draft stable
+release containing exactly the deterministic source archive, browser manifest, and checksums, with
+only the current version's changelog section as its body. The workflow downloads and compares the
+body and every asset before publishing once, then verifies the immutable release and each asset.
+
+Private vulnerability reporting is the disclosure path. Public issue forms exclude credentials,
+restricted data, sensitive values, and protected health information.
+
+**Consequences:**
+
+- Existing historical releases and their recorded prerelease states remain unchanged.
+- Future published tags and assets are immutable; a failed post-draft run leaves an inspectable
+  draft instead of a partial public release.
+- The Administration-read secret must exist and immutable releases must be enabled before the next
+  version tag; otherwise publication fails closed.
+- These controls do not alter app version 0.2.5, Core v0.4.1, any B01–B08 fixture, formula,
+  `confcurve` API, browser payload, default, view, warning/error, export, privacy, or scientific
+  interpretation.
+
+## 2026-07-30: Separate frozen tool provenance from dev-only security updates
+
+**Context:**
+
+The frozen B01–B08 manifest records pytest 9.0.2 as part of the environment that authored the
+historical fixtures. A security audit requires pytest 9.0.3, Requests 2.33.0, Pygments 2.20.0,
+urllib3 2.7.0, and idna 3.15 for current development and browser-test tooling. Treating the live
+pytest version as fixture provenance would either block the required update or tempt regeneration
+of otherwise unchanged golden evidence.
+
+**Decision:**
+
+Pin those five development-only packages to the audited exact versions in the dev dependency group
+and lockfile. Preserve pytest 9.0.2 in `HISTORICAL_PROVENANCE_VERSIONS`, alongside the historical
+`confcurve` fixture version, when validating the frozen manifest. Do not regenerate any golden
+request, response, export schema, or manifest.
+
+**Consequences:**
+
+- The current test environment uses pytest 9.0.3 and the exact audited transitive HTTP/rendering
+  packages.
+- The golden manifest truthfully continues to describe the environment that authored the fixtures.
+- `make golden-check` must prove the 22 stored cases and their bytes remain unchanged.
+- These packages belong only to the development dependency group and are not staged into Pyodide;
+  app version 0.2.5, Core v0.4.1, application/runtime dependencies, numerical behavior, browser
+  payload, exports, and public scientific interpretation remain unchanged.
