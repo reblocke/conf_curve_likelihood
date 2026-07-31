@@ -120,6 +120,11 @@ Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 `make serve`, `make test`, `make e2e`, CI, and GitHub Pages all invoke the same
 `make stage-web` prerequisite.
 
+Public engineering and accessibility reports use the scoped issue forms in `.github/`. Report
+vulnerabilities privately as described in [SECURITY.md](SECURITY.md); never put protected health
+information, credentials, restricted data, or sensitive values in a public report. Contribution
+and review requirements are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Core dependency and browser staging
 
 The locked dependency is the exact GitHub release artifact below; it is not `main`, a sibling
@@ -193,6 +198,15 @@ After every portfolio release or URL change, run the public check:
 uv run python scripts/check_portfolio_links.py --live
 ```
 
+Future version tags must be signed, annotated, equal to the declared project and citation version,
+and point to a reviewed commit contained in protected `main` history. The release workflow verifies
+those properties before running repository code, reruns B01–B08 and both browser engines, builds
+and checksums the deterministic source archive and browser manifest, and transfers the complete
+bundle to a separate publishing job. That job requires immutable releases, creates a draft stable
+release, re-downloads and compares every asset and the release body, and publishes only the
+verified draft. Credentialed release commands use an exact checksummed GitHub CLI; the
+immutability check uses the repository-scoped `RELEASE_SETTINGS_READ_TOKEN` Actions secret.
+
 ## Worked examples
 
 - Additive example: mean difference 95% CI `0.11` to `0.73`, implied point estimate `0.42`, null `0`
@@ -216,6 +230,8 @@ uv run python scripts/check_portfolio_links.py --live
 - `docs/TYPE_SM_DESIGN_ANALYSIS.md` explains the optional Type S/M design-calibration layer.
 - `CITATION.cff` provides software citation metadata and should be updated when release metadata changes.
 - `CHANGELOG.md` records app release notes and exact core provenance.
+- `CONTRIBUTING.md` records review, verification, and immutable-release requirements.
+- `SECURITY.md` records private vulnerability reporting and disclosure boundaries.
 - Source links used for app terminology and presentation notes:
   - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals; retrieved 2026-04-23.
   - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale; retrieved 2026-04-23.

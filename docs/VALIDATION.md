@@ -118,15 +118,30 @@ Generated ignored build/test directories may exist afterward; tracked source mus
 
 Each release record should identify:
 
-- annotated tag object and peeled commit;
+- GitHub-verified signed annotated tag object, peeled event commit, and containment in protected
+  `main` history before repository code executes;
 - app, Core, Python, Pyodide, NumPy, SciPy, Plotly, and browser versions;
 - Core artifact URL and digest;
 - staged package manifest and bundle digests;
 - local and GitHub CI/browser results;
 - Pages workflow and deployed manifest source commit;
-- release assets and published checksums;
+- exact local and downloaded draft-release body and asset comparison;
+- release assets, published checksums, and immutable-release/asset verification;
 - frozen numerical maximum absolute and relative differences; and
 - any evidence limitations or unresolved findings.
+
+Repository-policy tests additionally verify reviewed full-SHA Action pins with version comments,
+least-privilege permissions, nonpersisted checkout credentials, stable CI check IDs,
+release-cache isolation, signature and protected-main ordering, exact version-specific notes and
+assets, draft-first stable publication, immutable-release enforcement, checksummed GitHub CLI,
+Dependabot cooldowns, and private-reporting guidance. These controls validate engineering
+provenance; they do not establish scientific or clinical validity.
+
+Current development verification uses exact security-reviewed pytest 9.0.3, Requests 2.33.0,
+Pygments 2.20.0, urllib3 2.7.0, and idna 3.15. The immutable fixture manifest continues to record
+pytest 9.0.2 as historical authoring provenance through an explicit override. Validation must never
+rewrite golden files merely to match the current development tool version; it must compare the
+existing 22 cases and their declared provenance unchanged.
 
 The independent portfolio audit and its machine-readable status live in the
 [`wald-inference-tools`](https://github.com/reblocke/wald-inference-tools) catalog repository.

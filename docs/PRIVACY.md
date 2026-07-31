@@ -20,3 +20,7 @@ values are not included in those requests or transmitted to an application serve
 
 Any future backend, persistence, telemetry, input-bearing URL, external export, or new network
 destination requires an explicit privacy/data-flow decision and updated tests before adoption.
+
+Public issue and pull-request reports must use synthetic values and omit credentials, sensitive
+data, private study materials, and protected health information. Vulnerability details use the
+private process in `SECURITY.md`, not public coordination surfaces.
