@@ -29,6 +29,23 @@ The v0.2.7 integrated-workbench release is pinned to `wald-inference` v0.4.2. It
 legacy numerical, Python, browser, and export contracts while adopting the portfolio's current
 Core release.
 
+## Why this repository exists
+
+The portfolio's focused apps are the preferred entry points for a single inferential question.
+This repository remains separate to preserve the established `confcurve` API, browser payload,
+default interface, and export contracts, and to support deliberate comparison of observed-data
+reconstruction with repeated-study design calibration. Keeping that compatibility surface here
+allows the focused apps to remain narrower without rewriting or silently retiring existing work.
+
+## Intended use and audience
+
+The workbench is intended for researchers, methods collaborators, reviewers, and educators who
+need an advanced side-by-side view and can keep its two conditioning paradigms distinct. Use
+aggregate published estimates or synthetic teaching scenarios. For compatibility interpretation
+alone, use the focused [Compatibility curve](https://reblocke.github.io/compatibility-curve/);
+for another single question, use the corresponding focused tool below. This is not a
+patient-specific, diagnostic, treatment, regulatory, or clinical decision-support product.
+
 ## Choose a focused tool for one question
 
 - [Compatibility curve](https://reblocke.github.io/compatibility-curve/) — candidate effects under
@@ -233,31 +250,56 @@ immediately after publication.
 - `CHANGELOG.md` records app release notes and exact core provenance.
 - `CONTRIBUTING.md` records review, verification, and immutable-release requirements.
 - `SECURITY.md` records private vulnerability reporting and disclosure boundaries.
-- Source links used for app terminology and presentation notes:
-  - [Zampieri et al., AJRCCM 2025](https://academic.oup.com/ajrccm/article/211/9/1610/8300617) for evidential likelihood, likelihood ratios, support, and S−2 intervals; retrieved 2026-04-23.
-  - [Perugini et al., AMPS 2025](https://journals.sagepub.com/doi/10.1177/25152459251335298) for critical-effect-size values and design-interpretation rationale; retrieved 2026-04-23.
-  - [Gelman & Carlin 2014](https://journals.sagepub.com/doi/abs/10.1177/1745691614551642) for Type S sign error, Type M magnitude/exaggeration ratio, and design calculations; retrieved 2026-06-14.
+- Method sources used for terminology and rationale:
+  - Rafi Z, Greenland S. Semantic and cognitive tools to aid statistical science: replace
+    confidence and significance by compatibility and surprise. *BMC Medical Research
+    Methodology*. 2020;20:244.
+    [doi:10.1186/s12874-020-01105-9](https://doi.org/10.1186/s12874-020-01105-9).
+    This open-access CC BY 4.0 source supports compatibility terminology and interpretation only;
+    retrieved 2026-08-01.
+  - Zampieri FG, Cahusac PMB, Maia IS, et al. Trial Analysis and Interpretation in Critical Care
+    Using the Evidential (Likelihood) Approach: Rationale and Practical Considerations.
+    *American Journal of Respiratory and Critical Care Medicine*. 2025;211(9):1610–1621.
+    [doi:10.1164/rccm.202504-0809TR](https://doi.org/10.1164/rccm.202504-0809TR).
+    This source supports evidential likelihood, likelihood-ratio, support, and S−2 terminology;
+    retrieved 2026-04-23; CC BY-NC-ND 4.0.
+  - Perugini A, Gambarota F, Toffalini E, et al. The Benefits of Reporting Critical-Effect-Size
+    Values. *Advances in Methods and Practices in Psychological Science*.
+    2025;8(2):25152459251335298.
+    [doi:10.1177/25152459251335298](https://doi.org/10.1177/25152459251335298).
+    This source supplies critical-effect-size and design-interpretation rationale; retrieved
+    2026-04-23; CC BY-NC 4.0.
+  - Gelman A, Carlin J. Beyond Power Calculations: Assessing Type S (Sign) and Type M (Magnitude)
+    Errors. *Perspectives on Psychological Science*. 2014;9(6):641–651.
+    [doi:10.1177/1745691614551642](https://doi.org/10.1177/1745691614551642).
+    This source motivates Type S, Type M, and design-calculation interpretation; retrieved
+    2026-06-14; publisher page © the authors 2014, reuse by permission.
 
-## Repository Notes
+These sources do not govern executable behavior. The exact released Core APIs and tests are the
+implementation authority. No publication figure, table, dataset, code, or substantial text is
+copied into this repository; third-party materials remain under their original access and reuse
+terms. Cite the exact software release or commit used through [CITATION.cff](CITATION.cff), plus
+the applicable method source when discussing its concepts.
 
-### Project Status
+## Maintenance, data, privacy, and release boundaries
 
-Maintained, feature-frozen integrated workbench. Supported changes are Core upgrades, correctness,
-accessibility, security, browser compatibility, and documentation/portfolio-link maintenance. See
-[Maintenance](docs/MAINTENANCE.md). No manuscript version is expected. Code and teaching examples
-are repository-authored unless otherwise noted.
-
-### Data and Reuse
-
-No clinical data expected
-
-### License
-
-MIT License for repository code; see `LICENSE`. Third-party and publisher materials remain under their original terms.
-
-### Contact
-
-Maintainer: Brian Locke (`@reblocke`). Use GitHub issues or pull requests for repository-specific questions when the repository is public.
+- **Maintenance:** This is a maintained, feature-frozen integrated workbench. Supported work is
+  limited to reviewed Core upgrades, correctness, accessibility, security, browser compatibility,
+  backward compatibility, and documentation or portfolio-link maintenance. New focused features
+  belong in their owning repositories. See [Maintenance](docs/MAINTENANCE.md).
+- **Data and privacy:** The intended inputs are aggregate published estimates or synthetic values,
+  not identifiers or patient-level data. Calculations run in browser memory; the app has no
+  application backend, telemetry, cookies, or browser persistence, and exports occur only after an
+  explicit local action. Static runtime requests do not include entered values. See
+  [Privacy](docs/PRIVACY.md).
+- **Release boundary:** The current integrated release is v0.2.7, pinned to the immutable Core
+  v0.4.2 artifact documented above. Cite the exact tagged release or commit used. Published tags
+  and release assets are historical records and are not moved or replaced by later documentation
+  maintenance on `main`.
+- **License and contact:** Repository code and original text are MIT licensed; see [LICENSE](LICENSE).
+  Third-party materials retain their original terms. Maintainer: Brian Locke (`@reblocke`). Use
+  GitHub issues or pull requests for public repository-specific questions and the private process
+  in [SECURITY.md](SECURITY.md) for vulnerabilities.
 
 ## Related Wald tools
 
