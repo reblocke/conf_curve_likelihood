@@ -186,20 +186,33 @@ def test_manifest_static_structure_rejects_tampered_expected_status() -> None:
     assert any("manifest.cases[0].expected_status" in mismatch for mismatch in mismatches)
 
 
-def test_manifest_preserves_historical_adapter_version_as_fixture_provenance() -> None:
+def test_manifest_preserves_historical_dependency_versions_as_fixture_provenance() -> None:
     manifest = json.loads((GOLDEN_ROOT / "manifest.json").read_text())
+    expected_versions = {
+        "confcurve": "0.1.0",
+        "hypothesis": "6.151.9",
+        "playwright": "1.58.0",
+        "pytest": "9.0.2",
+        "pytest-playwright": "0.7.2",
+    }
 
     assert baseline._dependency_versions()["confcurve"] == "0.2.6"
-    assert baseline._fixture_versions()["confcurve"] == "0.1.0"
-    assert manifest["versions"]["confcurve"] == "0.1.0"
-    assert all(case["versions"]["confcurve"] == "0.1.0" for case in manifest["cases"])
+    assert baseline.HISTORICAL_PROVENANCE_VERSIONS == expected_versions
+    assert {
+        key: baseline._fixture_versions()[key] for key in expected_versions
+    } == expected_versions
+    assert {key: manifest["versions"][key] for key in expected_versions} == expected_versions
+    assert all(
+        {key: case["versions"][key] for key in expected_versions} == expected_versions
+        for case in manifest["cases"]
+    )
     assert _manifest_structure_mismatches(manifest) == []
 
     tampered = copy.deepcopy(manifest)
-    tampered["versions"]["confcurve"] = "0.1.1"
+    tampered["versions"]["hypothesis"] = "6.161.2"
     mismatches = _manifest_structure_mismatches(tampered)
 
-    assert "manifest.versions.confcurve: expected '0.1.0', observed '0.1.1'" in mismatches
+    assert "manifest.versions.hypothesis: expected '6.151.9', observed '6.161.2'" in mismatches
 
 
 def test_manifest_accepts_a_different_patch_within_declared_python(
