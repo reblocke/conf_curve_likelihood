@@ -9,7 +9,7 @@ name and approved retaining the MIT License. PR #13 applied that decision at
 `9d59fd9e17900ef177e695ba3a34ccc0a08e374b`.
 
 Ticket 10 and its Milestone 11 corrective releases refreshed the product/version surfaces while
-preserving that identity decision. The table below reports the reconciled v0.2.6 candidate state;
+preserving that identity decision. The table below reports the reconciled v0.2.7 candidate state;
 the original conflicts remain described as provenance.
 
 The historical conflict remains recorded here as provenance: the README used `Brian W.
@@ -29,12 +29,12 @@ placeholder `Your Name`.
 | Package description | `Static GitHub Pages app and compatibility adapter for Wald inference` | From `pyproject.toml`; distinct from the verified live GitHub description above |
 | Distribution name | `confcurve` | From `pyproject.toml` |
 | Import package | `confcurve` | From `src/confcurve/` |
-| Package version | `0.2.6` | From `pyproject.toml` |
+| Package version | `0.2.7` | From `pyproject.toml` |
 | README maintainer | `Brian Locke` (`@reblocke`) | Canonical form applied by PR #13 |
 | `pyproject.toml` author | `Brian Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` author | Given name `Brian`; family name `Locke` | Canonical form applied by PR #13 |
 | `CITATION.cff` title | `Integrated Wald Inference Workbench` | Consistent with README/HTML |
-| `CITATION.cff` version | `0.2.6` | Consistent with package version |
+| `CITATION.cff` version | `0.2.7` | Consistent with package version |
 | `CITATION.cff` release date | `2026-07-31` | Consistent with changelog release heading |
 | `CITATION.cff` repository | `https://github.com/reblocke/conf_curve_likelihood` | Consistent with `origin` |
 | License identifier | MIT | Consistent across README, `CITATION.cff`, and `LICENSE` |

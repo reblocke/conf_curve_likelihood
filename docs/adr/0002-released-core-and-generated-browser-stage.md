@@ -169,3 +169,10 @@ Core v0.4.2 changes governance and release provenance only. It explicitly preser
 formulas, public APIs, tolerances, dependency resolution, and frozen baseline values. The
 integrated adapter therefore exposes no new Core fields and retains every compatibility gate
 above. Rollback restores the exact v0.4.1 pin and digest in the preceding record.
+
+## 2026-07-31 development-tool maintenance record
+
+App v0.2.7 retains the exact v0.4.2 Core artifact above while advancing only locked development,
+test, formatting, and build tools. The frozen B01-B08 corpus remains byte-identical and records
+its historical authoring versions; current tools compare behavior against that unchanged corpus.
+No Core formula, adapter API, browser payload, default, warning/error, view, or export changes.

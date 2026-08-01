@@ -22,7 +22,7 @@ const EXPECTED_PACKAGES = [
     role: "app",
     distribution: "confcurve",
     importName: "confcurve",
-    version: "0.2.6",
+    version: "0.2.7",
   },
   {
     role: "core",

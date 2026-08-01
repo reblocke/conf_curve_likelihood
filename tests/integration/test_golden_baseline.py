@@ -196,7 +196,7 @@ def test_manifest_preserves_historical_dependency_versions_as_fixture_provenance
         "pytest-playwright": "0.7.2",
     }
 
-    assert baseline._dependency_versions()["confcurve"] == "0.2.6"
+    assert baseline._dependency_versions()["confcurve"] == "0.2.7"
     assert baseline.HISTORICAL_PROVENANCE_VERSIONS == expected_versions
     assert {
         key: baseline._fixture_versions()[key] for key in expected_versions
