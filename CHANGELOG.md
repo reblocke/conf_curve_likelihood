@@ -4,10 +4,24 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-07-31
+
 ### Changed
 
-- Update the locked development and browser-test toolchain, while preserving the byte-identical
-  22-case golden corpus and its historical dependency provenance.
+- Update the locked development and browser-test toolchain while preserving the byte-identical
+  22-case B01-B08 golden corpus and its historical dependency provenance.
+- Keep the exact stable immutable `wald-inference` v0.4.2 Core artifact and preserve the
+  `confcurve` Python surface, strict JSON, browser payloads, defaults, views, warnings/errors,
+  plots, and CSV/PNG/caption/reviewer exports. This maintenance patch remains backward compatible.
+- Retain `docs/SCIENTIFIC_SCOPE.md`, `docs/VALIDATION.md`, and the supported-change boundary in
+  `docs/MAINTENANCE.md`.
+- This release is engineering-validation evidence, not clinical validation or scientific revalidation.
+- Continue to route single questions through the focused tools:
+  [compatibility-curve](https://reblocke.github.io/compatibility-curve/),
+  [wald-likelihood-support](https://reblocke.github.io/wald-likelihood-support/),
+  [critical-effect-size](https://reblocke.github.io/critical-effect-size/),
+  [type-s-m-calibrator](https://reblocke.github.io/type-s-m-calibrator/), and
+  [precision-guardrail-planner](https://reblocke.github.io/precision-guardrail-planner/).
 
 ## [0.2.6] - 2026-07-31
 
@@ -289,7 +303,8 @@ All notable changes to the integrated workbench are documented here.
   threshold, numerical tolerance, undefined-value convention, or public interpretation is
   intentionally changed.
 
-[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/reblocke/conf_curve_likelihood/compare/v0.2.3...v0.2.4

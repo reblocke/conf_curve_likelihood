@@ -530,9 +530,10 @@ manifest truthfully records the older versions that authored its 22 cases.
 
 **Decision:**
 
-Accept the locked development-tool updates only after the frozen corpus passes unchanged under the
-new runtime. Extend `HISTORICAL_PROVENANCE_VERSIONS` for the upgraded fixture-authoring tools and
-do not regenerate the manifest, requests, responses, export schemas, or their hashes.
+Release integrated workbench v0.2.7 with the locked development-tool updates only after the frozen
+corpus passes unchanged under the new runtime. Extend `HISTORICAL_PROVENANCE_VERSIONS` for the
+upgraded fixture-authoring tools and do not regenerate the manifest, requests, responses, export
+schemas, or their hashes.
 
 **Consequences:**
 

@@ -452,3 +452,23 @@ These corrections supersede the affected wording above:
 
 - None in the local Core-adoption scope. Merge, tag, release, and catalog reconciliation remain
   explicit later lifecycle steps after review and hosted verification.
+
+## 2026-07-31: Development-tool maintenance patch v0.2.7
+
+The immutable v0.2.6 release was published from protected-main commit
+`60ca0e3f5d6f05bb943cb4b7b7d02ed5a1d5714a` after its candidate record above. The subsequent
+scheduled dependency update merged to protected main at
+`289498fcdda7b17037b4ffdff6522ce5a8b09caf`.
+
+| Field | Status |
+|---|---|
+| Branch | `codex/release-v0.2.7` |
+| Tag/release | Planned unsigned annotated `v0.2.7`; creation follows reviewed merge and exact-main checks |
+| Core version | Unchanged exact stable immutable `wald-inference` v0.4.2 release |
+| Intended behavior changes | Development, browser-test, formatting, and build tooling only |
+| Frozen evidence | Preserve all 22 B01-B08 requests, responses, schemas, hashes, and tolerances byte-for-byte |
+
+The release candidate must pass formatting, lint, portfolio links, deterministic staging, all
+non-browser tests, the full Chromium suite, WebKit smoke, and the frozen scientific comparison.
+Hosted CI, Pages, tag, immutable release, asset attestations, and catalog reconciliation remain
+explicit post-merge lifecycle gates.

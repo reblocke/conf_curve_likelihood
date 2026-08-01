@@ -512,15 +512,15 @@ def test_tag_release_workflow_is_verified_and_does_not_publish_to_pypi() -> None
 
 def test_release_metadata_and_core_provenance_are_synchronized() -> None:
     pyproject = tomllib.loads(_read("pyproject.toml"))
-    assert pyproject["project"]["version"] == "0.2.6"
+    assert pyproject["project"]["version"] == "0.2.7"
 
     citation = _read("CITATION.cff")
     changelog = _read("CHANGELOG.md")
-    assert "version: 0.2.6" in citation
+    assert "version: 0.2.7" in citation
     assert 'date-released: "2026-07-31"' in citation
-    assert "## [0.2.6] - 2026-07-31" in changelog
-    release_notes = changelog.split("## [0.2.6] - 2026-07-31", 1)[1].split(
-        "## [0.2.5] - 2026-07-30", 1
+    assert "## [0.2.7] - 2026-07-31" in changelog
+    release_notes = changelog.split("## [0.2.7] - 2026-07-31", 1)[1].split(
+        "## [0.2.6] - 2026-07-31", 1
     )[0]
     for required_release_detail in (
         "docs/SCIENTIFIC_SCOPE.md",
