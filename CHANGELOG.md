@@ -4,6 +4,11 @@ All notable changes to the integrated workbench are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Update the locked development and browser-test toolchain, while preserving the byte-identical
+  22-case golden corpus and its historical dependency provenance.
+
 ## [0.2.6] - 2026-07-31
 
 ### Changed

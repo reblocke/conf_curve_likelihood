@@ -139,11 +139,12 @@ and assets, draft-first stable publication, immutable-release enforcement, check
 Dependabot cooldowns, and private-reporting guidance. These controls validate engineering
 provenance; they do not establish scientific or clinical validity.
 
-Current development verification uses exact security-reviewed pytest 9.0.3, Requests 2.33.0,
-Pygments 2.20.0, urllib3 2.7.0, and idna 3.15. The immutable fixture manifest continues to record
-pytest 9.0.2 as historical authoring provenance through an explicit override. Validation must never
-rewrite golden files merely to match the current development tool version; it must compare the
-existing 22 cases and their declared provenance unchanged.
+Current locked development verification uses pytest 9.1.1, Hypothesis 6.161.2, Playwright 1.61.0,
+pytest-playwright 0.8.0, Requests 2.34.2, idna 3.18, Pygments 2.20.0, and urllib3 2.7.0. The
+immutable fixture manifest continues to record its historical authoring versions through explicit
+overrides, including pytest 9.0.2, Hypothesis 6.151.9, Playwright 1.58.0, and pytest-playwright
+0.7.2. Validation must never rewrite golden files merely to match current development tools; it
+must compare the existing 22 cases and their declared provenance unchanged.
 
 The independent portfolio audit and its machine-readable status live in the
 [`wald-inference-tools`](https://github.com/reblocke/wald-inference-tools) catalog repository.

@@ -518,3 +518,27 @@ request, response, export schema, or manifest.
 - These packages belong only to the development dependency group and are not staged into Pyodide;
   app version 0.2.5, Core v0.4.1, application/runtime dependencies, numerical behavior, browser
   payload, exports, and public scientific interpretation remain unchanged.
+
+## 2026-07-31: Advance development tooling without rewriting frozen provenance
+
+**Context:**
+
+The scheduled development-dependency proposal advances pytest to 9.1.1, Hypothesis to 6.161.2,
+Playwright to 1.61.0, pytest-playwright to 0.8.0, Requests to 2.34.2, idna to 3.18, Ruff to
+0.16.0, pre-commit to 4.6.1, and the setuptools build floor to 83.0.0. The frozen B01-B08
+manifest truthfully records the older versions that authored its 22 cases.
+
+**Decision:**
+
+Accept the locked development-tool updates only after the frozen corpus passes unchanged under the
+new runtime. Extend `HISTORICAL_PROVENANCE_VERSIONS` for the upgraded fixture-authoring tools and
+do not regenerate the manifest, requests, responses, export schemas, or their hashes.
+
+**Consequences:**
+
+- The historical corpus continues to record Hypothesis 6.151.9, Playwright 1.58.0,
+  pytest-playwright 0.7.2, and pytest 9.0.2.
+- Current verification runs the same 22 cases under the upgraded tools and must retain the exact
+  corpus bytes plus the declared `rtol=1e-12` and `atol=1e-14` comparisons.
+- These development-only changes do not alter the staged Pyodide packages, Wald formulas,
+  application payloads, browser defaults, exports, privacy behavior, or scientific interpretation.

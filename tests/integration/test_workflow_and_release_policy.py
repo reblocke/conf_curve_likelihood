@@ -562,10 +562,10 @@ def test_release_metadata_and_core_provenance_are_synchronized() -> None:
 
 def test_dev_security_versions_preserve_frozen_pytest_provenance() -> None:
     expected = {
-        "idna": "3.15",
+        "idna": "3.18",
         "pygments": "2.20.0",
-        "pytest": "9.0.3",
-        "requests": "2.33.0",
+        "pytest": "9.1.1",
+        "requests": "2.34.2",
         "urllib3": "2.7.0",
     }
     pyproject = tomllib.loads(_read("pyproject.toml"))
