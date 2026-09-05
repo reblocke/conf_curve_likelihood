@@ -35,7 +35,7 @@
 If implementation and documentation disagree, preserve behavior unless the task explicitly changes it, then record the decision in `docs/DECISIONS.md` or a new ADR under `docs/adr/`.
 
 ## Working Rules
-- Before non-trivial edits, state assumptions, ambiguities, tradeoffs, a brief plan, risks, and verification commands.
+- An implementation request covers local edits, applicable safe verification, and fixing regressions caused by the change. Resolve material scientific, scope, data-access, cost, or publication decisions before dependent work.
 - Keep changes small and directly tied to the request; do not make drive-by refactors.
 - Treat the workbench as feature-frozen under `docs/MAINTENANCE.md`; route focused-app features to
   their owning repositories.
@@ -47,9 +47,9 @@ If implementation and documentation disagree, preserve behavior unless the task 
 - Use Ruff only for formatting/linting.
 - Do not commit external artifacts without provenance and licensing notes.
 
-## Skill Triggers
-- Planning a non-trivial change: `.agents/skills/implementation-strategy/SKILL.md`.
-- Verifying a code change: `.agents/skills/code-change-verification/SKILL.md`.
+## Task-specific workflows
+Use only the route needed for the current task.
+- For substantial code/contract verification, use `.agents/skills/code-change-verification/SKILL.md` when its workflow is needed.
 - Updating docs after behavior/workflow changes: `.agents/skills/docs-sync/SKILL.md`.
 - Preparing PR text: `.agents/skills/pr-draft-summary/SKILL.md`.
 - Reviewing numerical/statistical behavior: `.agents/skills/scientific-validation/SKILL.md`.
@@ -57,6 +57,7 @@ If implementation and documentation disagree, preserve behavior unless the task 
 - Reviewing clinical/public wording, privacy, or provenance: use the matching focused skill in `.agents/skills/`.
 
 ## Done Criteria
+- Documentation-only changes need affected-reference checks and `git diff --check`; code, browser, numerical, and release checks below apply when their behavior or claims are affected.
 - Relevant tests pass locally.
 - B01-B08 and `scripts/check_portfolio_links.py` pass for Core/version/navigation changes.
 - Browser-facing package changes are staged and verified.

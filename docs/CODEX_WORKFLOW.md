@@ -1,38 +1,11 @@
 # Coding-agent workflow (Codex)
 
-This repo is intended to be usable with a coding agent (Codex) without turning the codebase into an unreviewable blob.
+Use `AGENTS.md` for repository boundaries and select a focused workflow under `.agents/skills/` when it helps the current task. A skill trigger is not a requirement to perform an unrelated planning or audit workflow.
 
-## Default loop
-
-1. **Frame**
-   - restate the product and scientific goal
-   - state assumptions and constraints
-   - define acceptance tests
-
-2. **Plan**
-   - propose the smallest change set that satisfies the acceptance tests
-   - identify touch points (files to change)
-
-3. **Execute**
-   - implement in small commits
-   - keep side effects at the edges
-   - update/add tests
-
-4. **Evaluate**
-   - run `make verify`
-   - summarize what changed and why
-
-## Repo-specific rules
-
-- Read and follow `AGENTS.md`.
-- Use focused workflows under `.agents/skills/` when the task matches a skill trigger.
-- Treat skill triggers as gates: plan with `implementation-strategy`, verify static browser/Pyodide changes with `static-browser-pyodide-verification`, check numerical implications with `scientific-validation`, sync docs with `docs-sync`, and close with `code-change-verification` when applicable.
-- Record non-obvious choices in `docs/DECISIONS.md`.
-- If `src/confcurve/` changes, run the staging step before browser verification.
-
-## When you are stuck
-
-- reduce scope
-- write a failing test that captures the desired behavior
-- add logging/diagnostics behind a flag
-- document what you tried and why it failed
+- Read the documentation and entry points governing the affected behavior. Resolve consequential scientific or interface choices before dependent edits.
+- Complete authorized local implementation, applicable verification, and regression fixes. Commit only when the user requests it.
+- Documentation-only changes need affected-reference checks and `git diff --check`.
+- Code changes need affected tests; use `make verify` when impact spans the repository. Preserve the complete Core upgrade and release gates in `docs/CORE_UPGRADE_CHECKLIST.md` and `docs/VALIDATION.md`.
+- If `src/confcurve/` changes, run `make stage-web` before browser verification; never hand-edit generated browser Python.
+- Record non-obvious behavior or architecture choices in `docs/DECISIONS.md` and update affected public documentation.
+- Report verification evidence and any unresolved gates without claiming scientific or clinical validation beyond that evidence.

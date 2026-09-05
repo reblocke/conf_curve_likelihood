@@ -20,7 +20,7 @@ other sensitive values in an issue, pull request, fixture, screenshot, URL, or w
 ## Change process
 
 1. Start from the current `main` branch and make one reviewable change.
-2. State assumptions, success criteria, silent-failure risks, and verification before editing.
+2. Resolve consequential scientific or interface choices and select verification for the affected behavior.
 3. Route missing numerical behavior to a released `wald-inference` version before adopting it here.
 4. Keep `src/confcurve/` thin and backward compatible.
 5. Regenerate ignored browser Python only with `make stage-web`.
@@ -35,7 +35,7 @@ exists.
 
 ## Verification
 
-Restore the locked environment and run the documented suite:
+Documentation-only changes need affected-reference checks and `git diff --check`. For code changes, start with affected tests. Restore the locked environment and run the full suite below for broad integration changes or release verification:
 
 ```bash
 uv sync --locked
